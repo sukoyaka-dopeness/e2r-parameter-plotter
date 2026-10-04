@@ -20,7 +20,7 @@ Open <http://localhost:4180>. Import an E2R Dataset JSON file from your computer
 npm run check
 ```
 
-The focused tests cover numeric range mapping and candidate generation, integer-only authoring, decimal presentation, Matrix row order, Profile random generation, Radar drag geometry, and the boundary between imported Dataset content and application-local values. They are supporting machine evidence, not Human acceptance.
+The focused tests cover numeric range mapping and candidate generation, integer-only authoring, decimal presentation, Matrix row order, Profile random generation, Radar drag geometry, and the boundary between imported Dataset content and application-local values. They are supporting machine evidence; first-slice Human acceptance is recorded in the [acceptance result](docs/first-slice-human-acceptance-2026-10-04.md).
 The GitHub Actions check runs the same command with read-only repository access; it does not deploy or publish the application.
 
 ## Source relationship

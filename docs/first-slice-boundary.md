@@ -1,6 +1,6 @@
 # First application slice boundary
 
-Status: Human-selected Candidate B; initial source commit is local and unpushed.
+Status: **Candidate B first Product slice HUMAN-ACCEPTED (2026-10-04); source published; release and deployment remain separate and unauthorized.**
 
 ## Product responsibility
 
@@ -30,4 +30,11 @@ This is a starting choice, not a permanent flat-layout rule. Reconsider organiza
 
 The current modules separate session and range/value rules, four projection renderers, and focused interaction/presentation helpers for validation, random candidates, drag geometry, focus, and destructive confirmation. `main.js` composes the workspace and coordinates user workflows. Further extraction should accompany a concrete change that benefits from a smaller responsibility boundary; no framework or fixed layout is imposed.
 
-The initial bounded source review and local automated checks are complete. Commit `e77c610` (`feat: add ParameterPlotter first app slice`) records that reviewed slice. No application source has been pushed; the first external source push remains a separate Human approval gate.
+The reviewed source is published on the public `main` at
+`e31c67af3f89a23f959d151091e8f144f413624d`. GitHub Actions `Check` Run #1 / `verify`
+passed, as did the local syntax check and all 26 tests. The first Product slice
+has now been Human-accepted; see the [first-slice acceptance record](first-slice-human-acceptance-2026-10-04.md).
+
+The earlier pre-publication wording in this document described the state at
+the initial source review and is superseded by the publication and acceptance
+status above. No tag, release, deployment, or formal product name is adopted.
