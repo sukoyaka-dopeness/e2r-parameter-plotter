@@ -1,0 +1,403 @@
+import {authoredDecimalPlaces, decimalAdd} from './decimal-presentation.js';
+﻿import {load, save, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates} from './model.js';
+import {renderProfile, renderQuadrant, renderRadar, renderMatrix} from './views.js';
+import {dimensionRange, rangePosition, valueAtRangePosition, quadrantOutOfRangeEntities} from './model.js';
+import {layoutPlotLabels} from './plot-labels.js';
+import {shortId, duplicateDimension, dimensionDisplayName, dimensionNeedsId, radarAxisName, entityNeedsId, deleteDimension, deleteTemporaryEntity, returnToWaiting} from './workspace-actions.js';
+import {numericError, showNumericError} from './field-validation.js';
+import {parseFiniteDecimal} from './field-validation.js';
+import {confirmationMarkup} from './confirmation-dialog.js';
+import {sizeRadarLabels, PROTOTYPE_SPOKE_CAP, radarPositionAtPoint} from './radar-geometry.js';
+import {startQuadrantPointDrag} from './quadrant-drag.js';
+import {keepRadarRowVisible} from './radar-list.js';
+import {containDrawerFocus, focusDrawer} from './drawer-focus.js';
+import {hasTemporaryWork, replacementMarkup} from './replacement-safety.js';
+import {randomDimensionValue} from './profile-random.js';
+import {acceptsDimensionValue, authoredValueAtPosition, matrixEntities, reorderMatrixRow} from './model.js';
+let s = load();
+let pagerDirection = 0;
+let radarSelectedDimension = null;
+let closingDrawer = null;
+let closeTimer = null;
+let dimensionQuery = '';
+let contextMenu = null;
+let confirmation = null;
+let dimensionWarning = null;
+let dimensionError = null;
+let dimensionDraft = null;
+let fileError = '';
+let matrixError = '';
+let matrixFocus = null;
+let entityMenu = null;
+let editEntityId = null;
+let drawerOpener = null;
+let drawerOpenerLocation = 'header';
+let replacement = null;
+let radarScroll = 0;
+let matrixDragId = null;
+let matrixRowDragId = null;
+let profileRandomNotice = '';
+const root = document.querySelector('#app');
+const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const name = id => { const list=entities(s),i=list.findIndex(e=>e.id===id); return i<0?'Select Entity':label(list[i],i); };
+function options(items, current, first='Choose…') { return `<option value="">${first}</option>`+items.map(x=>`<option value="${esc(x.id)}" ${x.id===current?'selected':''}>${esc(x.name)}</option>`).join(''); }
+function dimensionOptions(current, exclude=[]) { return options(s.dimensions.filter(x=>!exclude.includes(x.id)).map(d=>({...d,name:dimensionDisplayName(s,d)})),current); }
+function entityOptions(current, exclude=[]) { return options(entities(s).filter(x=>!exclude.includes(x.id)).map((x,i)=>({id:x.id,name:x.name||`Entity ${i+1}`})),current); }
+const api={esc,name,options,dimensionOptions,entityOptions,get:(e,d)=>getValue(s,e,d),fmt, state:()=>s,entities:()=>entities(s),plotted:()=>plottedEntities(s),waitingCandidates:()=>waitingCandidates(s),matrixError:()=>matrixError,randomNotice:()=>profileRandomNotice,entityId:(id,surface)=>entityNeedsId(s,entities(s).find(e=>e.id===id),surface)?shortId(id):'',dimensionId:(id,surface)=>dimensionNeedsId(s,s.dimensions.find(d=>d.id===id),surface)?shortId(id):'',dimensionName:id=>dimensionDisplayName(s,s.dimensions.find(d=>d.id===id)),axisName:id=>radarAxisName(s,s.dimensions.find(d=>d.id===id))};
+function render() {
+  Object.assign(api,{quadrantOutOfRange:()=>quadrantOutOfRangeEntities(s),dimension:id=>s.dimensions.find(d=>d.id===id),rangeMidpoint:id=>valueAtRangePosition(s.dimensions.find(d=>d.id===id),0.5)});
+  const oldRadarList=root.querySelector('.radar-spoke-list');if(oldRadarList)radarScroll=oldRadarList.scrollTop;
+  if(s.waiting&&!waitingCandidates(s).some(e=>e.id===s.waiting))s.waiting=null;
+  const allEntities=entities(s),showEntity=s.poolOpen||closingDrawer==='entity',showDimension=s.dimensionOpen||closingDrawer==='dimension';
+  root.innerHTML=`<header><div><p class="eyebrow">E2R · SINGLE-USER COMPARISON WORKSPACE</p><h1>ParameterPlotter <small>working name</small></h1><p class="sub">Compare Entities with dimensions you define. Dataset stays read-only.</p>${fileError?`<p class="field-error" role="alert">${esc(fileError)}</p>`:''}</div><div class="header-actions"><label class="button primary" data-import-trigger tabindex="0" role="button">Import E2R Dataset<input id="dataset-file" type="file" accept=".json,.e2r.json,application/json" hidden></label><button data-action="entities">Entities</button><button data-action="dimensions">Dimensions</button></div></header>
+  <main><div class="topline"><div><strong>${allEntities.length?`${allEntities.length} ${allEntities.length===1?'Entity':'Entities'} available`:'No Entities available'}</strong><span> · ${s.dimensions.length} temporary ${s.dimensions.length===1?'dimension':'dimensions'}</span></div><span>Values stay in this tab session</span></div>
+  <nav class="tabs" aria-label="Views">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<button class="${s.view===v?'active':''}" data-view="${v}">${v}</button>`).join('')}</nav><label class="view-select">View <select id="view-select">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<option ${s.view===v?'selected':''}>${v}</option>`).join('')}</select></label>
+  <section class="workspace">${!allEntities.length?`<div class="empty"><h2>Start with an E2R Dataset or temporary Entity</h2><p>Import a local JSON file or create an Entity in the pool. No comparison value is inferred.</p><button data-action="entities">Open Entity Pool</button></div>`:s.view==='Profile'?renderProfile(api):s.view==='Quadrant'?renderQuadrant(api):s.view==='Radar'?renderRadar(api):renderMatrix(api)}</section></main>
+  ${showEntity||showDimension?`<button class="drawer-backdrop ${closingDrawer?'is-closing':''}" data-action="close-drawers" aria-label="Close panel" tabindex="-1"></button>`:''}
+  ${showEntity?`<aside class="drawer ${closingDrawer==='entity'?'is-closing':'is-open'}" role="dialog" aria-modal="true" aria-label="Entity Pool"><div class="drawer-head"><h2>Entity Pool</h2><button data-action="close-pool">Close</button></div><p>Dataset Entities and session-only Entities can be compared together.</p><div class="pool-action"><button class="primary" data-action="add-entity">Add temporary Entity</button></div>${s.entityFormOpen?`<form id="entity-form" class="drawer-form" autocomplete="off"><h3>${editEntityId?'Edit temporary Entity':'Temporary Entity'}</h3><label>Name<input name="temporary-entity-name" autocomplete="off" required maxlength="80" placeholder="Entity name" value="${esc(s.tempEntities.find(e=>e.id===editEntityId)?.name||'')}"></label><label>Description (optional)<textarea name="temporary-entity-description" autocomplete="off" rows="3" placeholder="Describe this temporary Entity">${esc(s.tempEntities.find(e=>e.id===editEntityId)?.description||'')}</textarea></label><div class="actions"><button class="primary" type="submit">${editEntityId?'Save Entity':'Create Entity'}</button><button type="button" data-action="cancel-entity-form">Cancel</button></div></form>`:''}<label class="pool-search">Search Entity list<input id="entity-search" placeholder="Filter by name" aria-label="Search Entities"></label><div id="entity-list" class="item-list"></div></aside>`:''}
+  ${showDimension?`<aside class="drawer dimension-drawer ${closingDrawer==='dimension'?'is-closing':'is-open'}" role="dialog" aria-modal="true" aria-label="Dimension Pool"><div class="drawer-head"><div><p class="eyebrow">TEMPORARY AXES</p><h2>Dimension Pool</h2></div><button data-action="close-dimensions">Close</button></div><div class="pool-action"><button class="primary" data-action="add-dimension">Add dimension</button></div>${s.dimensionFormOpen?`<form id="dimension-form" class="drawer-form" autocomplete="off"><h3>${s.editDimension?'Edit dimension':'New dimension'}</h3><input type="hidden" name="id" value="${esc(s.editDimension||'')}"><label>Name<input name="dimension-name" autocomplete="off" required maxlength="80"></label><div class="field-pair"><label>Low label<input name="dimension-low" autocomplete="off" required maxlength="80"></label><label>High label<input name="dimension-high" autocomplete="off" required maxlength="80"></label></div>${dimensionWarning?`<div class="duplicate-warning" role="alert"><strong>${dimensionWarning.exact?'Possible exact duplicate':'Same name exists'}</strong><p>${dimensionWarning.exact?'A dimension already has this name and the same low/high labels.':'A dimension already has this name. Compare its low/high labels before continuing.'}</p><button type="submit" data-confirm-duplicate class="primary">${s.editDimension?'Save anyway':'Create anyway'}</button></div>`:''}<div class="actions"><button type="submit" class="primary">Save dimension</button><button type="button" data-action="cancel-dimension-form">Cancel</button></div></form>`:''}<label class="pool-search">Search Dimension list<input id="dimension-search" value="${esc(dimensionQuery)}" placeholder="Filter by name or labels" aria-label="Search dimensions"></label><div id="dimension-list" class="item-list dimension-list"></div></aside>`:''}
+  ${contextMenu&&s.view==='Quadrant'?`<div class="plot-context-menu" role="menu" aria-label="Entity actions" style="left:${Math.min(contextMenu.x,innerWidth-190)}px;top:${Math.min(contextMenu.y,innerHeight-110)}px"><p>${esc(name(contextMenu.id))}</p><button role="menuitem" data-context-action="profile">Open Profile</button><button role="menuitem" data-context-action="waiting">Return to waiting</button></div>`:''}
+  ${confirmationMarkup(confirmation,s,esc)}${replacement?replacementMarkup():''}`;
+  if(showEntity) renderEntityList(); if(showDimension) {renderDimensionList(); fillDimensionForm();}
+  layoutPlotLabels(root);
+  sizeRadarLabels(root);
+  if(s.view==='Radar'&&radarSelectedDimension){const vertex=root.querySelector(`[data-vertex="${CSS.escape(radarSelectedDimension)}"]`);if(vertex)vertex.classList.add('is-selected');else radarSelectedDimension=null;}
+  const radarList=root.querySelector('.radar-spoke-list');if(radarList)radarList.scrollTop=radarScroll;
+  document.documentElement.classList.toggle('drawer-modal-open',Boolean(s.poolOpen||s.dimensionOpen||closingDrawer));
+  root.querySelectorAll('header,main').forEach(el=>el.inert=Boolean(s.poolOpen||s.dimensionOpen||closingDrawer||confirmation||replacement));
+  if(confirmation){root.querySelectorAll('header,main,.drawer,.drawer-backdrop').forEach(el=>el.inert=true);root.querySelector('[data-cancel-confirmation]:not(.confirm-scrim)')?.focus();}
+  else if(replacement){root.querySelectorAll('header,main,.drawer,.drawer-backdrop').forEach(el=>el.inert=true);root.querySelector('[data-cancel-replacement]:not(.confirm-scrim)')?.focus();}
+  else if((s.poolOpen||s.dimensionOpen)&&!root.querySelector('.drawer.is-open')?.contains(document.activeElement))focusDrawer(root);
+  if(matrixFocus&&s.view==='Matrix'&&Date.now()<matrixFocus.until){const row=[...root.querySelectorAll('[data-matrix-row]')].find(x=>x.dataset.matrixRow===matrixFocus.id)||root.querySelector('[data-matrix-empty]');if(row){row.classList.add('row-target');row.scrollIntoView({block:'center'});row.focus({preventScroll:true});}}
+  if(pagerDirection){const content=root.querySelector('[data-entity-content]');if(content)content.classList.add(pagerDirection>0?'page-next':'page-previous');pagerDirection=0;}
+}
+function renderEntityList(){const q=(document.querySelector('#entity-search')?.value||'').toLowerCase(),plotted=new Set(plottedEntities(s).map(e=>e.id));document.querySelector('#entity-list').innerHTML=entities(s).map((e,i)=>({e,i})).filter(({e,i})=>[label(e,i),String(e.description||''),e.id].some(x=>x.toLowerCase().includes(q))).map(({e,i})=>`<div class="list-row entity-row"><button class="entity-choice" data-choose-entity="${esc(e.id)}" ${s.view==='Quadrant'&&plotted.has(e.id)?'disabled':''}><span class="entity-row-title"><strong>${esc(label(e,i))}</strong><small class="temp-badge">${e.temporary?'Temporary':'Dataset'}</small></span>${e.description?`<small>${esc(e.description)}</small>`:''}${entityNeedsId(s,e,'pool')?`<small>ID ${esc(shortId(e.id))}</small>`:''}<small>${s.view==='Quadrant'&&plotted.has(e.id)?'Plotted':s.selected===e.id?'Selected':''}</small></button><button class="entity-more" data-entity-menu="${esc(e.id)}" aria-label="Actions for ${esc(label(e,i))}" aria-expanded="${entityMenu===e.id}">⋯</button>${entityMenu===e.id?`<div class="entity-actions">${e.temporary?`<button data-edit-entity="${esc(e.id)}">Edit temporary Entity</button><button disabled title="Dataset is read-only">Add to Dataset · unavailable</button><button class="danger" data-delete-entity="${esc(e.id)}">Delete temporary Entity</button>`:`<button data-open-profile="${esc(e.id)}">Open Profile</button><button disabled title="Dataset deletion semantics are undecided">Delete from Dataset · unavailable</button>`}</div>`:''}</div>`).join('')||'<p>No matches</p>';}
+function renderDimensionList(){const q=dimensionQuery.toLowerCase();document.querySelector('#dimension-list').innerHTML=s.dimensions.filter(d=>[d.name,d.low,d.high].some(x=>x.toLowerCase().includes(q))).map(d=>`<div class="list-row"><span><strong>${esc(d.name)}</strong><small>${esc(d.low)} → ${esc(d.high)}</small>${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}">Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}">Delete</button></div>`).join('')||`<p>${s.dimensions.length?'No matching dimensions':'No dimensions yet'}</p>`;}
+function fillDimensionForm(){const f=document.querySelector('#dimension-form'),d=dimensionDraft||s.dimensions.find(x=>x.id===s.editDimension);if(!d||!f)return;f.elements.namedItem('dimension-name').value=d.name;f.elements.namedItem('dimension-low').value=d.low;f.elements.namedItem('dimension-high').value=d.high;}
+function update(){save(s);render();}
+function openConfirmation(kind,id){confirmation={kind,id};render();}
+function cancelConfirmation(){const prior=confirmation;confirmation=null;render();if(prior){const key=prior.kind==='dimension'?'deleteDimension':'entityMenu';[...root.querySelectorAll(`[data-${key.replace(/[A-Z]/g,x=>'-'+x.toLowerCase())}]`)].find(x=>x.dataset[key]===prior.id)?.focus();}}
+function trapDialogTab(event,selector){
+  const controls=[...root.querySelectorAll(`${selector} button:not([disabled])`)];
+  const first=controls[0],last=controls.at(-1);
+  if(!first)return;
+  if(!root.querySelector(selector).contains(document.activeElement)){event.preventDefault();first.focus();}
+  else if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+}
+function commitNumeric(input){
+ const error=numericError(input.value,input.validity.badInput);
+ if(error){showNumericError(input,error);input.focus();return false;}
+ showNumericError(input,null);
+ if(input.dataset.dirty!=='true'){input.blur();return true;}
+ const [entity,dimension]=input.dataset.value.split('|');setValue(s,entity,dimension,input.value);update();return true;
+}
+function focusMatrixRow(id){s.selected=id;matrixFocus={id,until:Date.now()+1800};closeDrawers();setTimeout(()=>{matrixFocus=null;root.querySelector('.row-target')?.classList.remove('row-target');},1800);}
+function closeDrawers(){
+  if(closingDrawer)return;
+  entityMenu=null;
+  closingDrawer=s.poolOpen?'entity':s.dimensionOpen?'dimension':null;
+  if(!closingDrawer)return;
+  s.poolOpen=false;s.dimensionOpen=false;s.dimensionFormOpen=false;s.entityFormOpen=false;s.editDimension=null;editEntityId=null;
+  update();
+  clearTimeout(closeTimer);
+  const openerAction=drawerOpener?.dataset?.action;
+  closeTimer=setTimeout(()=>{closingDrawer=null;render();const restored=openerAction?root.querySelector(`${drawerOpenerLocation} [data-action="${CSS.escape(openerAction)}"]`):null;(restored||root.querySelector('[data-action="entities"]'))?.focus();drawerOpener=null;},matchMedia('(prefers-reduced-motion: reduce)').matches?0:180);
+}
+function openDrawer(kind,opener){clearTimeout(closeTimer);closingDrawer=null;drawerOpener=opener||document.activeElement;drawerOpenerLocation=drawerOpener.closest('main')?'main':'header';s.poolOpen=kind==='entity';s.dimensionOpen=kind==='dimension';update();focusDrawer(root);}
+document.addEventListener('click',e=>{
+  if(replacement){if(e.target.closest('[data-cancel-replacement]')){replacement=null;render();root.querySelector('[data-import-trigger]')?.focus();return;}if(e.target.closest('[data-confirm-replacement]')){s=fresh(replacement);replacement=null;fileError='';matrixError='';update();return;}return;}
+  if(e.target.matches('[data-cancel-confirmation]')){cancelConfirmation();return;}
+  const b=e.target.closest('button,[data-action]');if(!b)return;
+  if(b.dataset.entityMenu){entityMenu=entityMenu===b.dataset.entityMenu?null:b.dataset.entityMenu;renderEntityList();root.querySelector(`[data-entity-menu="${CSS.escape(b.dataset.entityMenu)}"]`)?.focus();return;}
+  if(b.dataset.openProfile){s.selected=b.dataset.openProfile;s.view='Profile';entityMenu=null;closeDrawers();return;}
+  if(b.dataset.confirmDelete!==undefined&&confirmation){const {kind,id}=confirmation;confirmation=null;if(kind==='dimension')deleteDimension(s,id);else {deleteTemporaryEntity(s,id);entityMenu=null;if(matrixFocus?.id===id)matrixFocus=null;if(contextMenu?.id===id)contextMenu=null;}update();return;}
+  if(b.dataset.contextAction){const id=contextMenu?.id,action=b.dataset.contextAction;contextMenu=null;if(!id)return;s.selected=id;if(action==='profile')s.view='Profile';else returnToWaiting(s,id);update();return;}
+  if(contextMenu)contextMenu=null;
+  if(b.dataset.view){s.view=b.dataset.view;update();return;}
+  if(b.dataset.chooseEntity){if(s.view==='Quadrant'&&!waitingCandidates(s).some(e=>e.id===b.dataset.chooseEntity))return;if(s.view==='Matrix'){focusMatrixRow(b.dataset.chooseEntity);return;}if(s.view==='Radar'&&s.selected!==b.dataset.chooseEntity){const list=entities(s),from=list.findIndex(x=>x.id===s.selected),to=list.findIndex(x=>x.id===b.dataset.chooseEntity);pagerDirection=to>=from?1:-1;radarSelectedDimension=null;}s.selected=b.dataset.chooseEntity;if(s.view==='Quadrant')s.waiting=b.dataset.chooseEntity;closeDrawers();return;}
+  if(b.dataset.selectEntity){s.selected=b.dataset.selectEntity;update();return;}
+  if(b.dataset.editDimension){dimensionWarning=null;dimensionDraft=null;s.editDimension=b.dataset.editDimension;s.dimensionFormOpen=true;render();document.querySelector('#dimension-form [name=dimension-name]')?.focus();return;}
+  if(b.dataset.editEntity){if(!s.tempEntities.some(x=>x.id===b.dataset.editEntity))return;editEntityId=b.dataset.editEntity;s.entityFormOpen=true;entityMenu=null;render();root.querySelector('#entity-form [name=temporary-entity-name]')?.focus();return;}
+  if(b.dataset.deleteDimension){openConfirmation('dimension',b.dataset.deleteDimension);return;}
+  if(b.dataset.deleteEntity){openConfirmation('entity',b.dataset.deleteEntity);return;}
+  if(b.dataset.valueClear){profileRandomNotice='';const [entity,dim]=b.dataset.valueClear.split('|');setValue(s,entity,dim,null);update();return;}
+  if(b.dataset.random){const card=b.dataset.random==='card',ids=card?s.dimensions.map(d=>d.id):[b.dataset.random];let count=0;for(const id of ids)if(!card||getValue(s,s.selected,id)===null){setValue(s,s.selected,id,Math.round((Math.random()*2-1)*100)/100);count++;}update();if(count){const button=[...root.querySelectorAll('[data-random]')].find(x=>x.dataset.random===b.dataset.random);button?.focus({preventScroll:true});if(button&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const face=button.querySelector('.dice-face');if(face){face.textContent='⚂';face.classList.add('is-rolling');setTimeout(()=>{if(face.isConnected){face.textContent='⚄';face.classList.remove('is-rolling');}},180);}}}return;}
+  if(b.dataset.matrixPage){s.matrixPage=Math.max(0,s.matrixPage+Number(b.dataset.matrixPage));update();return;}
+  if(b.dataset.primaryStep){const list=entities(s),i=list.findIndex(x=>x.id===s.selected),n=list.length;pagerDirection=Number(b.dataset.primaryStep);s.selected=list[(i+pagerDirection+n)%n]?.id;if(s.view==='Radar')radarSelectedDimension=null;update();return;}
+  if(b.dataset.waitingStep){const list=waitingCandidates(s),i=list.findIndex(x=>x.id===s.waiting),step=Number(b.dataset.waitingStep);if(list.length){s.waiting=list[i<0?(step>0?0:list.length-1):(i+step+list.length)%list.length].id;s.selected=s.waiting;update();}return;}
+  if(b.dataset.radarRemove){s.radar.splice(Number(b.dataset.radarRemove),1);update();return;}
+  if(b.dataset.radarMove){const [i,step]=b.dataset.radarMove.split('|').map(Number),j=i+step;if(j>=0&&j<s.radar.length){const id=s.radar[i];[s.radar[i],s.radar[j]]=[s.radar[j],s.radar[i]];update();keepRadarRowVisible(root,id,step);}return;}
+  if(b.dataset.action){const action=b.dataset.action;if(action==='entities'||action==='dimensions'){openDrawer(action==='entities'?'entity':'dimension',b);return;}if(['close-pool','close-dimensions','close-drawers'].includes(action)){closeDrawers();return;}switch(action){case 'add-entity':editEntityId=null;s.entityFormOpen=true;break;case 'cancel-entity-form':editEntityId=null;s.entityFormOpen=false;break;case 'add-dimension':dimensionQuery='';dimensionWarning=null;dimensionDraft=null;s.editDimension=null;s.dimensionFormOpen=true;break;case 'cancel-dimension-form':dimensionWarning=null;dimensionDraft=null;s.editDimension=null;s.dimensionFormOpen=false;break;case 'clear-waiting':s.waiting=null;break;case 'return-waiting':returnToWaiting(s,b.dataset.entity);break;}update();if(action==='add-dimension'||action==='add-entity')document.querySelector('#dimension-form [name=dimension-name],#entity-form [name=temporary-entity-name]')?.focus();}
+});
+document.addEventListener('change',async e=>{
+  const t=e.target;
+  if(t.id==='dataset-file'){const file=t.files?.[0];if(!file)return;try{const data=readDataset(JSON.parse(await file.text()));t.value='';if(hasTemporaryWork(s)){replacement=data;render();}else{s=fresh(data);fileError='';matrixError='';update();}}catch(err){fileError=err.message;render();}return;}
+  if(t.id==='view-select'){s.view=t.value;update();return;}
+  if(t.dataset.value){if(t.type==='number')commitNumeric(t);else {const [en,dim]=t.dataset.value.split('|');setValue(s,en,dim,t.value);update();}return;}
+  if(t.dataset.quadrantAxis){s.quadrant[Number(t.dataset.quadrantAxis)]=t.value||null;update();return;}
+  if(t.id==='radar-add-dimension'){if(t.value&&!s.radar.includes(t.value)&&s.radar.length<PROTOTYPE_SPOKE_CAP)s.radar.push(t.value);update();return;}
+  if(t.id==='secondary'){s.secondary=t.value||null;update();return;}
+  if(t.dataset.matrixColumn){const i=Number(t.dataset.matrixColumn);if(s.matrix.includes(t.value)&&t.value){matrixError='This dimension is already selected in another column.';render();return;}matrixError='';s.matrix[i]=t.value||null;update();return;}
+});
+document.addEventListener('submit',e=>{if(e.target.getAttribute('id')!=='dimension-form')return;e.preventDefault();const f=e.target,field=n=>f.elements.namedItem(n).value;const min=parseFiniteDecimal(field('dimension-min'),f.elements.namedItem('dimension-min').validity.badInput),max=parseFiniteDecimal(field('dimension-max'),f.elements.namedItem('dimension-max').validity.badInput);const d={id:field('id')||uid(),name:field('dimension-name').trim(),low:field('dimension-low').trim(),high:field('dimension-high').trim(),min,max,minInput:field('dimension-min'),maxInput:field('dimension-max'),decimalPlaces:authoredDecimalPlaces(field('dimension-min'),field('dimension-max')),unit:field('dimension-unit').trim(),integerOnly:f.elements.namedItem('dimension-integer-only').checked};if(!d.name||!d.low||!d.high)return;if(min===null||max===null||!(min<max)){dimensionError='Enter finite decimal MIN and MAX values, with MIN less than MAX. Scientific notation is not enabled in this application.';dimensionDraft={...d,minInput:field('dimension-min'),maxInput:field('dimension-max')};render();root.querySelector('[name="dimension-min"]')?.focus();return;}const duplicate=duplicateDimension(s,d);if(duplicate&&!e.submitter?.hasAttribute('data-confirm-duplicate')){dimensionWarning=duplicate;dimensionDraft={...d,minInput:field('dimension-min'),maxInput:field('dimension-max')};render();root.querySelector('.duplicate-warning button')?.focus();return;}dimensionError=null;profileRandomNotice='';const i=s.dimensions.findIndex(x=>x.id===d.id);if(i<0){s.dimensions.push(d);s.matrix.push(d.id);}else s.dimensions[i]=d;dimensionWarning=null;dimensionDraft=null;s.editDimension=null;s.dimensionFormOpen=false;update();});
+document.addEventListener('submit',e=>{if(e.target.getAttribute('id')!=='entity-form')return;e.preventDefault();const value=e.target.elements.namedItem('temporary-entity-name').value.trim(),description=e.target.elements.namedItem('temporary-entity-description').value.trim();if(!value)return;if(editEntityId){const entity=s.tempEntities.find(x=>x.id===editEntityId);if(!entity)return;entity.name=value;if(description)entity.description=description;else delete entity.description;editEntityId=null;}else{let id;do{id='temp:'+uid();}while(entities(s).some(x=>x.id===id));s.tempEntities.push({id,name:value,...(description?{description}:{}),temporary:true});s.selected=id;if(s.view==='Quadrant')s.waiting=id;}s.entityFormOpen=false;update();});
+document.addEventListener('keydown',e=>{
+  if(replacement){if(e.key==='Escape'){e.preventDefault();replacement=null;render();root.querySelector('[data-import-trigger]')?.focus();}else if(e.key==='Tab')trapDialogTab(e,'.confirm-dialog');return;}
+  if(confirmation){if(e.key==='Escape'){e.preventDefault();cancelConfirmation();return;}if(e.key==='Tab'){const buttons=[...root.querySelectorAll('.confirm-dialog button')],first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}return;}
+  if(e.key==='Escape'&&contextMenu){contextMenu=null;render();return;}
+  if(e.key==='Escape'&&(s.poolOpen||s.dimensionOpen)){e.preventDefault();closeDrawers();return;}
+  if(s.poolOpen||s.dimensionOpen){containDrawerFocus(e,root);return;}
+  if(e.target.matches('[data-import-trigger]')&&['Enter',' '].includes(e.key)){e.preventDefault();root.querySelector('#dataset-file')?.click();return;}
+  if(e.altKey&&['ArrowLeft','ArrowRight'].includes(e.key)&&e.target.matches('[data-matrix-move]')){e.preventDefault();const i=Number(e.target.dataset.matrixMove),j=i+(e.key==='ArrowLeft'?-1:1);if(j>=0&&j<s.matrix.length){[s.matrix[i],s.matrix[j]]=[s.matrix[j],s.matrix[i]];update();root.querySelector(`[data-matrix-move="${j}"]`)?.focus();}return;}
+  if(e.key==='Enter'&&e.target.matches('input[type=number][data-value]')){e.preventDefault();commitNumeric(e.target);return;}
+  const vertex=e.target.closest?.('[data-vertex]');
+  if(vertex&&['ArrowUp','ArrowRight','ArrowDown','ArrowLeft'].includes(e.key)){
+    e.preventDefault();const dim=vertex.dataset.vertex,delta=['ArrowUp','ArrowRight'].includes(e.key)?0.05:-0.05;radarSelectedDimension=dim;
+    setValue(s,s.selected,dim,clamp(getValue(s,s.selected,dim)+delta));update();
+    document.querySelector(`[data-vertex="${CSS.escape(dim)}"]`)?.focus();
+  }
+});
+document.addEventListener('focusin',e=>{
+  const vertex=e.target.closest?.('[data-vertex]');if(vertex){radarSelectedDimension=vertex.dataset.vertex;root.querySelectorAll('.vertex-hit.is-selected').forEach(x=>x.classList.remove('is-selected'));vertex.classList.add('is-selected');const guide=root.querySelector('.radar-chart>.small');if(guide){const name=s.dimensions.find(d=>d.id===radarSelectedDimension)?.name||'vertex';guide.textContent=`${name} selected · Arrow keys adjust Primary by ${s.dimensions.find(d=>d.id===radarSelectedDimension)?.integerOnly===true?1:0.05}. Secondary stays comparison-only.`;}}
+  if(confirmation||replacement||!(s.poolOpen||s.dimensionOpen))return;
+  const drawer=root.querySelector('.drawer.is-open');
+  if(drawer&&!drawer.contains(e.target))focusDrawer(root);
+});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='entity-search')renderEntityList();if(t.id==='dimension-search'){dimensionQuery=t.value;renderDimensionList();}if(t.closest('#dimension-form')&&dimensionWarning){dimensionWarning=null;t.closest('form').querySelector('.duplicate-warning')?.remove();}if(t.matches('input[type=number][data-value]')){t.dataset.dirty='true';showNumericError(t,numericError(t.value,t.validity.badInput));}if(t.matches('input[type=range].range-missing'))t.classList.remove('range-missing');if(t.matches('input[type=range][data-value]')){const [en,dim]=t.dataset.value.split('|');setValue(s,en,dim,t.value);save(s);const card=t.closest('.dimension-card');const numeric=card?.querySelector('input[type=number]'),readout=card?.querySelector(':scope > small');if(numeric){numeric.value=fmt(getValue(s,en,dim));numeric.title='Stored value '+getValue(s,en,dim);numeric.dataset.dirty='false';}if(readout)readout.textContent='Temporary value '+fmt(getValue(s,en,dim));}});
+function clearMatrixDrop(){root.querySelector('.matrix-insertion-indicator')?.classList.remove('is-visible');}
+function matrixInsertionAt(event,col){
+  if(!matrixDragId||!col)return null;
+  const from=s.matrix.indexOf(matrixDragId),target=Number(col.dataset.dropColumn);
+  if(from<0||target<0||target>=s.matrix.length||s.matrix[target]===matrixDragId)return null;
+  const rect=col.getBoundingClientRect(),after=event.clientX>=rect.left+rect.width/2;
+  const insertion=target+(after?1:0),finalIndex=insertion-(from<insertion?1:0);
+  if(finalIndex===from)return null;
+  return {finalIndex,x:after?rect.right:rect.left,top:rect.top,height:rect.height};
+}
+function showMatrixInsertion(event,col){
+  const point=matrixInsertionAt(event,col),wrap=col?.closest('.matrix-wrap'),indicator=wrap?.querySelector('.matrix-insertion-indicator');
+  if(!point||!wrap||!indicator){clearMatrixDrop();return null;}
+  indicator.style.left=`${point.x}px`;
+  indicator.style.top=`${point.top}px`;
+  indicator.style.height=`${point.height}px`;indicator.classList.add('is-visible');
+  return point.finalIndex;
+}
+document.addEventListener('dragstart',e=>{const id=e.target.dataset.dragEntity||e.target.dataset.dragDimension;if(id)e.dataTransfer.setData(e.target.dataset.dragEntity?'entity':'dimension',id);matrixDragId=e.target.dataset.dragDimension||null;});
+document.addEventListener('dragend',()=>{matrixDragId=null;clearMatrixDrop();});
+document.addEventListener('contextmenu',e=>{const item=e.target.closest('.plot-item');if(!item||s.view!=='Quadrant')return;e.preventDefault();contextMenu={id:item.dataset.entity,x:e.clientX,y:e.clientY};render();root.querySelector('.plot-context-menu button')?.focus();});
+document.addEventListener('dragover',e=>{const col=e.target.closest('[data-drop-column]');if(matrixDragId&&col){if(showMatrixInsertion(e,col)!==null)e.preventDefault();return;}if(matrixDragId)clearMatrixDrop();if(e.target.closest('[data-plot],[data-waiting]'))e.preventDefault();});
+document.addEventListener('drop',e=>{const plot=e.target.closest('[data-plot]'),wait=e.target.closest('[data-waiting]'),col=e.target.closest('[data-drop-column]');if(plot){clearMatrixDrop();matrixDragId=null;e.preventDefault();const id=e.dataTransfer.getData('entity');if(id)placeOnPlot(id,e,plot);}if(wait){clearMatrixDrop();matrixDragId=null;e.preventDefault();const id=e.dataTransfer.getData('entity');if(id&&returnToWaiting(s,id))update();}if(col){e.preventDefault();const id=e.dataTransfer.getData('dimension'),to=showMatrixInsertion(e,col),from=s.matrix.indexOf(id);clearMatrixDrop();matrixDragId=null;if(from>=0&&to!==null&&from!==to){s.matrix.splice(from,1);s.matrix.splice(to,0,id);update();}}});
+function placeOnPlot(id,e,plot){
+ const [x,y]=s.quadrant,xd=s.dimensions.find(d=>d.id===x),yd=s.dimensions.find(d=>d.id===y);
+ if(!xd||!yd||x===y)return;
+ const rect=plot.getBoundingClientRect(),px=clamp(2*(e.clientX-rect.left)/rect.width-1),py=clamp(1-2*(e.clientY-rect.top)/rect.height);
+ const xv=authoredValueAtPosition(xd,(px+1)/2),yv=authoredValueAtPosition(yd,(py+1)/2);
+ if(!acceptsDimensionValue(xd,xv)||!acceptsDimensionValue(yd,yv)){
+  update();const guide=root.querySelector('.plot-foot .small');
+  if(guide)guide.textContent='Values unchanged: a selected integer-only Dimension has no safely generated integer candidate in range.';
+  return;
+ }
+ setValue(s,id,x,xv);setValue(s,id,y,yv);s.selected=id;if(s.waiting===id)s.waiting=null;update();
+}
+document.addEventListener('click',e=>{const plot=e.target.closest('[data-plot]');if(plot&&s.waiting&&!e.target.closest('.plot-item'))placeOnPlot(s.waiting,e,plot);});
+document.addEventListener('click',e=>{if(contextMenu&&!e.target.closest('.plot-context-menu')){contextMenu=null;root.querySelector('.plot-context-menu')?.remove();}});
+document.addEventListener('pointerdown',e=>{
+  const point=e.target.closest('[data-point]'),vertex=e.target.closest('[data-vertex]');
+  if(point){
+    const id=point.dataset.point,plot=point.closest('[data-plot]');
+    startQuadrantPointDrag(e,{point,plot,waiting:root.querySelector('[data-waiting]'),onPlace:x=>placeOnPlot(id,x,plot),onReturn:()=>{returnToWaiting(s,id);update();},onSelect:()=>{s.selected=id;update();}});
+  }
+  if(vertex){
+    if(e.button!==0||!e.isPrimary)return;
+    const id=s.selected,dim=vertex.dataset.vertex,svg=vertex.closest('svg'),angle=Number(vertex.dataset.angle),dims=s.radar;
+    const startX=e.clientX,startY=e.clientY,pointerId=e.pointerId;
+    let dragging=false;
+    radarSelectedDimension=dim;
+    vertex.focus({preventScroll:true});
+    const value=x=>{const p=svg.createSVGPoint();p.x=x.clientX;p.y=x.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());return clamp((((q.x-150)*Math.cos(angle)+(q.y-150)*Math.sin(angle))/105)*2-1);};
+    const paint=v=>{
+      const radius=(v+1)*105/2;
+      vertex.setAttribute('cx',String(150+Math.cos(angle)*radius));
+      vertex.setAttribute('cy',String(150+Math.sin(angle)*radius));
+      const visual=vertex.nextElementSibling;
+      if(visual?.classList.contains('vertex')){visual.setAttribute('cx',vertex.getAttribute('cx'));visual.setAttribute('cy',vertex.getAttribute('cy'));}
+      const polygon=svg.querySelector('.primary-poly');
+      if(polygon)polygon.setAttribute('points',dims.map((d,i)=>{const a=-Math.PI/2+i*2*Math.PI/dims.length,n=d===dim?v:getValue(s,id,d),r=(n+1)*105/2;return `${150+Math.cos(a)*r},${150+Math.sin(a)*r}`;}).join(' '));
+      const readout=document.querySelector(`[data-radar-value="${CSS.escape(dim)}"]`);
+      if(readout)readout.textContent=fmt(v,s.dimensions.find(d=>d.id===dim))+(s.secondary&&s.secondary!==id?` · ${fmt(getValue(s,s.secondary,dim),s.dimensions.find(d=>d.id===dim))}`:'');
+    };
+    const cleanup=()=>{vertex.onpointermove=null;vertex.onpointerup=null;vertex.onpointercancel=null;vertex.classList.remove('dragging');if(vertex.hasPointerCapture?.(pointerId))vertex.releasePointerCapture(pointerId);};
+    vertex.setPointerCapture(pointerId);
+    vertex.onpointermove=x=>{if(x.pointerId!==pointerId||!x.buttons)return;if(!dragging&&Math.hypot(x.clientX-startX,x.clientY-startY)>5){dragging=true;vertex.classList.add('dragging');}if(dragging)paint(value(x));};
+    vertex.onpointerup=x=>{if(x.pointerId!==pointerId)return;cleanup();if(dragging){setValue(s,id,dim,value(x));update();root.querySelector(`[data-vertex="${CSS.escape(dim)}"]`)?.focus({preventScroll:true});}};
+    vertex.onpointercancel=x=>{if(x.pointerId===pointerId)cleanup();};
+  }
+});
+function clearMatrixRowDrop(){root.querySelector('.matrix-row-insertion-indicator')?.classList.remove('is-visible');}
+function matrixRowInsertionAt(event,row){
+  if(!matrixRowDragId||!row)return null;
+  const order=matrixEntities(s),from=order.findIndex(e=>e.id===matrixRowDragId),target=order.findIndex(e=>e.id===row.dataset.matrixRow);
+  if(from<0||target<0)return null;
+  const rect=row.getBoundingClientRect(),after=event.clientY>=rect.top+rect.height/2;
+  const insertion=target+(after?1:0),to=insertion-(from<insertion?1:0);
+  return to===from?null:{insertion,y:after?rect.bottom:rect.top};
+}
+function showMatrixRowInsertion(event,row){
+  const point=matrixRowInsertionAt(event,row),wrap=row?.closest('.matrix-wrap'),indicator=wrap?.querySelector('.matrix-row-insertion-indicator');
+  if(!point||!indicator){clearMatrixRowDrop();return null;}
+  const rect=wrap.getBoundingClientRect(),left=Math.max(0,rect.left),right=Math.min(innerWidth,rect.right);
+  indicator.style.left=`${left}px`;indicator.style.top=`${point.y}px`;
+  indicator.style.width=`${Math.max(0,right-left)}px`;indicator.classList.add('is-visible');return point.insertion;
+}
+function moveMatrixRow(id,insertion){
+  const wrap=root.querySelector('.matrix-wrap'),top=wrap?.scrollTop,left=wrap?.scrollLeft,pageX=window.scrollX,pageY=window.scrollY;
+  if(!reorderMatrixRow(s,id,insertion))return false;
+  update();
+  const next=root.querySelector('.matrix-wrap');if(next){next.scrollTop=top;next.scrollLeft=left;}
+  window.scrollTo(pageX,pageY);
+  const handle=root.querySelector(`[data-matrix-row-handle="${CSS.escape(id)}"]`);
+  handle?.focus({preventScroll:true});handle?.scrollIntoView({block:'nearest',inline:'nearest'});
+  const index=matrixEntities(s).findIndex(e=>e.id===id),announcement=root.querySelector('.matrix-row-announcement');
+  if(announcement)announcement.textContent=`${name(id)} moved to Matrix row ${index+1} of ${matrixEntities(s).length}.`;
+  return true;
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&matrixRowDragId){matrixRowDragId=null;clearMatrixRowDrop();}
+  if(!e.altKey||!['ArrowUp','ArrowDown'].includes(e.key)||!e.target.matches('[data-matrix-row-handle]'))return;
+  e.preventDefault();const id=e.target.dataset.matrixRowHandle,order=matrixEntities(s),index=order.findIndex(x=>x.id===id),step=e.key==='ArrowUp'?-1:1;
+  if(index>=0&&index+step>=0&&index+step<order.length)moveMatrixRow(id,index+(step>0?2:-1));
+});
+document.addEventListener('dragstart',e=>{
+  const id=e.target.dataset.dragMatrixRow;if(!id)return;
+  matrixRowDragId=id;e.dataTransfer.setData('matrix-row',id);e.dataTransfer.effectAllowed='move';
+});
+document.addEventListener('dragover',e=>{
+  if(!matrixRowDragId)return;
+  const row=e.target.closest('[data-matrix-row]');
+  if(showMatrixRowInsertion(e,row)!==null){e.preventDefault();e.dataTransfer.dropEffect='move';}
+});
+document.addEventListener('drop',e=>{
+  if(!matrixRowDragId)return;
+  const id=matrixRowDragId,row=e.target.closest('[data-matrix-row]'),insertion=matrixRowInsertionAt(e,row)?.insertion;
+  matrixRowDragId=null;clearMatrixRowDrop();
+  if(insertion!==undefined&&e.dataTransfer.getData('matrix-row')===id){e.preventDefault();moveMatrixRow(id,insertion);}
+});
+document.addEventListener('dragend',()=>{matrixRowDragId=null;clearMatrixRowDrop();});
+document.addEventListener('scroll',clearMatrixRowDrop,true);
+addEventListener('resize',clearMatrixRowDrop);
+// Visual feedback only; row/column payloads, insertion and commit paths stay separate.
+function clearMatrixGripFeedback(){root.querySelectorAll('.matrix-grip.is-dragging').forEach(handle=>handle.classList.remove('is-dragging'));}
+document.addEventListener('dragstart',e=>{e.target.closest('.matrix-grip')?.classList.add('is-dragging');});
+document.addEventListener('dragend',clearMatrixGripFeedback);
+document.addEventListener('drop',clearMatrixGripFeedback);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')clearMatrixGripFeedback();});
+render();
+addEventListener('resize',()=>{if(s.view==='Matrix')render();else if(s.view==='Quadrant')layoutPlotLabels(root,{animate:true});else if(s.view==='Radar')sizeRadarLabels(root);});
+
+// Range and value-policy controls stay application-local. Older Dimensions
+// without explicit bounds use the read-time legacy range without rewriting data.
+function dimensionBounds(id){return dimensionRange(s.dimensions.find(d=>d.id===id));}
+function buildDimensionFields(){
+ const form=root.querySelector('#dimension-form');if(!form)return;
+ const id=form.elements.namedItem('id').value,dimension=s.dimensions.find(d=>d.id===id),range=dimensionRange(dimension);
+ const pair=document.createElement('div');pair.className='field-pair p2-range-fields';
+ for(const [name,value,label] of [['dimension-min',dimensionDraft?.minInput??(dimension?(dimension.minInput??String(range.min)):''),'MIN'],['dimension-max',dimensionDraft?.maxInput??(dimension?(dimension.maxInput??String(range.max)):''),'MAX']]){
+  const field=document.createElement('label');field.textContent=label;
+  const input=document.createElement('input');input.name=name;input.type='number';input.inputMode='decimal';input.step='any';input.required=true;input.value=value;input.setAttribute('aria-describedby','p2-range-help');field.append(input);pair.append(field);
+ }
+ const help=document.createElement('small');help.id='p2-range-help';help.textContent='Enter finite decimal values with MIN < MAX. New Dimensions have no default. Explicit fractional digits (including trailing zeros) give a local random/display hint; the larger endpoint count is used. Without fractional digits, random uses a 2-place grid only. Direct entry is not constrained by either random scale. Generation/padding supports up to 100 places; unsafe grids are unavailable. A P1 Dimension without explicit bounds uses the legacy −1..+1 range.';
+ const unitLabel=document.createElement('label');unitLabel.textContent='Unit (optional free text)';
+ const unit=document.createElement('input');unit.name='dimension-unit';unit.type='text';unit.maxLength=240;unit.autocomplete='off';unit.placeholder='Symbol or descriptive phrase';unit.value=dimensionDraft?.unit??dimension?.unit??'';
+ const unitHelp=document.createElement('small');unitHelp.textContent='Application-local input limit: 240 characters. No conversion or parsing.';unitLabel.append(unit,unitHelp);
+ const integerLabel=document.createElement('label');integerLabel.className='dimension-integer-option';
+ const integer=document.createElement('input');integer.name='dimension-integer-only';integer.type='checkbox';integer.checked=(dimensionDraft?.integerOnly??dimension?.integerOnly)===true;
+ integerLabel.append(integer,document.createTextNode('Integer values only (this temporary Dimension)'));
+ const integerHelp=document.createElement('small');integerHelp.textContent='Applies to all new value edits. Existing decimals are retained and marked until corrected; no automatic rounding.';
+ const actions=form.querySelector('.actions');form.insertBefore(pair,actions);form.insertBefore(help,actions);form.insertBefore(unitLabel,actions);form.insertBefore(integerLabel,actions);form.insertBefore(integerHelp,actions);
+ if(dimensionError){const error=document.createElement('p');error.className='field-error';error.setAttribute('role','alert');error.textContent=dimensionError;form.insertBefore(error,actions);}
+}
+
+renderDimensionList=function(){
+ const q=dimensionQuery.toLowerCase();
+ const matches=s.dimensions.filter(d=>[d.name,d.low,d.high,String(d.min??-1),String(d.max??1),String(d.unit||'')].some(x=>x.toLowerCase().includes(q)));
+ document.querySelector('#dimension-list').innerHTML=matches.map(d=>{
+  const range=dimensionRange(d),outside=Object.values(s.values).filter(values=>values&&values[d.id]!==undefined&&!acceptsDimensionValue(d,values[d.id])).length;
+  return `<div class="list-row dimension-list-row"><span><strong>${esc(d.name)}</strong><small>${esc(d.low)} · ${fmt(range.min)} → ${fmt(range.max)} · ${esc(d.high)}</small>${d.unit?`<small class="dimension-unit" title="Unit: ${esc(d.unit)}">Unit: ${esc(d.unit)}</small>`:''}${d.integerOnly===true?'<small>Integer values only</small>':''}${range.legacy?'<small>Legacy P1 range (−1..+1)</small>':''}${outside?`<small class="out-of-range-flag">${outside} stored ${outside===1?'value violates':'values violate'} range/value policy</small>`:''}${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}">Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}">Delete</button></div>`;
+ }).join('')||`<p>${s.dimensions.length?'No matching dimensions':'No dimensions yet'}</p>`;
+};
+
+commitNumeric=function(input){
+ const [entity,dimensionId]=input.dataset.value.split('|'),dimension=s.dimensions.find(d=>d.id===dimensionId),error=numericError(input.value,input.validity.badInput,dimension);
+ if(error){showNumericError(input,error);input.focus();return false;}
+ showNumericError(input,null);
+ if(input.dataset.dirty!=='true'){input.blur();return true;}
+  if(!setValue(s,entity,dimensionId,input.value)){showNumericError(input,numericError(input.value,false,dimension));return false;}
+  profileRandomNotice='';const matrixWrap=s.view==='Matrix'?input.closest('.matrix-wrap'):null,matrixScrollTop=matrixWrap?.scrollTop,pageX=window.scrollX,pageY=window.scrollY;
+  update();
+  if(matrixWrap){const nextWrap=root.querySelector('.matrix-wrap');if(nextWrap)nextWrap.scrollTop=matrixScrollTop;window.scrollTo(pageX,pageY);}
+  return true;
+};
+
+// Direct numeric edits use the selected Dimension's range and preserve a
+// rejected draft without changing the stored application-local value.
+document.addEventListener('input',e=>{
+ const input=e.target;
+ if(input.matches('input[type=number][data-value]')){
+  const dimension=s.dimensions.find(d=>d.id===input.dataset.value.split('|')[1]);input.dataset.dirty='true';
+  showNumericError(input,numericError(input.value,input.validity.badInput,dimension));e.stopImmediatePropagation();return;
+ }
+ if(input.matches('input[type=range][data-value]')){
+  e.stopImmediatePropagation();const [entity,dimension]=input.dataset.value.split('|');if(!setValue(s,entity,dimension,input.value))return;
+  save(s);const card=input.closest('.dimension-card'),numeric=card?.querySelector('input[type=number]'),readout=card?.querySelector('.value-status');
+  if(numeric){numeric.value=fmt(getValue(s,entity,dimension),s.dimensions.find(d=>d.id===dimension));numeric.title='Stored value '+getValue(s,entity,dimension);numeric.dataset.dirty='false';}
+  if(readout)readout.textContent='Temporary value '+fmt(getValue(s,entity,dimension),s.dimensions.find(d=>d.id===dimension));e.stopImmediatePropagation();
+ }
+},true);
+
+document.addEventListener('click',e=>{
+ const button=e.target.closest('[data-random]');if(!button)return;
+ e.preventDefault();e.stopImmediatePropagation();const card=button.dataset.random==='card',ids=card?s.dimensions.map(d=>d.id):[button.dataset.random];let count=0,skipped=0;
+ for(const id of ids)if(!card||getValue(s,s.selected,id)===null){const value=randomDimensionValue(s.dimensions.find(d=>d.id===id));if(value===null){skipped++;continue;}if(setValue(s,s.selected,id,value))count++;}
+ profileRandomNotice=skipped?(count?`Generated ${count} random value${count===1?'':'s'}; skipped ${skipped} Dimension${skipped===1?'':'s'} without a safely generated value under its integer/decimal-grid policy in range.`:'No safely generated value under its integer/decimal-grid policy is available in this range; no value changed.'):'';
+ update();if(count){const current=[...root.querySelectorAll('[data-random]')].find(x=>x.dataset.random===button.dataset.random);current?.focus({preventScroll:true});if(current&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const face=current.querySelector('.dice-face');if(face){face.textContent='⚂';face.classList.add('is-rolling');setTimeout(()=>{if(face.isConnected){face.textContent='⚄';face.classList.remove('is-rolling');}},180);}}}
+},true);
+
+document.addEventListener('keydown',e=>{
+ const vertex=e.target.closest?.('[data-vertex]');if(!vertex||!['ArrowUp','ArrowRight','ArrowDown','ArrowLeft'].includes(e.key))return;
+ e.preventDefault();e.stopImmediatePropagation();const dim=vertex.dataset.vertex,dimension=s.dimensions.find(d=>d.id===dim),increment=dimension.integerOnly===true?1:0.05,delta=['ArrowUp','ArrowRight'].includes(e.key)?increment:-increment,current=getValue(s,s.selected,dim),range=dimensionBounds(dim);
+ if(!setValue(s,s.selected,dim,decimalAdd(current,delta))){const guide=root.querySelector('.radar-chart>.small');if(guide)guide.textContent=`Value unchanged · this Dimension accepts ${dimension.integerOnly===true?'integers from ':''}${fmt(range.min)} to ${fmt(range.max)}. The recorded value remains in session data.`;return;}
+ radarSelectedDimension=dim;update();root.querySelector(`[data-vertex="${CSS.escape(dim)}"]`)?.focus();
+},true);
+
+document.addEventListener('pointerdown',e=>{
+ const vertex=e.target.closest?.('[data-vertex]');if(!vertex)return;
+ if(e.button!==0||!e.isPrimary)return;e.stopImmediatePropagation();
+ const id=s.selected,dim=vertex.dataset.vertex,dimension=s.dimensions.find(d=>d.id===dim),svg=vertex.closest('svg'),angle=Number(vertex.dataset.angle),dims=s.radar,startX=e.clientX,startY=e.clientY,pointerId=e.pointerId;let dragging=false;
+ radarSelectedDimension=dim;vertex.focus({preventScroll:true});
+ const valueAtPointer=event=>{const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const q=point.matrixTransform(svg.getScreenCTM().inverse());return authoredValueAtPosition(dimension,radarPositionAtPoint(q.x,q.y,angle));};
+ const paint=value=>{if(value===null)return;const radius=rangePosition(dimension,value)*105;vertex.setAttribute('cx',String(150+Math.cos(angle)*radius));vertex.setAttribute('cy',String(150+Math.sin(angle)*radius));const visual=vertex.nextElementSibling;if(visual?.classList.contains('vertex')){visual.setAttribute('cx',vertex.getAttribute('cx'));visual.setAttribute('cy',vertex.getAttribute('cy'));}const polygon=svg.querySelector('.primary-poly');if(polygon&&dims.every(d=>acceptsDimensionValue(s.dimensions.find(item=>item.id===d),d===dim?value:getValue(s,id,d))))polygon.setAttribute('points',dims.map((d,i)=>{const a=-Math.PI/2+i*2*Math.PI/dims.length,n=d===dim?value:getValue(s,id,d),r=rangePosition(s.dimensions.find(item=>item.id===d),n)*105;return `${150+Math.cos(a)*r},${150+Math.sin(a)*r}`;}).join(' '));const readout=root.querySelector(`[data-radar-value="${CSS.escape(dim)}"]`);if(readout)readout.textContent=`Primary ${fmt(value,dimension)}${dimension.unit?` · Unit: ${dimension.unit}`:''}${s.secondary&&s.secondary!==id?` · Secondary ${fmt(getValue(s,s.secondary,dim),s.dimensions.find(d=>d.id===dim))}`:''}`;};
+ const cleanup=()=>{vertex.onpointermove=null;vertex.onpointerup=null;vertex.onpointercancel=null;vertex.classList.remove('dragging');if(vertex.hasPointerCapture?.(pointerId))vertex.releasePointerCapture(pointerId);};
+ vertex.setPointerCapture(pointerId);
+ vertex.onpointermove=event=>{if(event.pointerId!==pointerId||!event.buttons)return;if(!dragging&&Math.hypot(event.clientX-startX,event.clientY-startY)>5){dragging=true;vertex.classList.add('dragging');}if(dragging)paint(valueAtPointer(event));};
+ vertex.onpointerup=event=>{if(event.pointerId!==pointerId)return;cleanup();if(dragging){const value=valueAtPointer(event);if(value!==null)setValue(s,id,dim,value);update();root.querySelector(`[data-vertex="${CSS.escape(dim)}"]`)?.focus({preventScroll:true});}};
+ vertex.onpointercancel=event=>{if(event.pointerId===pointerId)cleanup();};
+},true);
+
+document.addEventListener('input',e=>{
+ const form=e.target.closest?.('#dimension-form');if(!form)return;
+ if(dimensionWarning){dimensionWarning=null;form.querySelector('.duplicate-warning')?.remove();}
+ if(dimensionError){dimensionError=null;form.querySelector('[role=alert].field-error')?.remove();}
+},true);
+document.addEventListener('click',e=>{if(e.target.closest('[data-action="add-dimension"],[data-action="cancel-dimension-form"],[data-edit-dimension]')){dimensionWarning=null;dimensionDraft=null;dimensionError=null;}},true);
+
+// Add range and unit controls while preserving the drawer and focus behavior.
+const originalRender=render;
+render=function(){
+ originalRender();
+ const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER COMPARISON WORKSPACE';
+ document.title='ParameterPlotter (working name)';
+ const search=root.querySelector('#dimension-search');if(search)search.placeholder='Filter by name, labels, range, or unit';
+ buildDimensionFields();
+};
+render();

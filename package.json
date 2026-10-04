@@ -1,0 +1,11 @@
+{
+  "name": "e2r-parameter-plotter",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "node serve.mjs",
+    "test": "node --test *.test.mjs",
+    "check": "node scripts/check-syntax.mjs && npm test"
+  }
+}

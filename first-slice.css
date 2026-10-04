@@ -1,0 +1,22 @@
+﻿.session-boundary {
+  box-sizing: border-box;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid #c9a34a;
+  background: #fff5d9;
+  color: #4a3a12;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.session-boundary strong {
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .session-boundary {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.8125rem;
+  }
+}
