@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {dimensionRange, inDimensionRange, rangePosition, valueAtRangePosition, setValue, getValue, fmt, load} from './model.js';
+import {dimensionRange, inDimensionRange, rangePosition, valueAtRangePosition, setValue, getValue, fmt, load, fresh} from './model.js';
 import {parseFiniteDecimal, numericError} from './field-validation.js';
 
 test('unbounded Prototype 1 Dimensions use a read-only legacy range', () => {
@@ -11,17 +11,17 @@ test('unbounded Prototype 1 Dimensions use a read-only legacy range', () => {
   assert.equal(inDimensionRange(legacy, 1.01), false);
 });
 
-test('loading a legacy Dimension in this workspace retains its original record without migration writes', () => {
-  const stored = JSON.stringify({dataset:{version:'1.0',entities:[],events:[],relations:[]},tempEntities:[],dimensions:[{id:'legacy',name:'Legacy',low:'Low',high:'High'}],values:{},selected:null,view:'Profile',quadrant:[null,null],radar:[]});
-  const prior = globalThis.sessionStorage;
-  globalThis.sessionStorage = {getItem:key=>key==='e2r-parameter-plotter-workspace-v1'?stored:null};
+test('successor load starts a new workspace instead of importing a Candidate B session', () => {
+  const prior = globalThis.localStorage, session=globalThis.sessionStorage, values=new Map();
+  globalThis.localStorage={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,String(value)),removeItem:key=>values.delete(key)};
+  globalThis.sessionStorage={getItem:()=>JSON.stringify({dimensions:[{id:'legacy',name:'Legacy',low:'Low',high:'High'}],tempEntities:[{id:'t'}]})};
   try {
-    const session = load();
-    assert.deepEqual(dimensionRange(session.dimensions[0]), {min:-1,max:1,legacy:true});
-    assert.equal(JSON.stringify(session.dimensions[0]), JSON.stringify({id:'legacy',name:'Legacy',low:'Low',high:'High'}));
+    const state = load();
+    assert.deepEqual(state.dimensions,[]);
+    assert.deepEqual(state.dataset.entities,[]);
   } finally {
-    if (prior === undefined) delete globalThis.sessionStorage;
-    else globalThis.sessionStorage = prior;
+    if (prior === undefined) delete globalThis.localStorage; else globalThis.localStorage = prior;
+    if (session === undefined) delete globalThis.sessionStorage; else globalThis.sessionStorage = session;
   }
 });
 
@@ -39,7 +39,8 @@ test('arbitrary negative, positive, asymmetric, and extreme finite ranges map to
 });
 
 test('recorded values accept range endpoints and zero, reject out-of-range values, and clear to null', () => {
-  const state = {dimensions: [{id: 'd', min: -4, max: 9}], values: {}};
+  const state = fresh({version:'1.0',entities:[{id:'e'}],events:[],relations:[]});
+  state.dimensions=[{id: 'd', min: -4, max: 9}];
   assert.equal(setValue(state, 'e', 'd', -4), true);
   assert.equal(getValue(state, 'e', 'd'), -4);
   assert.equal(setValue(state, 'e', 'd', 0), true);

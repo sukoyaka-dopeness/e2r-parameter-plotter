@@ -1,5 +1,5 @@
 import {authoredDecimalPlaces, decimalAdd} from './decimal-presentation.js';
-﻿import {load, save, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates} from './model.js';
+import {load, save, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates, validateDataset, datasetForWorkspace, exportBaseline, persistRestoredWorkspace, transactDatasetMutation} from './model.js';
 import {renderProfile, renderQuadrant, renderRadar, renderMatrix} from './views.js';
 import {dimensionRange, rangePosition, valueAtRangePosition, quadrantOutOfRangeEntities} from './model.js';
 import {layoutPlotLabels} from './plot-labels.js';
@@ -11,8 +11,9 @@ import {sizeRadarLabels, PROTOTYPE_SPOKE_CAP, radarPositionAtPoint} from './rada
 import {startQuadrantPointDrag} from './quadrant-drag.js';
 import {keepRadarRowVisible} from './radar-list.js';
 import {containDrawerFocus, focusDrawer} from './drawer-focus.js';
-import {hasTemporaryWork, replacementMarkup} from './replacement-safety.js';
+import {hasLossSensitiveWork, shouldWarnBeforeUnload, workspaceBackupFor, readWorkspaceBackup} from './workspace-recovery.js';
 import {randomDimensionValue} from './profile-random.js';
+import {candidateAuthoringAvailable, createDatasetEntity, editDatasetEntity, entityDeleteEligibility, deleteDatasetEntity, deleteDatasetDimension, rescaledAssessmentValue, applyDimensionAndRescale} from './successor-domain.js';
 import {acceptsDimensionValue, authoredValueAtPosition, matrixEntities, reorderMatrixRow} from './model.js';
 let s = load();
 let pagerDirection = 0;
@@ -37,6 +38,10 @@ let radarScroll = 0;
 let matrixDragId = null;
 let matrixRowDragId = null;
 let profileRandomNotice = '';
+let lifecycleNotice = '';
+let entityDeleteNotice = null;
+let entityFormError = null;
+let rescaleProposal = null;
 const root = document.querySelector('#app');
 const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name = id => { const list=entities(s),i=list.findIndex(e=>e.id===id); return i<0?'Select Entity':label(list[i],i); };
@@ -50,9 +55,9 @@ function render() {
   if(s.waiting&&!waitingCandidates(s).some(e=>e.id===s.waiting))s.waiting=null;
   const allEntities=entities(s),showEntity=s.poolOpen||closingDrawer==='entity',showDimension=s.dimensionOpen||closingDrawer==='dimension';
   root.innerHTML=`<header><div><p class="eyebrow">E2R · SINGLE-USER COMPARISON WORKSPACE</p><h1>ParameterPlotter <small>working name</small></h1><p class="sub">Compare Entities with dimensions you define. Dataset stays read-only.</p>${fileError?`<p class="field-error" role="alert">${esc(fileError)}</p>`:''}</div><div class="header-actions"><label class="button primary" data-import-trigger tabindex="0" role="button">Import E2R Dataset<input id="dataset-file" type="file" accept=".json,.e2r.json,application/json" hidden></label><button data-action="entities">Entities</button><button data-action="dimensions">Dimensions</button></div></header>
-  <main><div class="topline"><div><strong>${allEntities.length?`${allEntities.length} ${allEntities.length===1?'Entity':'Entities'} available`:'No Entities available'}</strong><span> · ${s.dimensions.length} temporary ${s.dimensions.length===1?'dimension':'dimensions'}</span></div><span>Values stay in this tab session</span></div>
+  <main><div class="topline"><div><strong>${allEntities.length?`${allEntities.length} ${allEntities.length===1?'Dataset Entity':'Dataset Entities'} available`:'No Dataset Entities available'}</strong><span> · ${s.dimensions.length} portable ${s.dimensions.length===1?'Dimension':'Dimensions'}</span></div><span>Comparison values are Dataset Assessments</span></div>
   <nav class="tabs" aria-label="Views">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<button class="${s.view===v?'active':''}" data-view="${v}">${v}</button>`).join('')}</nav><label class="view-select">View <select id="view-select">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<option ${s.view===v?'selected':''}>${v}</option>`).join('')}</select></label>
-  <section class="workspace">${!allEntities.length?`<div class="empty"><h2>Start with an E2R Dataset or temporary Entity</h2><p>Import a local JSON file or create an Entity in the pool. No comparison value is inferred.</p><button data-action="entities">Open Entity Pool</button></div>`:s.view==='Profile'?renderProfile(api):s.view==='Quadrant'?renderQuadrant(api):s.view==='Radar'?renderRadar(api):renderMatrix(api)}</section></main>
+  <section class="workspace">${!allEntities.length?`<div class="empty"><h2>Start with an E2R Dataset</h2><p>Open a Dataset or create a Dataset Entity. No Assessment is inferred.</p><button data-action="entities">Open Entity Pool</button></div>`:s.view==='Profile'?renderProfile(api):s.view==='Quadrant'?renderQuadrant(api):s.view==='Radar'?renderRadar(api):renderMatrix(api)}</section></main>
   ${showEntity||showDimension?`<button class="drawer-backdrop ${closingDrawer?'is-closing':''}" data-action="close-drawers" aria-label="Close panel" tabindex="-1"></button>`:''}
   ${showEntity?`<aside class="drawer ${closingDrawer==='entity'?'is-closing':'is-open'}" role="dialog" aria-modal="true" aria-label="Entity Pool"><div class="drawer-head"><h2>Entity Pool</h2><button data-action="close-pool">Close</button></div><p>Dataset Entities and session-only Entities can be compared together.</p><div class="pool-action"><button class="primary" data-action="add-entity">Add temporary Entity</button></div>${s.entityFormOpen?`<form id="entity-form" class="drawer-form" autocomplete="off"><h3>${editEntityId?'Edit temporary Entity':'Temporary Entity'}</h3><label>Name<input name="temporary-entity-name" autocomplete="off" required maxlength="80" placeholder="Entity name" value="${esc(s.tempEntities.find(e=>e.id===editEntityId)?.name||'')}"></label><label>Description (optional)<textarea name="temporary-entity-description" autocomplete="off" rows="3" placeholder="Describe this temporary Entity">${esc(s.tempEntities.find(e=>e.id===editEntityId)?.description||'')}</textarea></label><div class="actions"><button class="primary" type="submit">${editEntityId?'Save Entity':'Create Entity'}</button><button type="button" data-action="cancel-entity-form">Cancel</button></div></form>`:''}<label class="pool-search">Search Entity list<input id="entity-search" placeholder="Filter by name" aria-label="Search Entities"></label><div id="entity-list" class="item-list"></div></aside>`:''}
   ${showDimension?`<aside class="drawer dimension-drawer ${closingDrawer==='dimension'?'is-closing':'is-open'}" role="dialog" aria-modal="true" aria-label="Dimension Pool"><div class="drawer-head"><div><p class="eyebrow">TEMPORARY AXES</p><h2>Dimension Pool</h2></div><button data-action="close-dimensions">Close</button></div><div class="pool-action"><button class="primary" data-action="add-dimension">Add dimension</button></div>${s.dimensionFormOpen?`<form id="dimension-form" class="drawer-form" autocomplete="off"><h3>${s.editDimension?'Edit dimension':'New dimension'}</h3><input type="hidden" name="id" value="${esc(s.editDimension||'')}"><label>Name<input name="dimension-name" autocomplete="off" required maxlength="80"></label><div class="field-pair"><label>Low label<input name="dimension-low" autocomplete="off" required maxlength="80"></label><label>High label<input name="dimension-high" autocomplete="off" required maxlength="80"></label></div>${dimensionWarning?`<div class="duplicate-warning" role="alert"><strong>${dimensionWarning.exact?'Possible exact duplicate':'Same name exists'}</strong><p>${dimensionWarning.exact?'A dimension already has this name and the same low/high labels.':'A dimension already has this name. Compare its low/high labels before continuing.'}</p><button type="submit" data-confirm-duplicate class="primary">${s.editDimension?'Save anyway':'Create anyway'}</button></div>`:''}<div class="actions"><button type="submit" class="primary">Save dimension</button><button type="button" data-action="cancel-dimension-form">Cancel</button></div></form>`:''}<label class="pool-search">Search Dimension list<input id="dimension-search" value="${esc(dimensionQuery)}" placeholder="Filter by name or labels" aria-label="Search dimensions"></label><div id="dimension-list" class="item-list dimension-list"></div></aside>`:''}
@@ -187,7 +192,7 @@ document.addEventListener('dragstart',e=>{const id=e.target.dataset.dragEntity||
 document.addEventListener('dragend',()=>{matrixDragId=null;clearMatrixDrop();});
 document.addEventListener('contextmenu',e=>{const item=e.target.closest('.plot-item');if(!item||s.view!=='Quadrant')return;e.preventDefault();contextMenu={id:item.dataset.entity,x:e.clientX,y:e.clientY};render();root.querySelector('.plot-context-menu button')?.focus();});
 document.addEventListener('dragover',e=>{const col=e.target.closest('[data-drop-column]');if(matrixDragId&&col){if(showMatrixInsertion(e,col)!==null)e.preventDefault();return;}if(matrixDragId)clearMatrixDrop();if(e.target.closest('[data-plot],[data-waiting]'))e.preventDefault();});
-document.addEventListener('drop',e=>{const plot=e.target.closest('[data-plot]'),wait=e.target.closest('[data-waiting]'),col=e.target.closest('[data-drop-column]');if(plot){clearMatrixDrop();matrixDragId=null;e.preventDefault();const id=e.dataTransfer.getData('entity');if(id)placeOnPlot(id,e,plot);}if(wait){clearMatrixDrop();matrixDragId=null;e.preventDefault();const id=e.dataTransfer.getData('entity');if(id&&returnToWaiting(s,id))update();}if(col){e.preventDefault();const id=e.dataTransfer.getData('dimension'),to=showMatrixInsertion(e,col),from=s.matrix.indexOf(id);clearMatrixDrop();matrixDragId=null;if(from>=0&&to!==null&&from!==to){s.matrix.splice(from,1);s.matrix.splice(to,0,id);update();}}});
+document.addEventListener('drop',e=>{const plot=e.target.closest('[data-plot]'),wait=e.target.closest('[data-waiting]'),col=e.target.closest('[data-drop-column]');if(plot){clearMatrixDrop();matrixDragId=null;e.preventDefault();const id=e.dataTransfer.getData('entity');if(id)placeOnPlot(id,e,plot);}if(wait){clearMatrixDrop();matrixDragId=null;e.preventDefault();const id=e.dataTransfer.getData('entity');if(id&&plottedEntities(s).some(entity=>entity.id===id))openConfirmation('axisClear',id);}if(col){e.preventDefault();const id=e.dataTransfer.getData('dimension'),to=showMatrixInsertion(e,col),from=s.matrix.indexOf(id);clearMatrixDrop();matrixDragId=null;if(from>=0&&to!==null&&from!==to){s.matrix.splice(from,1);s.matrix.splice(to,0,id);update();}}});
 function placeOnPlot(id,e,plot){
  const [x,y]=s.quadrant,xd=s.dimensions.find(d=>d.id===x),yd=s.dimensions.find(d=>d.id===y);
  if(!xd||!yd||x===y)return;
@@ -198,7 +203,9 @@ function placeOnPlot(id,e,plot){
   if(guide)guide.textContent='Values unchanged: a selected integer-only Dimension has no safely generated integer candidate in range.';
   return;
  }
- setValue(s,id,x,xv);setValue(s,id,y,yv);s.selected=id;if(s.waiting===id)s.waiting=null;update();
+ const result=transactDatasetMutation(s,()=>{s.values[id]||={};s.values[id][x]=xv;s.values[id][y]=yv;s.selected=id;if(s.waiting===id)s.waiting=null;});
+ if(!result.ok){lifecycleNotice=result.reason;update();return;}
+ update();
 }
 document.addEventListener('click',e=>{const plot=e.target.closest('[data-plot]');if(plot&&s.waiting&&!e.target.closest('.plot-item'))placeOnPlot(s.waiting,e,plot);});
 document.addEventListener('click',e=>{if(contextMenu&&!e.target.closest('.plot-context-menu')){contextMenu=null;root.querySelector('.plot-context-menu')?.remove();}});
@@ -206,7 +213,7 @@ document.addEventListener('pointerdown',e=>{
   const point=e.target.closest('[data-point]'),vertex=e.target.closest('[data-vertex]');
   if(point){
     const id=point.dataset.point,plot=point.closest('[data-plot]');
-    startQuadrantPointDrag(e,{point,plot,waiting:root.querySelector('[data-waiting]'),onPlace:x=>placeOnPlot(id,x,plot),onReturn:()=>{returnToWaiting(s,id);update();},onSelect:()=>{s.selected=id;update();}});
+    startQuadrantPointDrag(e,{point,plot,waiting:root.querySelector('[data-waiting]'),onPlace:x=>placeOnPlot(id,x,plot),onReturn:()=>{openConfirmation('axisClear',id);},onSelect:()=>{s.selected=id;update();}});
   }
   if(vertex){
     if(e.button!==0||!e.isPrimary)return;
@@ -351,7 +358,7 @@ document.addEventListener('input',e=>{
   e.stopImmediatePropagation();const [entity,dimension]=input.dataset.value.split('|');if(!setValue(s,entity,dimension,input.value))return;
   save(s);const card=input.closest('.dimension-card'),numeric=card?.querySelector('input[type=number]'),readout=card?.querySelector('.value-status');
   if(numeric){numeric.value=fmt(getValue(s,entity,dimension),s.dimensions.find(d=>d.id===dimension));numeric.title='Stored value '+getValue(s,entity,dimension);numeric.dataset.dirty='false';}
-  if(readout)readout.textContent='Temporary value '+fmt(getValue(s,entity,dimension),s.dimensions.find(d=>d.id===dimension));e.stopImmediatePropagation();
+ if(readout)readout.textContent='Recorded assessment '+fmt(getValue(s,entity,dimension),s.dimensions.find(d=>d.id===dimension));e.stopImmediatePropagation();
  }
 },true);
 
@@ -391,13 +398,179 @@ document.addEventListener('input',e=>{
 },true);
 document.addEventListener('click',e=>{if(e.target.closest('[data-action="add-dimension"],[data-action="cancel-dimension-form"],[data-edit-dimension]')){dimensionWarning=null;dimensionDraft=null;dimensionError=null;}},true);
 
-// Add range and unit controls while preserving the drawer and focus behavior.
+// Candidate successor shell. The accepted Prototype remains a separate historical
+// source; this runtime consumes the portable Candidate and persists a distinct workspace.
+let pendingEntityDraft=null;
+const runtimeHeader=()=>`<label class="button primary" data-import-trigger tabindex="0" role="button">Open E2R Dataset<input id="dataset-file" type="file" accept=".json,.e2r.json,application/json" hidden></label><label class="button" data-workspace-restore-trigger tabindex="0" role="button">Restore Workspace Backup<input id="workspace-file" type="file" accept=".pp-workspace.json,.json,application/json" hidden></label><button data-successor-export-dataset ${s.readOnly?'disabled':''}>Export E2R JSON</button><button data-successor-backup>Download Workspace Backup</button><button data-action="entities">Entities</button><button data-action="dimensions" ${s.readOnly||s.candidateUnsupported?'disabled title="Dimension Assessment authoring is unavailable for this Dataset"':''}>Dimensions</button>`;
+renderEntityList=function(){
+ const q=(root.querySelector('#entity-search')?.value||'').toLocaleLowerCase();
+ const rows=s.dataset.entities.map((entity,index)=>({entity,index})).filter(({entity,index})=>entity&&typeof entity==='object'&&[label(entity,index),String(entity.description||''),String(entity.id||'')].some(text=>text.toLocaleLowerCase().includes(q)));
+ root.querySelector('#entity-list').innerHTML=rows.map(({entity:e,index:i})=>{
+  const id=e.id||`inspection:entities:${i}`,eligibility=entityDeleteEligibility(s,id),expanded=entityMenu===id;
+  return `<div class="list-row entity-row"><button class="entity-choice" data-choose-entity="${esc(id)}" ${s.view==='Quadrant'&&plottedEntities(s).some(item=>item.id===id)?'disabled':''}><span class="entity-row-title"><strong>${esc(label(e,i))}</strong><small class="temp-badge">Dataset</small></span>${e.description?`<small>${esc(e.description)}</small>`:''}${entityNeedsId(s,e,'pool')?`<small>ID ${esc(e.id)}</small>`:''}<small>${s.selected===id?'Selected':''}</small></button><button class="entity-more" data-entity-menu="${esc(id)}" aria-label="Actions for ${esc(label(e,i))}" aria-expanded="${expanded}">⋯</button>${expanded?`<div class="entity-actions"><button data-edit-entity="${esc(id)}" ${s.readOnly?'disabled':''}>Edit Entity</button><button class="danger" data-delete-entity="${esc(id)}" ${s.readOnly?'disabled':''}>Delete from Dataset</button>${entityDeleteNotice?.id===id?`<small role="status">${esc(entityDeleteNotice.reason)}</small>`:''}</div>`:''}</div>`;
+ }).join('')||'<p>No matching Dataset Entities.</p>';
+};
+renderDimensionList=function(){
+ const q=dimensionQuery.toLocaleLowerCase(),allowed=candidateAuthoringAvailable(s);
+ root.querySelector('#dimension-list').innerHTML=s.dimensions.filter(d=>[d.name,d.low,d.high,String(d.min),String(d.max),String(d.unit||'')].some(text=>text.toLocaleLowerCase().includes(q))).map(d=>`<div class="list-row dimension-list-row"><span><strong>${esc(d.name)}</strong><small>${esc(d.low||'Low')} · ${fmt(d.min)} → ${fmt(d.max)} · ${esc(d.high||'High')}</small>${d.unit!==undefined?`<small class="dimension-unit">${esc(d.unit)}</small>`:''}${d.integerOnly===true?'<small>Integer values only</small>':''}${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Delete</button></div>`).join('')||`<p>${s.dimensions.length?'No matching Dimensions':'No portable Dimensions yet.'}</p>`;
+};
+function localEntityName(id){const index=s.dataset.entities.findIndex(entity=>entity?.id===id);return index<0?'Entity':label(s.dataset.entities[index],index);}
+function diagnosticMarkup(){
+ const diagnostics=s.validation?.diagnostics||[];if(!diagnostics.length&&!s.candidateUnsupported)return '';
+ const severity=s.readOnly?'error':'warning',title=s.readOnly?'Diagnostic read-only inspection':'Validator warnings';
+ return `<section class="validator-status ${severity}" aria-label="${title}"><strong>${title}</strong><p>${s.readOnly?'This Dataset has Validator errors. Authoring and E2R export are unavailable. No repair or normalization was applied.':'Warnings do not by themselves block supported authoring or export. Unsupported content is preserved; operations that cannot be checked safely are unavailable.'}</p><ul>${diagnostics.map(item=>`<li><code>${esc(item.code)}</code> · ${esc(item.path||'/')} · ${esc(item.severity)}</li>`).join('')}</ul>${s.candidateUnsupported?'<p>Dimension Assessment version is unsupported here; its payload remains opaque and unchanged.</p>':''}</section>`;
+}
+function relationBlockerMarkup(){
+ if(!entityDeleteNotice)return '';
+ const relations=entityDeleteNotice.relations||[];
+ const detail=relations.length?`<ul>${relations.map(relation=>`<li><strong>${esc(relation.name||relation.type||'Relation')}</strong> · ID ${esc(relation.id||'missing ID')} · ${esc(relation.sourceId||'unknown source')} → ${esc(relation.targetId||'unknown target')}</li>`).join('')}</ul><p>Resolve these Relations in a Relation-owning application before deleting the Entity. ParameterPlotter does not delete or edit Relations.</p>`:`<p>${esc(entityDeleteNotice.reason)}</p>`;
+ return `<div class="confirm-scrim" data-close-entity-delete-notice><section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="entity-block-title"><h2 id="entity-block-title">Entity deletion unavailable</h2><p>${esc(entityDeleteNotice.reason)}</p>${detail}<div class="actions"><button data-close-entity-delete-notice>Close</button></div></section></div>`;
+}
+function rescaleMarkup(){
+ if(!rescaleProposal)return '';
+ const rows=Object.entries(rescaleProposal.values).map(([entityId,value])=>`<li>${esc(localEntityName(entityId))}: ${fmt(getValue(s,entityId,rescaleProposal.dimension.id))} → ${fmt(value,rescaleProposal.dimension)}</li>`).join('');
+ return `<div class="confirm-scrim" data-cancel-rescale><section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="rescale-title"><h2 id="rescale-title">Review Assessment rescale</h2><p>Changing these bounds makes existing Assessments invalid. Review this linear rescale; nothing changes in the Dataset until you approve it.</p><ul>${rows}</ul><div class="actions"><button data-cancel-rescale>Back to Dimension edit</button><button class="primary" data-approve-rescale>Apply reviewed rescale</button></div></section></div>`;
+}
+function currentReplacementMarkup(){return replacement?replacementMarkup(replacement):'';}
+const baseRender=render;
+render=function(){
+ baseRender();
+ document.title='ParameterPlotter (working name)';
+ const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER DATASET COMPARISON';
+ const subtitle=root.querySelector('header .sub');if(subtitle)subtitle.textContent='Author E2R Entities and Dimension Assessments. Browser storage, E2R Dataset Export, and Workspace Backup are separate.';
+ const actions=root.querySelector('.header-actions');if(actions)actions.innerHTML=runtimeHeader();
+ const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);topline.innerHTML=`<div><strong>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'}</strong><span> · ${s.dimensions.length} portable Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${s.persistence.status==='saved'?'Saved locally':'Degraded / unsaved'} · Workspace Backup: separate user-managed file</span>`;}
+ let status=root.querySelector('.successor-status');if(!status){status=document.createElement('section');status.className='successor-status';root.querySelector('main')?.prepend(status);}
+ if(status)status.innerHTML=`<div class="persistence-status" role="status"><strong>${s.persistence.status==='saved'?'Browser-local workspace saved':'Browser-local workspace degraded / unsaved'}</strong>${s.persistence.message?`<p>${esc(s.persistence.message)}</p>`:'<p>Local persistence is not an E2R Dataset Export or a user-managed Workspace Backup.</p>'}</div><p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p>${lifecycleNotice?`<p class="lifecycle-notice" role="status">${esc(lifecycleNotice)}</p>`:''}${diagnosticMarkup()}`;
+ const entityDrawer=root.querySelector('.drawer[aria-label="Entity Pool"]');if(entityDrawer){const p=entityDrawer.querySelector(':scope > p');if(p)p.textContent='Dataset Entities are edited directly in this Dataset. Dimensions and Assessments are portable Candidate data.';const action=entityDrawer.querySelector('.pool-action button');if(action){action.textContent='Add Dataset Entity';action.disabled=s.readOnly;action.dataset.action='add-entity';}}
+ const entityForm=root.querySelector('#entity-form');if(entityForm){const heading=entityForm.querySelector('h3');if(heading)heading.textContent=editEntityId?'Edit Dataset Entity':'New Dataset Entity';const nameInput=entityForm.elements.namedItem('temporary-entity-name'),description=entityForm.elements.namedItem('temporary-entity-description'),entity=s.dataset.entities.find(item=>item?.id===editEntityId);nameInput.name='dataset-entity-name';nameInput.removeAttribute('required');nameInput.removeAttribute('maxlength');nameInput.placeholder='Optional Entity name';description.name='dataset-entity-description';nameInput.value=pendingEntityDraft?.editId===editEntityId?pendingEntityDraft.name:(entity?.name??'');description.value=pendingEntityDraft?.editId===editEntityId?pendingEntityDraft.description:(entity?.description??'');const nameLabel=nameInput.closest('label'),descriptionLabel=description.closest('label');if(nameLabel)nameLabel.firstChild.textContent='Name (optional)';if(descriptionLabel)descriptionLabel.firstChild.textContent='Description (optional)';if(entityFormError){const error=document.createElement('p');error.className='field-error';error.setAttribute('role','alert');error.textContent=entityFormError;entityForm.insertBefore(error,entityForm.querySelector('.actions'));}}
+ const dimensionDrawer=root.querySelector('.dimension-drawer');if(dimensionDrawer){const eyebrow2=dimensionDrawer.querySelector('.eyebrow');if(eyebrow2)eyebrow2.textContent='PORTABLE DATA';const h2=dimensionDrawer.querySelector('h2');if(h2)h2.textContent='Dimension Pool';const add=dimensionDrawer.querySelector('[data-action="add-dimension"]');if(add)add.disabled=!candidateAuthoringAvailable(s);const search=root.querySelector('#dimension-search');if(search)search.placeholder='Filter by name, labels, range, or unit';}
+ buildDimensionFields();
+ const form=root.querySelector('#dimension-form');if(form){const heading=form.querySelector('h3');if(heading)heading.textContent=s.editDimension?'Edit Dataset Dimension':'New Dataset Dimension';for(const name of ['dimension-low','dimension-high']){const input=form.elements.namedItem(name);if(input){input.removeAttribute('required');input.disabled=!form.elements.namedItem('dimension-labels-enabled')?.checked;}}const labelToggle=form.elements.namedItem('dimension-labels-enabled');if(labelToggle)labelToggle.checked=Boolean(dimensionDraft?.endpointLabelsPresent??s.dimensions.find(d=>d.id===s.editDimension)?.endpointLabelsPresent);const unitToggle=form.elements.namedItem('dimension-unit-enabled');if(unitToggle)unitToggle.checked=Boolean(dimensionDraft?.unitPresent??s.dimensions.find(d=>d.id===s.editDimension)?.unitPresent);const unit=form.elements.namedItem('dimension-unit');if(unit)unit.disabled=!unitToggle?.checked;const current=dimensionDraft||s.dimensions.find(d=>d.id===s.editDimension);if(current){form.elements.namedItem('dimension-name').value=current.name;form.elements.namedItem('dimension-low').value=current.low;form.elements.namedItem('dimension-high').value=current.high;form.elements.namedItem('dimension-min').value=current.minInput??String(current.min);form.elements.namedItem('dimension-max').value=current.maxInput??String(current.max);form.elements.namedItem('dimension-unit').value=current.unit??'';form.elements.namedItem('dimension-integer-only').checked=current.integerOnly===true;}}
+ root.querySelectorAll('.confirm-scrim[data-replacement-scrim],.confirm-scrim[data-close-entity-delete-notice],.confirm-scrim[data-cancel-rescale]').forEach(node=>node.remove());
+ if(replacement)root.insertAdjacentHTML('beforeend',currentReplacementMarkup());
+ if(entityDeleteNotice)root.insertAdjacentHTML('beforeend',relationBlockerMarkup());
+ if(rescaleProposal)root.insertAdjacentHTML('beforeend',rescaleMarkup());
+ if(confirmation?.kind==='axisClear'){root.querySelector('.confirm-scrim:not([data-cancel-replacement])')?.remove();root.insertAdjacentHTML('beforeend',`<div class="confirm-scrim" data-cancel-confirmation><section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="axis-clear-title"><h2 id="axis-clear-title">Clear plotted Assessments?</h2><p>This removes ${s.quadrant.filter(Boolean).length} selected X/Y Assessment record${s.quadrant.filter(Boolean).length===1?'':'s'} for ${esc(localEntityName(confirmation.id))} from the Dataset. It does not delete the Entity or Relations.</p><div class="actions"><button data-cancel-confirmation>Cancel</button><button class="danger solid" data-confirm-delete>Clear Assessments</button></div></section></div>`);}
+ if(confirmation||replacement||entityDeleteNotice||rescaleProposal)root.querySelector('.confirm-dialog button:not([disabled])')?.focus();
+};
+
+function showFileError(message){fileError=message;lifecycleNotice='';render();}
+function downloadJson(filename,value){
+ try{const blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=filename;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return true;}catch(error){lifecycleNotice=`Download could not be handed off: ${error?.message||'browser download unavailable'}`;render();return false;}
+}
+function startReplacement(kind,incoming){replacement={kind,state:incoming};render();root.querySelector('[data-cancel-replacement]')?.focus();}
+function activateIncoming(){
+ if(!replacement)return;
+ const request=replacement;replacement=null;s=request.state;fileError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;s.pendingDraft=false;
+ if(request.kind==='workspace')persistRestoredWorkspace(s);else save(s);
+ lifecycleNotice=s.persistence.status==='degraded'?`The ${request.kind==='workspace'?'Workspace Backup was restored':'Dataset was opened'} in memory, but the browser-local copy was not replaced. It remains unsaved and may be lost on reload or browser close.`:'';
+ render();
+}
+function importSelectedFile(file,kind){
+ if(!file)return;
+ (async()=>{try{const parsed=JSON.parse(await file.text());let incoming;if(kind==='workspace'){const restored=readWorkspaceBackup(parsed);incoming=fresh(restored.dataset,{datasetModified:restored.datasetModified,ui:{datasetBaseline:restored.datasetBaseline||undefined}});}else incoming=fresh(readDataset(parsed));if(hasLossSensitiveWork(s))startReplacement(kind,incoming);else{replacement={kind,state:incoming};activateIncoming();}}catch(error){showFileError(error?.message||'The selected file could not be opened.');}})();
+}
+function downloadCurrentBackup(){
+ const value=workspaceBackupFor(s);if(downloadJson('parameterplotter-workspace.pp-workspace.json',value)){lifecycleNotice='Workspace Backup download was handed to the browser. Keep this application-specific recovery file separately; it is not an E2R Dataset Export and does not clear Dataset changes.';render();}
+}
+function exportCurrentDataset(){
+ if(s.readOnly){lifecycleNotice='E2R Dataset Export is unavailable during diagnostic read-only inspection.';render();return;}
+ const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);s.validation=validation;
+ if(!validation.valid){s.readOnly=true;lifecycleNotice='Export blocked: Validator errors remain. No repair or normalization was applied.';render();return;}
+ if(!downloadJson('parameterplotter-dataset.e2r.json',dataset))return;
+ exportBaseline(s);save(s);lifecycleNotice='E2R JSON download was handed to the browser. This Dataset snapshot is now the clean Export baseline; keep the downloaded file yourself. Workspace Backup and browser-local persistence are unchanged.';render();
+}
+function relationDeletionFeedback(id){
+ const result=entityDeleteEligibility(s,id);if(!result.allowed){entityDeleteNotice={id,reason:result.reason,relations:result.relations||[]};render();root.querySelector('.confirm-dialog button')?.focus();return;}
+ openConfirmation('entity',id);
+}
+function captureSuccessorClick(event){
+ const target=event.target.closest('button,[data-action],label');if(!target)return;
+ if(replacement){if(target.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();const trigger=replacement.kind==='workspace'?'[data-workspace-restore-trigger]':'[data-import-trigger]';replacement=null;render();root.querySelector(trigger)?.focus();return;}if(target.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}if(target.closest('[data-backup-current]')){event.preventDefault();event.stopImmediatePropagation();downloadCurrentBackup();return;}return;}
+ if(entityDeleteNotice&&target.closest('[data-close-entity-delete-notice]')){event.preventDefault();event.stopImmediatePropagation();entityDeleteNotice=null;render();return;}
+ if(rescaleProposal){if(target.closest('[data-cancel-rescale]')){event.preventDefault();event.stopImmediatePropagation();rescaleProposal=null;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}if(target.closest('[data-approve-rescale]')){event.preventDefault();event.stopImmediatePropagation();const proposal=rescaleProposal;rescaleProposal=null;const result=applyDimensionAndRescale(s,proposal.dimension,proposal.values);if(!result.ok)dimensionError=result.reason;else{s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;s.pendingDraft=false;}update();return;}return;}
+ if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();exportCurrentDataset();return;}
+ if(target.closest('[data-successor-backup]')){event.preventDefault();event.stopImmediatePropagation();downloadCurrentBackup();return;}
+ if(target.closest('[data-import-trigger]'))return;
+ if(target.closest('[data-workspace-restore-trigger]'))return;
+ if(target.closest('[data-edit-entity]')){event.preventDefault();event.stopImmediatePropagation();const id=target.closest('[data-edit-entity]').dataset.editEntity;entityFormError=null;editEntityId=id;entityMenu=null;s.entityFormOpen=true;pendingEntityDraft={editId:id,name:s.dataset.entities.find(item=>item?.id===id)?.name??'',description:s.dataset.entities.find(item=>item?.id===id)?.description??''};render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
+ if(target.closest('[data-delete-entity]')){event.preventDefault();event.stopImmediatePropagation();relationDeletionFeedback(target.closest('[data-delete-entity]').dataset.deleteEntity);return;}
+ if(target.closest('[data-edit-dimension]')){event.preventDefault();event.stopImmediatePropagation();dimensionDraft=null;dimensionError=null;dimensionWarning=null;s.editDimension=target.closest('[data-edit-dimension]').dataset.editDimension;s.dimensionFormOpen=true;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}
+ if(target.closest('[data-delete-dimension]')){event.preventDefault();event.stopImmediatePropagation();const id=target.closest('[data-delete-dimension]').dataset.deleteDimension;if(candidateAuthoringAvailable(s))openConfirmation('dimension',id);return;}
+ if(target.dataset.action==='add-entity'){event.preventDefault();event.stopImmediatePropagation();entityFormError=null;editEntityId=null;s.entityFormOpen=true;entityMenu=null;pendingEntityDraft={editId:null,name:'',description:''};render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
+ if(target.dataset.action==='cancel-entity-form'){event.preventDefault();event.stopImmediatePropagation();entityFormError=null;s.entityFormOpen=false;editEntityId=null;pendingEntityDraft=null;s.pendingDraft=false;render();return;}
+ if(target.dataset.action==='add-dimension'){event.preventDefault();event.stopImmediatePropagation();if(!candidateAuthoringAvailable(s))return;dimensionQuery='';dimensionDraft=null;dimensionError=null;s.editDimension=null;s.dimensionFormOpen=true;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}
+ if(target.dataset.action==='cancel-dimension-form'){event.preventDefault();event.stopImmediatePropagation();dimensionDraft=null;dimensionError=null;s.pendingDraft=false;s.dimensionFormOpen=false;s.editDimension=null;render();return;}
+ if(target.dataset.action==='clear-axis-assessments'){event.preventDefault();event.stopImmediatePropagation();openConfirmation('axisClear',target.dataset.entity);return;}
+ if(target.matches('[data-cancel-confirmation]')){event.preventDefault();event.stopImmediatePropagation();cancelConfirmation();return;}
+ if(target.hasAttribute('data-confirm-delete')&&confirmation){event.preventDefault();event.stopImmediatePropagation();const request=confirmation;confirmation=null;
+   if(request.kind==='dimension'){
+     const result=deleteDatasetDimension(s,request.id);
+     if(result.ok)lifecycleNotice='Dimension and its dependent Assessments were removed in one Dataset change.';
+     else dimensionError=result.reason;
+   }else if(request.kind==='entity'){const result=deleteDatasetEntity(s,request.id);if(!result.ok)entityDeleteNotice={id:request.id,...result};}
+   else if(request.kind==='axisClear'){
+     const result=transactDatasetMutation(s,()=>{for(const dimensionId of s.quadrant)if(dimensionId&&s.values[request.id])delete s.values[request.id][dimensionId];if(s.values[request.id]&&!Object.keys(s.values[request.id]).length)delete s.values[request.id];});
+     if(!result.ok)lifecycleNotice=result.reason;
+   }
+   update();return;
+ }
+ if(target.dataset.contextAction==='waiting'){event.preventDefault();event.stopImmediatePropagation();const id=contextMenu?.id;contextMenu=null;openConfirmation('axisClear',id);return;}
+ if(target.dataset.action==='return-waiting'){event.preventDefault();event.stopImmediatePropagation();openConfirmation('axisClear',target.dataset.entity);return;}
+}
+document.addEventListener('click',captureSuccessorClick,true);
+document.addEventListener('submit',event=>{
+ const form=event.target;if(form.id==='entity-form'){
+   event.preventDefault();event.stopImmediatePropagation();const name=form.elements.namedItem('dataset-entity-name').value,description=form.elements.namedItem('dataset-entity-description').value;
+   const result=editEntityId?editDatasetEntity(s,editEntityId,{name,description}):createDatasetEntity(s,{name,description});
+   if(!result.ok){entityFormError=result.reason;render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
+   entityFormError=null;s.entityFormOpen=false;editEntityId=null;pendingEntityDraft=null;s.pendingDraft=false;entityMenu=null;lifecycleNotice='Dataset Entity change applied. It is part of the Dataset and is not exported until E2R JSON Export.';update();return;
+ }
+ if(form.id!=='dimension-form')return;
+ event.preventDefault();event.stopImmediatePropagation();if(!candidateAuthoringAvailable(s))return;
+ const field=name=>form.elements.namedItem(name),min=parseFiniteDecimal(field('dimension-min').value,field('dimension-min').validity.badInput),max=parseFiniteDecimal(field('dimension-max').value,field('dimension-max').validity.badInput);
+ const previous=s.dimensions.find(item=>item.id===field('id').value),enabled=field('dimension-labels-enabled').checked,unitPresent=field('dimension-unit-enabled').checked,integer=field('dimension-integer-only').checked;
+ if(min===null||max===null||!(min<max)){dimensionError='Enter finite numeric MIN and MAX values with MIN < MAX.';dimensionDraft={...(previous||{}),id:previous?.id||uid(),name:field('dimension-name').value,low:field('dimension-low').value,high:field('dimension-high').value,minInput:field('dimension-min').value,maxInput:field('dimension-max').value,endpointLabelsPresent:enabled,unit:field('dimension-unit').value,unitPresent,integerOnly:integer};render();root.querySelector('[name="dimension-min"]')?.focus();return;}
+ const next={id:previous?.id||uid(),name:field('dimension-name').value,low:field('dimension-low').value,high:field('dimension-high').value,endpointLabelsPresent:enabled,min,max,minInput:field('dimension-min').value,maxInput:field('dimension-max').value,unit:field('dimension-unit').value,unitPresent,integerOnly:integer,integerOnlyPresent:Boolean(previous?.integerOnlyPresent||integer)};
+ if(integer&&Math.ceil(min)>Math.floor(max)){dimensionError='This integer-only range has no valid integer candidate.';dimensionDraft=next;render();root.querySelector('[name="dimension-min"]')?.focus();return;}
+ const affected=previous?Object.entries(s.values).flatMap(([entityId,values])=>{const value=values?.[previous.id];return typeof value==='number'&&!acceptsDimensionValue(next,value)?[{entityId,value}]:[]}):[];
+ if(affected.length){const projected={};for(const {entityId,value} of affected){const candidate=rescaledAssessmentValue(value,previous,next);if(candidate===null||!acceptsDimensionValue(next,candidate)){dimensionError='Rescale cannot produce valid Assessments for this range. Nothing changed.';dimensionDraft=next;render();return;}projected[entityId]=candidate;}dimensionDraft=next;rescaleProposal={dimension:next,values:projected};render();root.querySelector('[data-approve-rescale]')?.focus();return;}
+ const result=applyDimensionAndRescale(s,next);if(!result.ok){dimensionError=result.reason;dimensionDraft=next;render();return;}
+ s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;dimensionError=null;s.pendingDraft=false;lifecycleNotice='Dimension change applied to the Dataset. E2R JSON Export is a separate step.';update();
+},true);
+document.addEventListener('change',event=>{
+ const target=event.target;
+ if(target.id==='dataset-file'||target.id==='workspace-file'){const kind=target.id==='workspace-file'?'workspace':'dataset',file=target.files?.[0];target.value='';importSelectedFile(file,kind);event.stopImmediatePropagation();return;}
+},true);
+document.addEventListener('input',event=>{
+ const target=event.target;
+ if(target.matches('#entity-form input,#entity-form textarea')){s.pendingDraft=true;pendingEntityDraft={editId:editEntityId,name:root.querySelector('#entity-form [name="dataset-entity-name"]')?.value||'',description:root.querySelector('#entity-form [name="dataset-entity-description"]')?.value||''};}
+ if(target.closest('#dimension-form')){s.pendingDraft=true;const form=target.closest('#dimension-form'),field=name=>form.elements.namedItem(name);dimensionDraft={id:field('id').value||undefined,name:field('dimension-name').value,low:field('dimension-low').value,high:field('dimension-high').value,minInput:field('dimension-min')?.value||'',maxInput:field('dimension-max')?.value||'',unit:field('dimension-unit')?.value||'',unitPresent:Boolean(field('dimension-unit-enabled')?.checked),endpointLabelsPresent:Boolean(field('dimension-labels-enabled')?.checked),integerOnly:Boolean(field('dimension-integer-only')?.checked)};for(const name of ['dimension-low','dimension-high']){const input=field(name);if(input)input.disabled=!field('dimension-labels-enabled')?.checked;}const unit=field('dimension-unit');if(unit)unit.disabled=!field('dimension-unit-enabled')?.checked;}
+ if(s.pendingDraft)root.querySelector('.pending-draft-status')?.removeAttribute('hidden');
+},true);
+document.addEventListener('beforeunload',event=>{if(shouldWarnBeforeUnload(s)){event.preventDefault();event.returnValue='';}},true);
+document.addEventListener('keydown',event=>{
+ if(replacement||entityDeleteNotice||rescaleProposal){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();const trigger=replacement?.kind==='workspace'?'[data-workspace-restore-trigger]':'[data-import-trigger]';const hadReplacement=Boolean(replacement);if(replacement)replacement=null;if(entityDeleteNotice)entityDeleteNotice=null;if(rescaleProposal)rescaleProposal=null;render();if(hadReplacement)root.querySelector(trigger)?.focus();}else if(event.key==='Tab')trapDialogTab(event,'.confirm-dialog');}
+},true);
+
+// Wire endpoint-label and unit presence without normalizing the text itself.
+const originalBuildDimensionFields=buildDimensionFields;
+buildDimensionFields=function(){
+ originalBuildDimensionFields();const form=root.querySelector('#dimension-form');if(!form)return;
+ const insertBefore=form.querySelector('.actions');
+ if(!form.elements.namedItem('dimension-labels-enabled')){const toggle=document.createElement('label');toggle.className='dimension-optional-toggle';const input=document.createElement('input');input.type='checkbox';input.name='dimension-labels-enabled';toggle.append(input,document.createTextNode('Include both endpoint labels'));form.insertBefore(toggle,insertBefore);}
+ if(!form.elements.namedItem('dimension-unit-enabled')){const toggle=document.createElement('label');toggle.className='dimension-optional-toggle';const input=document.createElement('input');input.type='checkbox';input.name='dimension-unit-enabled';toggle.append(input,document.createTextNode('Include unit text'));form.insertBefore(toggle,insertBefore);}
+ const help=root.querySelector('#p2-range-help');if(help)help.textContent='Enter finite numeric bounds with MIN < MAX. Endpoint labels and unit are optional text. Integer-only Dimensions need at least one integer in range. Assessments that would become invalid require a reviewed Rescale before this change is applied.';
+ const integerLabel=form.querySelector('.dimension-integer-option');if(integerLabel)integerLabel.lastChild.textContent='Integer values only';
+ const integerHelp=[...form.querySelectorAll('small')].find(el=>el.textContent.includes('Existing decimals'));if(integerHelp)integerHelp.textContent='Assessment values must remain valid for this Dimension. Existing records are never silently rounded or removed.';
+};
+const initialBuild=buildDimensionFields;
 const originalRender=render;
 render=function(){
  originalRender();
- const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER COMPARISON WORKSPACE';
+ const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER DATASET COMPARISON';
  document.title='ParameterPlotter (working name)';
  const search=root.querySelector('#dimension-search');if(search)search.placeholder='Filter by name, labels, range, or unit';
- buildDimensionFields();
 };
 render();

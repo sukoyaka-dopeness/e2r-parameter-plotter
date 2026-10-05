@@ -1,5 +1,10 @@
 import {decimalInterpolate, presentDecimal} from './decimal-presentation.js';
-const KEY = 'e2r-parameter-plotter-workspace-v1';
+import {validateDataset} from './vendor/e2r-validator/index.js';
+export {validateDataset};
+export const DIMENSION_ASSESSMENT_ID='draft.github.sukoyaka-dopeness.dimension-assessment';
+export const DIMENSION_ASSESSMENT_VERSION='0.1.0';
+const KEY = 'e2r-parameter-plotter-local-workspace-v2';
+const STAGING_KEY = `${KEY}.restore-staging`;
 export const uid = () => crypto.randomUUID();
 export const clamp = v => Math.max(-1, Math.min(1, v));
 
@@ -51,7 +56,10 @@ export function valueAtRangePosition(dimension, position) {
 }
 
 export const label = (entity, index) => entity.name?.trim() || `Entity ${index + 1}`;
-export const entities = state => [...state.dataset.entities, ...(state.tempEntities || [])];
+export const entities = state => state.dataset.entities.map((entity,index)=>{
+  if(entity&&typeof entity==='object'&&!Array.isArray(entity))return entity.id?entity:{...entity,id:`inspection:entities:${index}`,inspectionOnly:true};
+  return {id:`inspection:entities:${index}`,name:`Invalid Entity ${index+1}`,inspectionOnly:true};
+});
 
 // Matrix presentation only. Reading an older session never adds or repairs data.
 export function matrixEntities(state) {
@@ -97,47 +105,100 @@ export const waitingCandidates = state => {
 
 export function readDataset(value) {
   if (!value || typeof value.version !== 'string' || !Array.isArray(value.entities) || !Array.isArray(value.events) || !Array.isArray(value.relations)) throw Error('Expected an E2R Dataset with version, entities, events, and relations.');
-  if (value.entities.some(e => !e || typeof e.id !== 'string' || !e.id)) throw Error('Each Entity needs a nonempty ID.');
-  const ids = [...value.entities, ...value.events, ...value.relations].map(x => x?.id);
-  if (ids.some(x => typeof x !== 'string' || !x) || new Set(ids).size !== ids.length) throw Error('Core Object IDs must be present and unique.');
   return value;
 }
 
-export function fresh(dataset) {
-  return {dataset, tempEntities: [], dimensions: [], values: {}, selected: dataset.entities[0]?.id || null, view: 'Profile', poolOpen: false, dimensionOpen: false, waiting: null, quadrant: [null,null], radar: [], secondary: null, matrix: [], matrixPage: 0};
+function candidateOf(dataset){return dataset.extensions&&typeof dataset.extensions==='object'&&!Array.isArray(dataset.extensions)?dataset.extensions[DIMENSION_ASSESSMENT_ID]:undefined;}
+function hydrate(dataset,ui={}){
+  const payload=candidateOf(dataset),supported=payload?.specVersion===DIMENSION_ASSESSMENT_VERSION&&Array.isArray(payload.dimensions)&&Array.isArray(payload.assessments);
+  const dimensions=supported?payload.dimensions.flatMap(d=>d&&typeof d==='object'&&!Array.isArray(d)?[{id:d.id,name:d.name,low:d.lowLabel??'',high:d.highLabel??'',endpointLabelsPresent:Object.hasOwn(d,'lowLabel'),min:d.min,max:d.max,integerOnlyPresent:Object.hasOwn(d,'integerOnly'),unitPresent:Object.hasOwn(d,'unit'),...('integerOnly'in d?{integerOnly:d.integerOnly}:{}),...('unit'in d?{unit:d.unit}:{})}]:[]):[];
+  const values={};
+  if(supported)for(const assessment of payload.assessments){if(!assessment||typeof assessment!=='object'||typeof assessment.entityId!=='string'||typeof assessment.dimensionId!=='string')continue;values[assessment.entityId]||={};values[assessment.entityId][assessment.dimensionId]=assessment.value;}
+  const list=entities({dataset}),validIds=new Set(list.map(e=>e.id));
+  return {
+    dataset,dimensions,values,tempEntities:[],candidateUnsupported:Boolean(payload&&!supported),readOnly:false,
+    selected:validIds.has(ui.selected)?ui.selected:(list[0]?.id||null),view:['Profile','Radar','Quadrant','Matrix'].includes(ui.view)?ui.view:'Profile',
+    poolOpen:false,dimensionOpen:false,dimensionFormOpen:false,entityFormOpen:false,editDimension:null,
+    waiting:validIds.has(ui.waiting)?ui.waiting:null,quadrant:Array.isArray(ui.quadrant)?[...ui.quadrant.slice(0,2)]:[null,null],
+    radar:Array.isArray(ui.radar)?[...ui.radar]:[],secondary:validIds.has(ui.secondary)?ui.secondary:null,
+    matrix:Array.isArray(ui.matrix)?[...ui.matrix]:dimensions.map(d=>d.id),matrixRows:Array.isArray(ui.matrixRows)?[...ui.matrixRows]:[],matrixPage:Number.isInteger(ui.matrixPage)?ui.matrixPage:0,
+    datasetModified:Boolean(ui.datasetModified),datasetBaseline:typeof ui.datasetBaseline==='string'?ui.datasetBaseline:JSON.stringify(dataset),
+    pendingDraft:false,persistence:{status:'unsaved',message:''},validation:validateDataset(dataset),
+  };
 }
 
-export function load() {
-  try {
-    const raw = sessionStorage.getItem(KEY);
-    if (raw) {
-      const s = JSON.parse(raw);
-      readDataset(s.dataset);
-      if (Array.isArray(s.dimensions) && s.values && typeof s.values === 'object') {
-        s.tempEntities ||= [];
-        s.radar=Array.isArray(s.radar)?[...new Set(s.radar.filter(id=>s.dimensions.some(d=>d.id===id)))]:[];
-        delete s.radarCount;
-        s.poolOpen=false;s.dimensionOpen=false;s.dimensionFormOpen=false;s.entityFormOpen=false;s.editDimension=null;
-        return s;
-      }
-    }
-  } catch {}
-  return fresh({version:'1.0',entities:[],events:[],relations:[]});
+function attachValidation(s){s.validation=validateDataset(s.dataset);s.readOnly=!s.validation.valid;return s;}
+export function fresh(dataset,{ui={},datasetModified=false}={}){
+  readDataset(dataset);
+  return attachValidation(hydrate(structuredClone(dataset),{...ui,datasetModified}));
 }
 
-export function save(s) { try { sessionStorage.setItem(KEY, JSON.stringify(s)); } catch {} }
+function assessmentRecords(values){return Object.entries(values||{}).flatMap(([entityId,byDimension])=>Object.entries(byDimension||{}).filter(([,value])=>typeof value==='number'&&Number.isFinite(value)).map(([dimensionId,value])=>({entityId,dimensionId,value})));}
+export function datasetForWorkspace(s){
+  const dataset=structuredClone(s.dataset);
+  if(s.readOnly)return dataset;
+  const existing=candidateOf(dataset),hasState=s.dimensions.length>0||assessmentRecords(s.values).length>0;
+  if(!hasState&&!existing)return dataset;
+  if(existing&&existing.specVersion!==DIMENSION_ASSESSMENT_VERSION)return dataset;
+  const dimensionData=s.dimensions.map(d=>({id:d.id,name:d.name,min:d.min,max:d.max,...(('integerOnlyPresent'in d?d.integerOnlyPresent:('integerOnly'in d))?{integerOnly:Boolean(d.integerOnly)}:{}),...((d.unitPresent||(d.unit!==undefined&&d.unit!==''))?{unit:d.unit??''}:{}),...((d.endpointLabelsPresent||(d.low!==undefined&&d.high!==undefined&&d.low!==''&&d.high!==''))?{lowLabel:d.low??'',highLabel:d.high??''}:{})}));
+  const extensions=dataset.extensions&&typeof dataset.extensions==='object'&&!Array.isArray(dataset.extensions)?dataset.extensions:{};
+  dataset.extensions={...extensions,[DIMENSION_ASSESSMENT_ID]:{specVersion:DIMENSION_ASSESSMENT_VERSION,dimensions:dimensionData,assessments:assessmentRecords(s.values)}};
+  const spec=dataset.extensions['draft.github.sukoyaka-dopeness.specification'];
+  if(spec&&spec.specVersion==='0.1.0'&&Array.isArray(spec.uses)){
+    const declarations=spec.uses.filter(entry=>entry?.extension===DIMENSION_ASSESSMENT_ID);
+    if(!declarations.length)dataset.extensions['draft.github.sukoyaka-dopeness.specification']={...spec,uses:[...spec.uses,{extension:DIMENSION_ASSESSMENT_ID,version:DIMENSION_ASSESSMENT_VERSION}]};
+  }
+  return dataset;
+}
+function serializableWorkspace(s,dataset=datasetForWorkspace(s)){
+  return JSON.stringify({format:'parameterplotter-local-workspace',version:1,dataset,ui:{selected:s.selected,view:s.view,waiting:s.waiting,quadrant:s.quadrant,radar:s.radar,secondary:s.secondary,matrix:s.matrix,matrixRows:s.matrixRows,matrixPage:s.matrixPage,datasetModified:s.datasetModified,datasetBaseline:s.datasetBaseline}});
+}
+export function save(s,{preservePrevious=false}={}){
+  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);
+  if(!validation.valid&&!s.readOnly){s.validation=validation;s.readOnly=true;s.persistence={status:'degraded',message:'The current Dataset no longer passes Validator checks. It remains available for read-only inspection.'};return false;}
+  const data=serializableWorkspace(s,dataset);
+  try{
+    if(s.preserveStoredCopy&&!preservePrevious)throw Error('A prior browser workspace could not be read and has been left untouched. Restore a valid Workspace Backup or explicitly open another Dataset to replace it.');
+    if(preservePrevious){localStorage.setItem(STAGING_KEY,data);if(localStorage.getItem(STAGING_KEY)!==data)throw Error('Restore preparation could not be verified.');}
+    localStorage.setItem(KEY,data);
+    s.dataset=dataset;s.validation=validation;s.preserveStoredCopy=false;s.persistence={status:'saved',message:''};
+    if(preservePrevious){try{localStorage.removeItem(STAGING_KEY);}catch{}}
+    return true;
+  }catch(error){s.dataset=dataset;s.validation=validation;s.persistence={status:'degraded',message:`Browser-local persistence failed. This active workspace is unsaved and may be lost on reload or when the browser closes. ${error?.message||''}`.trim()};return false;}
+}
+export function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){const stored=JSON.parse(raw);if(stored?.format!=='parameterplotter-local-workspace'||stored.version!==1)throw Error('The saved ParameterPlotter workspace has an unsupported format.');const state=fresh(stored.dataset,{ui:stored.ui||{},datasetModified:stored.ui?.datasetModified});state.datasetBaseline=stored.ui?.datasetBaseline||JSON.stringify(stored.dataset);state.persistence={status:'saved',message:''};return state;}
+    const state=fresh({version:'1.0',entities:[],events:[],relations:[]});save(state);return state;
+  }catch(error){const state=fresh({version:'1.0',entities:[],events:[],relations:[]});state.preserveStoredCopy=true;state.persistence={status:'degraded',message:`Saved browser workspace could not be read and was left untouched. Restore a valid Workspace Backup or explicitly open another Dataset to replace it. ${error?.message||''}`.trim()};return state;}
+}
+export function persistRestoredWorkspace(s){return save(s,{preservePrevious:true});}
+export function exportBaseline(s){s.dataset=datasetForWorkspace(s);s.datasetBaseline=JSON.stringify(s.dataset);s.datasetModified=false;}
+export function markDatasetModified(s){s.datasetModified=true;}
+export function transactDatasetMutation(s,mutator){
+  if(s.readOnly)return {ok:false,reason:'This Dataset is in diagnostic read-only inspection.'};
+  const before={};
+  for(const key of ['dataset','dimensions','values','datasetModified','selected','secondary','waiting','quadrant','radar','matrix','matrixRows'])before[key]=structuredClone(s[key]);
+  try{mutator();}catch(error){Object.assign(s,before);return {ok:false,reason:error?.message||'The Dataset change could not be prepared.'};}
+  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);
+  if(!validation.valid){Object.assign(s,before);return {ok:false,reason:'The change would fail Validator checks and was not applied.',diagnostics:validation.diagnostics};}
+  s.dataset=dataset;s.validation=validation;s.datasetModified=true;return {ok:true};
+}
 export function getValue(s, entityId, dimensionId) { const v = s.values[entityId]?.[dimensionId]; return typeof v === 'number' && Number.isFinite(v) ? v : null; }
 
 export function setValue(s, entityId, dimensionId, value) {
-  if (!entityId || !dimensionId) return false;
+  if (!entityId || !dimensionId || s.readOnly || s.candidateUnsupported || !entities(s).some(entity=>entity.id===entityId) || !s.dimensions.some(dimension=>dimension.id===dimensionId)) return false;
   if (value === null || value === '') {
     if (s.values[entityId]) delete s.values[entityId][dimensionId];
+    s.datasetModified=true;
     return true;
   }
   const dimension=s.dimensions.find(d=>d.id===dimensionId),n=Number(value);
   if (!dimension || !acceptsDimensionValue(dimension,n)) return false;
   s.values[entityId] ||= {};
   s.values[entityId][dimensionId] = n;
+  s.datasetModified=true;
   return true;
 }
 

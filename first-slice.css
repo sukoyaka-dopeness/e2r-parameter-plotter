@@ -1,22 +1,41 @@
-﻿.session-boundary {
-  box-sizing: border-box;
+.successor-status {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0 auto 1rem;
   max-width: 1440px;
-  margin: 0 auto;
-  padding: 0.65rem 1.25rem;
-  border-bottom: 1px solid #c9a34a;
-  background: #fff5d9;
-  color: #4a3a12;
-  font-size: 0.875rem;
+  padding: 0 1.25rem;
+}
+
+.persistence-status,
+.validator-status,
+.lifecycle-notice {
+  box-sizing: border-box;
+  border: 1px solid #cbd3df;
+  border-radius: 8px;
+  background: #f7f9fc;
+  color: #233047;
+  padding: 0.7rem 0.9rem;
   line-height: 1.45;
 }
 
-.session-boundary strong {
-  font-weight: 700;
-}
+.persistence-status p,
+.validator-status p,
+.lifecycle-notice p { margin: 0.25rem 0 0; }
+
+.persistence-status[role="status"] { border-left: 4px solid #376f48; }
+.persistence-status:has(+ .lifecycle-notice),
+.persistence-status:has(+ .validator-status) { min-width: 0; }
+.successor-status .validator-status.error { border-left: 4px solid #a32d35; background: #fff5f4; }
+.successor-status .validator-status.warning { border-left: 4px solid #9a6b12; background: #fff9e9; }
+.successor-status ul { margin: 0.55rem 0 0; padding-left: 1.25rem; }
+.lifecycle-notice { border-left: 4px solid #355c91; }
+.topline { align-items: start; gap: 0.75rem; }
+.topline > span { overflow-wrap: anywhere; }
 
 @media (max-width: 720px) {
-  .session-boundary {
-    padding: 0.65rem 0.85rem;
-    font-size: 0.8125rem;
-  }
+  .successor-status { padding: 0 0.85rem; }
+  .persistence-status,
+  .validator-status,
+  .lifecycle-notice { padding: 0.65rem 0.75rem; }
+  .topline { flex-wrap: wrap; }
 }

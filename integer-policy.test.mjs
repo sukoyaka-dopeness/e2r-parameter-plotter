@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fresh,load,getValue,setValue,acceptsDimensionValue,dimensionValueIssue,rangePosition,authoredValueAtPosition,plottedEntities,waitingCandidates} from './model.js';
+import {fresh,load,save,getValue,setValue,acceptsDimensionValue,dimensionValueIssue,rangePosition,authoredValueAtPosition,plottedEntities,waitingCandidates} from './model.js';
 import {numericError} from './field-validation.js';
 import {randomDimensionValue} from './profile-random.js';
 
@@ -40,9 +40,12 @@ test('integer pointer candidates fit fractional bounds and no-candidate ranges r
   assert.equal(randomDimensionValue({min:1,max:8},()=>0.5),4.5);
 });
 
-test('reload preserves policy and violating recorded values without migrating legacy Dimensions',()=>{
-  const s=fresh({version:'1.0',entities:[{id:'e'}],events:[],relations:[]});
-  s.dimensions=[{id:'i',min:0,max:10,integerOnly:true},{id:'legacy'}];s.values={e:{i:2.5}};
-  const prior=globalThis.sessionStorage;globalThis.sessionStorage={getItem:()=>JSON.stringify(s)};
-  try{const restored=load();assert.deepEqual(restored.dimensions,s.dimensions);assert.deepEqual(restored.values,s.values);}finally{if(prior===undefined)delete globalThis.sessionStorage;else globalThis.sessionStorage=prior;}
+test('browser-local reload preserves Candidate Dimension policy and retained violating records',()=>{
+  const original=globalThis.localStorage,values=new Map();
+  globalThis.localStorage={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,String(value)),removeItem:key=>values.delete(key)};
+  try{
+    const s=fresh({version:'1.0',entities:[{id:'e'}],events:[],relations:[],extensions:{'draft.github.sukoyaka-dopeness.dimension-assessment':{specVersion:'0.1.0',dimensions:[{id:'i',name:'Count',min:0,max:10,integerOnly:true},{id:'legacy',name:'Legacy',min:0,max:10}],assessments:[{entityId:'e',dimensionId:'i',value:2.5}]}}});
+    assert.equal(save(s),true);
+    const restored=load();assert.deepEqual(restored.dimensions,s.dimensions);assert.deepEqual(restored.values,s.values);
+  }finally{if(original===undefined)delete globalThis.localStorage;else globalThis.localStorage=original;}
 });

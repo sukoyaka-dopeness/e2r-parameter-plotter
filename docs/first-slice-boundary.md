@@ -1,6 +1,12 @@
 # First application slice boundary
 
-Status: **Candidate B first Product slice HUMAN-ACCEPTED (2026-10-04); source published; release and deployment remain separate and unauthorized.**
+Status: **Historical Candidate B first Product slice HUMAN-ACCEPTED (2026-10-04). Current successor implementation status is in [successor-first-implementation.md](successor-first-implementation.md); it does not reopen or replace this checkpoint.**
+
+## Historical boundary
+
+The statements below describe the accepted Candidate B first slice at its
+2026-10-04 Human acceptance. The successor implementation has a separate
+boundary and current status.
 
 ## Product responsibility
 
