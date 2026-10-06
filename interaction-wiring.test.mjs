@@ -39,6 +39,8 @@ test('successor entry point wires replacement rendering, form identity, stale-no
   assert.match(source,/function clearLifecycleNotice\(\)\{\s*if\(!lifecycleNotice\)return;\s*lifecycleNotice='';\s*root\.querySelector\('\.lifecycle-notice'\)\?\.remove\(\);/);
   assert.match(source,/installBeforeUnloadProtection\(window,\(\)=>s\)/);
   assert.doesNotMatch(source,/document\.addEventListener\(['"]beforeunload['"]/);
+  assert.match(source,/placeholder="Describe this Entity"/);
+  assert.doesNotMatch(source,/placeholder="Describe this temporary Entity"/);
 });
 
 test('current Dataset context uses the E2R metadata title and an absent-title fallback',()=>{
