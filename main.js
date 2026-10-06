@@ -11,10 +11,13 @@ import {sizeRadarLabels, PROTOTYPE_SPOKE_CAP, radarPositionAtPoint} from './rada
 import {startQuadrantPointDrag} from './quadrant-drag.js';
 import {keepRadarRowVisible} from './radar-list.js';
 import {containDrawerFocus, focusDrawer} from './drawer-focus.js';
-import {hasLossSensitiveWork, shouldWarnBeforeUnload, workspaceBackupFor, readWorkspaceBackup} from './workspace-recovery.js';
+import {hasLossSensitiveWork, installBeforeUnloadProtection, workspaceBackupFor, readWorkspaceBackup} from './workspace-recovery.js';
+import {replacementMarkup} from './replacement-safety.js';
 import {randomDimensionValue} from './profile-random.js';
 import {candidateAuthoringAvailable, createDatasetEntity, editDatasetEntity, entityDeleteEligibility, deleteDatasetEntity, deleteDatasetDimension, rescaledAssessmentValue, applyDimensionAndRescale} from './successor-domain.js';
 import {acceptsDimensionValue, authoredValueAtPosition, matrixEntities, reorderMatrixRow} from './model.js';
+import {formAttributeId, rescaleActionFor} from './successor-event-wiring.js';
+import {datasetTitleFor} from './dataset-context.js';
 let s = load();
 let pagerDirection = 0;
 let radarSelectedDimension = null;
@@ -145,7 +148,6 @@ document.addEventListener('change',async e=>{
   if(t.id==='secondary'){s.secondary=t.value||null;update();return;}
   if(t.dataset.matrixColumn){const i=Number(t.dataset.matrixColumn);if(s.matrix.includes(t.value)&&t.value){matrixError='This dimension is already selected in another column.';render();return;}matrixError='';s.matrix[i]=t.value||null;update();return;}
 });
-document.addEventListener('submit',e=>{if(e.target.getAttribute('id')!=='dimension-form')return;e.preventDefault();const f=e.target,field=n=>f.elements.namedItem(n).value;const min=parseFiniteDecimal(field('dimension-min'),f.elements.namedItem('dimension-min').validity.badInput),max=parseFiniteDecimal(field('dimension-max'),f.elements.namedItem('dimension-max').validity.badInput);const d={id:field('id')||uid(),name:field('dimension-name').trim(),low:field('dimension-low').trim(),high:field('dimension-high').trim(),min,max,minInput:field('dimension-min'),maxInput:field('dimension-max'),decimalPlaces:authoredDecimalPlaces(field('dimension-min'),field('dimension-max')),unit:field('dimension-unit').trim(),integerOnly:f.elements.namedItem('dimension-integer-only').checked};if(!d.name||!d.low||!d.high)return;if(min===null||max===null||!(min<max)){dimensionError='Enter finite decimal MIN and MAX values, with MIN less than MAX. Scientific notation is not enabled in this application.';dimensionDraft={...d,minInput:field('dimension-min'),maxInput:field('dimension-max')};render();root.querySelector('[name="dimension-min"]')?.focus();return;}const duplicate=duplicateDimension(s,d);if(duplicate&&!e.submitter?.hasAttribute('data-confirm-duplicate')){dimensionWarning=duplicate;dimensionDraft={...d,minInput:field('dimension-min'),maxInput:field('dimension-max')};render();root.querySelector('.duplicate-warning button')?.focus();return;}dimensionError=null;profileRandomNotice='';const i=s.dimensions.findIndex(x=>x.id===d.id);if(i<0){s.dimensions.push(d);s.matrix.push(d.id);}else s.dimensions[i]=d;dimensionWarning=null;dimensionDraft=null;s.editDimension=null;s.dimensionFormOpen=false;update();});
 document.addEventListener('submit',e=>{if(e.target.getAttribute('id')!=='entity-form')return;e.preventDefault();const value=e.target.elements.namedItem('temporary-entity-name').value.trim(),description=e.target.elements.namedItem('temporary-entity-description').value.trim();if(!value)return;if(editEntityId){const entity=s.tempEntities.find(x=>x.id===editEntityId);if(!entity)return;entity.name=value;if(description)entity.description=description;else delete entity.description;editEntityId=null;}else{let id;do{id='temp:'+uid();}while(entities(s).some(x=>x.id===id));s.tempEntities.push({id,name:value,...(description?{description}:{}),temporary:true});s.selected=id;if(s.view==='Quadrant')s.waiting=id;}s.entityFormOpen=false;update();});
 document.addEventListener('keydown',e=>{
   if(replacement){if(e.key==='Escape'){e.preventDefault();replacement=null;render();root.querySelector('[data-import-trigger]')?.focus();}else if(e.key==='Tab')trapDialogTab(e,'.confirm-dialog');return;}
@@ -439,7 +441,7 @@ render=function(){
  const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER DATASET COMPARISON';
  const subtitle=root.querySelector('header .sub');if(subtitle)subtitle.textContent='Author E2R Entities and Dimension Assessments. Browser storage, E2R Dataset Export, and Workspace Backup are separate.';
  const actions=root.querySelector('.header-actions');if(actions)actions.innerHTML=runtimeHeader();
- const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);topline.innerHTML=`<div><strong>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'}</strong><span> · ${s.dimensions.length} portable Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${s.persistence.status==='saved'?'Saved locally':'Degraded / unsaved'} · Workspace Backup: separate user-managed file</span>`;}
+ const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);topline.innerHTML=`<div class="dataset-context"><strong class="dataset-title">${esc(datasetTitleFor(s.dataset))}</strong><span>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'} · ${s.dimensions.length} portable Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${s.persistence.status==='saved'?'Saved locally':'Degraded / unsaved'} · Workspace Backup: separate user-managed file</span>`;}
  let status=root.querySelector('.successor-status');if(!status){status=document.createElement('section');status.className='successor-status';root.querySelector('main')?.prepend(status);}
  if(status)status.innerHTML=`<div class="persistence-status" role="status"><strong>${s.persistence.status==='saved'?'Browser-local workspace saved':'Browser-local workspace degraded / unsaved'}</strong>${s.persistence.message?`<p>${esc(s.persistence.message)}</p>`:'<p>Local persistence is not an E2R Dataset Export or a user-managed Workspace Backup.</p>'}</div><p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p>${lifecycleNotice?`<p class="lifecycle-notice" role="status">${esc(lifecycleNotice)}</p>`:''}${diagnosticMarkup()}`;
  const entityDrawer=root.querySelector('.drawer[aria-label="Entity Pool"]');if(entityDrawer){const p=entityDrawer.querySelector(':scope > p');if(p)p.textContent='Dataset Entities are edited directly in this Dataset. Dimensions and Assessments are portable Candidate data.';const action=entityDrawer.querySelector('.pool-action button');if(action){action.textContent='Add Dataset Entity';action.disabled=s.readOnly;action.dataset.action='add-entity';}}
@@ -485,11 +487,17 @@ function relationDeletionFeedback(id){
  const result=entityDeleteEligibility(s,id);if(!result.allowed){entityDeleteNotice={id,reason:result.reason,relations:result.relations||[]};render();root.querySelector('.confirm-dialog button')?.focus();return;}
  openConfirmation('entity',id);
 }
+function clearLifecycleNotice(){
+ if(!lifecycleNotice)return;
+ lifecycleNotice='';
+ root.querySelector('.lifecycle-notice')?.remove();
+}
 function captureSuccessorClick(event){
- const target=event.target.closest('button,[data-action],label');if(!target)return;
+ clearLifecycleNotice();
+ const target=event.target.closest('button,[data-action],label');if(!target&&!(rescaleProposal&&event.target.matches('.confirm-scrim[data-cancel-rescale]')))return;
  if(replacement){if(target.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();const trigger=replacement.kind==='workspace'?'[data-workspace-restore-trigger]':'[data-import-trigger]';replacement=null;render();root.querySelector(trigger)?.focus();return;}if(target.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}if(target.closest('[data-backup-current]')){event.preventDefault();event.stopImmediatePropagation();downloadCurrentBackup();return;}return;}
  if(entityDeleteNotice&&target.closest('[data-close-entity-delete-notice]')){event.preventDefault();event.stopImmediatePropagation();entityDeleteNotice=null;render();return;}
- if(rescaleProposal){if(target.closest('[data-cancel-rescale]')){event.preventDefault();event.stopImmediatePropagation();rescaleProposal=null;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}if(target.closest('[data-approve-rescale]')){event.preventDefault();event.stopImmediatePropagation();const proposal=rescaleProposal;rescaleProposal=null;const result=applyDimensionAndRescale(s,proposal.dimension,proposal.values);if(!result.ok)dimensionError=result.reason;else{s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;s.pendingDraft=false;}update();return;}return;}
+ if(rescaleProposal){const action=rescaleActionFor(target,event.target);if(action==='approve'){event.preventDefault();event.stopImmediatePropagation();const proposal=rescaleProposal;rescaleProposal=null;const result=applyDimensionAndRescale(s,proposal.dimension,proposal.values);if(!result.ok)dimensionError=result.reason;else{s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;s.pendingDraft=false;}update();return;}if(action==='cancel'){event.preventDefault();event.stopImmediatePropagation();rescaleProposal=null;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}return;}
  if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();exportCurrentDataset();return;}
  if(target.closest('[data-successor-backup]')){event.preventDefault();event.stopImmediatePropagation();downloadCurrentBackup();return;}
  if(target.closest('[data-import-trigger]'))return;
@@ -521,13 +529,13 @@ function captureSuccessorClick(event){
 }
 document.addEventListener('click',captureSuccessorClick,true);
 document.addEventListener('submit',event=>{
- const form=event.target;if(form.id==='entity-form'){
+ const form=event.target,formId=formAttributeId(form);if(formId==='entity-form'){
    event.preventDefault();event.stopImmediatePropagation();const name=form.elements.namedItem('dataset-entity-name').value,description=form.elements.namedItem('dataset-entity-description').value;
    const result=editEntityId?editDatasetEntity(s,editEntityId,{name,description}):createDatasetEntity(s,{name,description});
    if(!result.ok){entityFormError=result.reason;render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
    entityFormError=null;s.entityFormOpen=false;editEntityId=null;pendingEntityDraft=null;s.pendingDraft=false;entityMenu=null;lifecycleNotice='Dataset Entity change applied. It is part of the Dataset and is not exported until E2R JSON Export.';update();return;
  }
- if(form.id!=='dimension-form')return;
+ if(formId!=='dimension-form')return;
  event.preventDefault();event.stopImmediatePropagation();if(!candidateAuthoringAvailable(s))return;
  const field=name=>form.elements.namedItem(name),min=parseFiniteDecimal(field('dimension-min').value,field('dimension-min').validity.badInput),max=parseFiniteDecimal(field('dimension-max').value,field('dimension-max').validity.badInput);
  const previous=s.dimensions.find(item=>item.id===field('id').value),enabled=field('dimension-labels-enabled').checked,unitPresent=field('dimension-unit-enabled').checked,integer=field('dimension-integer-only').checked;
@@ -540,16 +548,18 @@ document.addEventListener('submit',event=>{
  s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;dimensionError=null;s.pendingDraft=false;lifecycleNotice='Dimension change applied to the Dataset. E2R JSON Export is a separate step.';update();
 },true);
 document.addEventListener('change',event=>{
+ clearLifecycleNotice();
  const target=event.target;
  if(target.id==='dataset-file'||target.id==='workspace-file'){const kind=target.id==='workspace-file'?'workspace':'dataset',file=target.files?.[0];target.value='';importSelectedFile(file,kind);event.stopImmediatePropagation();return;}
 },true);
 document.addEventListener('input',event=>{
+ clearLifecycleNotice();
  const target=event.target;
  if(target.matches('#entity-form input,#entity-form textarea')){s.pendingDraft=true;pendingEntityDraft={editId:editEntityId,name:root.querySelector('#entity-form [name="dataset-entity-name"]')?.value||'',description:root.querySelector('#entity-form [name="dataset-entity-description"]')?.value||''};}
  if(target.closest('#dimension-form')){s.pendingDraft=true;const form=target.closest('#dimension-form'),field=name=>form.elements.namedItem(name);dimensionDraft={id:field('id').value||undefined,name:field('dimension-name').value,low:field('dimension-low').value,high:field('dimension-high').value,minInput:field('dimension-min')?.value||'',maxInput:field('dimension-max')?.value||'',unit:field('dimension-unit')?.value||'',unitPresent:Boolean(field('dimension-unit-enabled')?.checked),endpointLabelsPresent:Boolean(field('dimension-labels-enabled')?.checked),integerOnly:Boolean(field('dimension-integer-only')?.checked)};for(const name of ['dimension-low','dimension-high']){const input=field(name);if(input)input.disabled=!field('dimension-labels-enabled')?.checked;}const unit=field('dimension-unit');if(unit)unit.disabled=!field('dimension-unit-enabled')?.checked;}
  if(s.pendingDraft)root.querySelector('.pending-draft-status')?.removeAttribute('hidden');
 },true);
-document.addEventListener('beforeunload',event=>{if(shouldWarnBeforeUnload(s)){event.preventDefault();event.returnValue='';}},true);
+installBeforeUnloadProtection(window,()=>s);
 document.addEventListener('keydown',event=>{
  if(replacement||entityDeleteNotice||rescaleProposal){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();const trigger=replacement?.kind==='workspace'?'[data-workspace-restore-trigger]':'[data-import-trigger]';const hadReplacement=Boolean(replacement);if(replacement)replacement=null;if(entityDeleteNotice)entityDeleteNotice=null;if(rescaleProposal)rescaleProposal=null;render();if(hadReplacement)root.querySelector(trigger)?.focus();}else if(event.key==='Tab')trapDialogTab(event,'.confirm-dialog');}
 },true);

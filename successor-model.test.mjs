@@ -59,6 +59,26 @@ test('Rescale uses linear position and integer ties away from zero',()=>{
   assert.equal(rescaledAssessmentValue(5e-301,{min:0,max:1e-300},{min:-10,max:10}),0);
 });
 
+test('reviewed Rescale commits its Dimension and Assessment together or leaves both unchanged',()=>{
+  const state=fresh(baseDataset());
+  assert.equal(applyDimensionAndRescale(state,{id:'d1',name:'Measure',low:'Low',high:'High',endpointLabelsPresent:true,min:0,max:10}).ok,true);
+  assert.equal(applyAssessment(state,'e1','d1',7).ok,true);
+  exportBaseline(state);
+  const result=applyDimensionAndRescale(state,{id:'d1',name:'Measure',low:'Low',high:'High',endpointLabelsPresent:true,min:0,max:5},{e1:3.5});
+  assert.equal(result.ok,true);
+  assert.equal(state.dimensions[0].max,5);
+  assert.equal(state.values.e1.d1,3.5);
+  assert.equal(state.datasetModified,true);
+  assert.equal(state.datasetBaseline.includes('"max":10'),true);
+
+  const unchanged={dimension:structuredClone(state.dimensions[0]),value:state.values.e1.d1,dirty:state.datasetModified};
+  const rejected=applyDimensionAndRescale(state,{id:'d1',name:'Measure',low:'Low',high:'High',endpointLabelsPresent:true,min:0,max:2},{e1:3.5});
+  assert.equal(rejected.ok,false);
+  assert.deepEqual(state.dimensions[0],unchanged.dimension);
+  assert.equal(state.values.e1.d1,unchanged.value);
+  assert.equal(state.datasetModified,unchanged.dirty);
+});
+
 test('Validator-invalid Dataset is read-only, but warning-only unknown data remains inspectable',()=>{
   const invalid=baseDataset();invalid.extensions[DIMENSION_ASSESSMENT_ID]={specVersion:'0.1.0',dimensions:[],assessments:[{entityId:'missing',dimensionId:'d',value:0}]};
   const state=fresh(invalid);
