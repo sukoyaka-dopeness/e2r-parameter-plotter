@@ -2,7 +2,7 @@
 
 Date: 2026-10-05
 
-Status: **FUNCTIONAL HUMAN ACCEPTANCE COMPLETE / ACCEPTED SOURCE `b9a8e1fee6499c191c66033296e98965d777684e` / CURRENT LOCAL SOURCE `a27b6ef5056291cbe1c5a2ff80e69a43c55aa5c8` / UNPUBLISHED / CANDIDATE NOT STABLE**
+Status: **FUNCTIONAL HUMAN ACCEPTANCE COMPLETE / ACCEPTED SOURCE `b9a8e1fee6499c191c66033296e98965d777684e` / CURRENT VERIFIED LOCAL SOURCE `35e8a8c1612d4aa9ce00feef75f255d4d5a6776d` / UNPUBLISHED / CANDIDATE NOT STABLE**
 
 This is a bounded successor implementation in the canonical
 e2r-parameter-plotter repository. It does not change the historical
@@ -92,12 +92,15 @@ local working tree now fixed at source commit
 unpublished. It does not grant Candidate Stable status or authorize release or
 deployment.
 
-After acceptance, local commit
-`a27b6ef5056291cbe1c5a2ff80e69a43c55aa5c8` changed only the Description
-placeholder for direct Dataset Entity creation from “temporary Entity” to
-“Entity” and added a regression assertion. This copy-only correction does not
-change the accepted behavior or its source baseline. The exact Human-accepted
-source remains `b9a8e1fee6499c191c66033296e98965d777684e`.
+After acceptance, local commits `a27b6ef5056291cbe1c5a2ff80e69a43c55aa5c8`
+and `35e8a8c1612d4aa9ce00feef75f255d4d5a6776d` added a copy-only direct
+Dataset Entity Description placeholder correction and the Human-decided
+optional endpoint-label presentation, respectively. The latter shows numeric
+MIN/MAX without supplying Low/High labels when labels were not authored, and
+retains explicit Candidate labels when present. Both changes have automated
+regression coverage and do not change Candidate semantics or the accepted
+behavior baseline. The exact Human-accepted source remains
+`b9a8e1fee6499c191c66033296e98965d777684e`.
 
 ## Historical references and separate follow-ups
 

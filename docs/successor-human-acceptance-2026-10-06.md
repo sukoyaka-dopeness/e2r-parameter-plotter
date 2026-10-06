@@ -21,11 +21,13 @@ This acceptance record is a later documentation commit. The source remains
 unpublished, and any later source change must be assessed against this evidence
 before treating it as the accepted implementation.
 
-The later local commit `a27b6ef5056291cbe1c5a2ff80e69a43c55aa5c8`
-changes only the direct Dataset Entity Description placeholder from
-“temporary Entity” to “Entity” and adds a regression assertion. It is a
-post-acceptance copy correction; it does not replace or broaden the exact
-Human-accepted source revision above.
+Later local commits `a27b6ef5056291cbe1c5a2ff80e69a43c55aa5c8` and
+`35e8a8c1612d4aa9ce00feef75f255d4d5a6776d` add a copy-only direct Dataset
+Entity Description placeholder correction and implement the Human-decided
+endpoint-label presentation policy, respectively. Automated regression tests
+cover both corrections. Neither revision replaces or broadens the exact
+Human-accepted source above; the later source has not received a new Human
+functional acceptance.
 
 The evidence combines direct Human operation in Microsoft Edge, Codex-led
 real-browser operation at `http://localhost:4181/`, and repository-local
@@ -71,12 +73,13 @@ as a browser PASS. The listed Human and Codex browser cases passed.
 
 The tested worktree includes bounded presentation corrections for Dataset
 title/identity visibility, inactive View-tab affordance, Dimension option
-checkbox association, and stale action-specific notices. The new Dataset
-Entity Description placeholder was corrected after acceptance in the
-copy-only follow-up noted above. The remaining known UI follow-up is the
-Low/High fallback labels when endpoint labels are absent; their wording and
-presentation remain a Human choice and did not block this functional
-acceptance. Existing Prototype 2 Quadrant connector and
+checkbox association, and stale action-specific notices. The Dataset Entity
+Description placeholder and absent-endpoint-label presentation were corrected
+after acceptance in the follow-ups noted above. A separate real-browser narrow
+viewport review of the successor remains **NOT RUN**: Computer Use stopped
+because it could not determine the active Edge URL confidently enough to
+continue. Automated checks do not substitute for that requested review.
+Existing Prototype 2 Quadrant connector and
 waiting-Entity discoverability follow-ups remain separate. This record does
 not claim a separate narrow-viewport visual review of the successor.
 
