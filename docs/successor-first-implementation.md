@@ -2,7 +2,7 @@
 
 Date: 2026-10-05
 
-Status: **HUMAN-AUTHORIZED / LOCAL IMPLEMENTATION IN PROGRESS / AUTOMATED CHECKS PASS / NOT HUMAN-ACCEPTED / UNCOMMITTED / UNPUBLISHED**
+Status: **FUNCTIONAL HUMAN ACCEPTANCE COMPLETE / SOURCE FIXED AT LOCAL COMMIT `b9a8e1fee6499c191c66033296e98965d777684e` / UNPUBLISHED / CANDIDATE NOT STABLE**
 
 This is a bounded successor implementation in the canonical
 e2r-parameter-plotter repository. It does not change the historical
@@ -71,9 +71,9 @@ responsibility-based; no fixed directory layout is prescribed.
 
 The local server uses port 4180 by default and accepts a `PORT` override when
 that port is occupied. The current successor review server is
-<http://localhost:4181>. A supporting browser smoke check is recorded in the
-e2r-spec implementation result; it is not visual or first-successor Human
-acceptance.
+<http://localhost:4181>. The subsequent functional Human and real-browser
+acceptance evidence is recorded in
+[successor Human Acceptance](./successor-human-acceptance-2026-10-06.md).
 
 ## Supporting verification
 
@@ -84,8 +84,12 @@ acceptance.
 - e2r-spec Candidate/schema validation and the repository validation gate.
 - git diff --check in each changed repository.
 
-These are machine evidence only. They do not grant Candidate Stable status,
-Human acceptance, or publication.
+The automated checks support, but do not replace, the Human and browser
+acceptance recorded in the linked result. Acceptance applies to the tested
+local working tree now fixed at source commit
+`b9a8e1fee6499c191c66033296e98965d777684e`; the source remains local and
+unpublished. It does not grant Candidate Stable status or authorize release or
+deployment.
 
 ## Historical references and separate follow-ups
 
