@@ -2,7 +2,7 @@
 
 Canonical application source: [`e2r-parameter-plotter`](https://github.com/sukoyaka-dopeness/e2r-parameter-plotter). This repository owns the application runtime and its application-level tests. E2R Core, Extensions, schemas, Validator, and the specification remain owned by [e2r-spec](https://github.com/sukoyaka-dopeness/e2r-spec).
 
-The accepted Candidate B first slice remains a historical checkpoint. The current local source is a bounded successor implementation in progress; it has not been Human-accepted, committed, or published. It supports direct Dataset Entity authoring and Dimension Assessment Candidate 0.1.0 as portable Dataset data, with Validator-gated editing and E2R JSON Export. Browser-local persistence, E2R Dataset Export, and the self-contained ParameterPlotter Workspace Backup are separate. The Candidate is Human-adopted but not Stable. See the [successor implementation status](docs/successor-first-implementation.md) and the [historical first-slice boundary](docs/first-slice-boundary.md).
+The accepted Candidate B first slice remains a historical checkpoint. The successor source code is committed locally through `623b73b77d055be7f38d8d87ba109e7c8947c0a3` but has not been pushed; the published repository still contains the Candidate B first slice. Functional Human Acceptance applies specifically to source commit `b9a8e1fee6499c191c66033296e98965d777684e`. Later source corrections, including the current local source, are not covered by that acceptance. The successor supports direct Dataset Entity authoring and Dimension Assessment Candidate 0.1.0 as portable Dataset data, with Validator-gated editing and E2R JSON Export. Browser-local persistence, E2R Dataset Export, and the self-contained ParameterPlotter Workspace Backup are separate. The Candidate is Human-adopted but not Stable. See the [successor implementation status](docs/successor-first-implementation.md) and the [historical first-slice boundary](docs/first-slice-boundary.md).
 
 ## Run locally
 
@@ -26,7 +26,7 @@ file you opened.
 npm run check
 ```
 
-The focused tests cover the four views, Candidate payload semantics, Entity and Dimension authoring, Assessment rescale, Validator eligibility, unknown Extension preservation, Dataset Export baseline, local persistence, backup restore atomicity, and no-migration behavior. They are supporting machine evidence, not Human acceptance of this successor implementation. The earlier Candidate B result is recorded in the [historical acceptance result](docs/first-slice-human-acceptance-2026-10-04.md).
+The focused tests cover the four views, Candidate payload semantics, Entity and Dimension authoring, Assessment rescale, Validator eligibility, unknown Extension preservation, Dataset Export baseline, local persistence, backup restore atomicity, and no-migration behavior. They are supporting machine evidence, not Human acceptance of post-Acceptance corrections to the successor. The earlier Candidate B result is recorded in the [historical acceptance result](docs/first-slice-human-acceptance-2026-10-04.md).
 The GitHub Actions check runs the same command with read-only repository access; it does not deploy or publish the application.
 
 ## Source relationship

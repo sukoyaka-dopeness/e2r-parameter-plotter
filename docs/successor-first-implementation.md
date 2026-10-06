@@ -109,6 +109,46 @@ Dimension Pool range paths. A 390px real-browser review covered all four views,
 including Radar spoke additions and Quadrant axis selection; this is a
 post-Acceptance correction and does not replace the accepted source revision.
 
+## Post-Acceptance source-readiness review
+
+Reviewed 2026-10-06 against local source commit
+`623b73b77d055be7f38d8d87ba109e7c8947c0a3` and its successor status record.
+This is a technical readiness audit, not a new Functional Human Acceptance,
+release, or deployment approval.
+
+- ParameterPlotter `npm run check`: **PASS**, syntax for 19 application
+  modules and 50/50 tests.
+- Canonical Validator `npm run validate`: **PASS**, 136/136 tests and 3/3
+  fixture tests. Its source is local commit
+  `6533e970ddc5d5131a1f39fe88e22d8f6402c416`; the vendored browser modules
+  match all 14 canonical modules (`node scripts/sync-validator-vendor.mjs
+  --check`). That Validator commit remains ahead of the published Validator
+  `main`.
+- e2r-spec `npm run validate`: **PASS**, including the 13 Dimension
+  Assessment Candidate `0.1.0` checks. Existing mixed changes in that checkout
+  were left untouched.
+- The local static server returned the application entry, CSS, main module,
+  and vendored Validator modules successfully. HTML asset references and
+  browser module imports are relative, so they resolve beneath a repository
+  subpath as well as at an origin root. No hosted subpath deployment was
+  available to smoke-test.
+- The repository's only workflow is a read-only `Check` running
+  `npm run check`; it grants `contents: read` and does not publish or deploy.
+  The latest available public runs pass on the published Candidate B source
+  (`785e701`), not on this unpublished successor source.
+- The repository is public under the canonical identity, carries the approved
+  description and topics, and has a blank homepage URL. MIT license notices
+  are present for the app and vendored Validator. `package.json` is private
+  and has no package version, so npm publication is not configured.
+
+The source is locally verified, but the successor is not yet on public
+`main`. No formal release identity/version or hosting/deployment target is
+selected. Browser-local storage write-failure injection remains **NOT RUN in a
+real browser**; current evidence for that failure path is automated only. The
+exact Human-accepted source remains `b9a8e1fee6499c191c66033296e98965d777684e`;
+the current post-Acceptance source has not received a new Human functional
+acceptance. Candidate `0.1.0` remains non-Stable.
+
 ## Historical references and separate follow-ups
 
 - Candidate B first-slice acceptance remains in
