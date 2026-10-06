@@ -84,3 +84,64 @@
 @media (max-width: 720px) {
   .topline > span { max-width: none; }
 }
+
+/* Keep lifecycle/file actions available without competing with workspace tools. */
+.header-actions > button,
+.header-actions > .workspace-more > .workspace-more-trigger { min-height: 40px; }
+.workspace-more { position: relative; }
+.workspace-more-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  list-style: none;
+  cursor: pointer;
+}
+.workspace-more-trigger::-webkit-details-marker { display: none; }
+.workspace-more-trigger::after {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  margin: -0.15rem 0 0 0.45rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+.workspace-more[open] .workspace-more-trigger::after { transform: rotate(225deg); }
+.workspace-more-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  display: grid;
+  gap: 0.25rem;
+  width: max-content;
+  min-width: 15rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 0.45rem;
+  border: 1px solid #cbd3df;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 24px #20233126;
+}
+.workspace-more-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 6px;
+  background: #fff;
+  color: #202331;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.workspace-more-item:hover { background: #eef1fa; }
+.workspace-more-item:focus-visible,
+.workspace-more-trigger:focus-visible { outline: 3px solid #4b60b1; outline-offset: 2px; }
+@media (max-width: 550px) {
+  .header-actions .workspace-more { flex: 0 0 100%; width: 100%; }
+  .header-actions .workspace-more-trigger { width: 100%; }
+  .workspace-more-panel { right: 0; left: 0; width: 100%; min-width: 0; max-width: calc(100vw - 2rem); }
+}

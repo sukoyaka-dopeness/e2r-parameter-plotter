@@ -19,6 +19,7 @@ import {candidateAuthoringAvailable, createDatasetEntity, editDatasetEntity, ent
 import {acceptsDimensionValue, authoredValueAtPosition, matrixEntities, reorderMatrixRow} from './model.js';
 import {formAttributeId, rescaleActionFor} from './successor-event-wiring.js';
 import {datasetTitleFor} from './dataset-context.js';
+import {workspaceActionsMarkup} from './workspace-actions-menu.js';
 let s = load();
 let pagerDirection = 0;
 let radarSelectedDimension = null;
@@ -60,7 +61,7 @@ function render() {
   const allEntities=entities(s),showEntity=s.poolOpen||closingDrawer==='entity',showDimension=s.dimensionOpen||closingDrawer==='dimension';
   root.innerHTML=`<header><div><p class="eyebrow">E2R · SINGLE-USER COMPARISON WORKSPACE</p><h1>ParameterPlotter <small>working name</small></h1><p class="sub">Compare Entities with dimensions you define. Dataset stays read-only.</p>${fileError?`<p class="field-error" role="alert">${esc(fileError)}</p>`:''}</div><div class="header-actions"><label class="button primary" data-import-trigger tabindex="0" role="button">Import E2R Dataset<input id="dataset-file" type="file" accept=".json,.e2r.json,application/json" hidden></label><button data-action="entities">Entities</button><button data-action="dimensions">Dimensions</button></div></header>
   <main><div class="topline"><div><strong>${allEntities.length?`${allEntities.length} ${allEntities.length===1?'Dataset Entity':'Dataset Entities'} available`:'No Dataset Entities available'}</strong><span> · ${s.dimensions.length} portable ${s.dimensions.length===1?'Dimension':'Dimensions'}</span></div><span>Comparison values are Dataset Assessments</span></div>
-  <nav class="tabs" aria-label="Views">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<button class="${s.view===v?'active':''}" data-view="${v}">${v}</button>`).join('')}</nav><label class="view-select">View <select id="view-select">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<option ${s.view===v?'selected':''}>${v}</option>`).join('')}</select></label>
+  <nav class="tabs" aria-label="Views">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<button class="${s.view===v?'active':''}" aria-current="${s.view===v?'page':'false'}" data-view="${v}">${v}</button>`).join('')}</nav><label class="view-select">View <select id="view-select">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<option ${s.view===v?'selected':''}>${v}</option>`).join('')}</select></label>
   <section class="workspace">${!allEntities.length?`<div class="empty"><h2>Start with an E2R Dataset</h2><p>Open a Dataset or create a Dataset Entity. No Assessment is inferred.</p><button data-action="entities">Open Entity Pool</button></div>`:s.view==='Profile'?renderProfile(api):s.view==='Quadrant'?renderQuadrant(api):s.view==='Radar'?renderRadar(api):renderMatrix(api)}</section></main>
   ${showEntity||showDimension?`<button class="drawer-backdrop ${closingDrawer?'is-closing':''}" data-action="close-drawers" aria-label="Close panel" tabindex="-1"></button>`:''}
   ${showEntity?`<aside class="drawer ${closingDrawer==='entity'?'is-closing':'is-open'}" role="dialog" aria-modal="true" aria-label="Entity Pool"><div class="drawer-head"><h2>Entity Pool</h2><button data-action="close-pool">Close</button></div><p>Dataset Entities and session-only Entities can be compared together.</p><div class="pool-action"><button class="primary" data-action="add-entity">Add temporary Entity</button></div>${s.entityFormOpen?`<form id="entity-form" class="drawer-form" autocomplete="off"><h3>${editEntityId?'Edit temporary Entity':'Temporary Entity'}</h3><label>Name<input name="temporary-entity-name" autocomplete="off" required maxlength="80" placeholder="Entity name" value="${esc(s.tempEntities.find(e=>e.id===editEntityId)?.name||'')}"></label><label>Description (optional)<textarea name="temporary-entity-description" autocomplete="off" rows="3" placeholder="Describe this Entity">${esc(s.tempEntities.find(e=>e.id===editEntityId)?.description||'')}</textarea></label><div class="actions"><button class="primary" type="submit">${editEntityId?'Save Entity':'Create Entity'}</button><button type="button" data-action="cancel-entity-form">Cancel</button></div></form>`:''}<label class="pool-search">Search Entity list<input id="entity-search" placeholder="Filter by name" aria-label="Search Entities"></label><div id="entity-list" class="item-list"></div></aside>`:''}
@@ -115,7 +116,7 @@ function closeDrawers(){
 }
 function openDrawer(kind,opener){clearTimeout(closeTimer);closingDrawer=null;drawerOpener=opener||document.activeElement;drawerOpenerLocation=drawerOpener.closest('main')?'main':'header';s.poolOpen=kind==='entity';s.dimensionOpen=kind==='dimension';update();focusDrawer(root);}
 document.addEventListener('click',e=>{
-  if(replacement){if(e.target.closest('[data-cancel-replacement]')){replacement=null;render();root.querySelector('[data-import-trigger]')?.focus();return;}if(e.target.closest('[data-confirm-replacement]')){s=fresh(replacement);replacement=null;fileError='';matrixError='';update();return;}return;}
+  if(replacement){if(e.target.closest('[data-cancel-replacement]')){replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();return;}if(e.target.closest('[data-confirm-replacement]')){s=fresh(replacement);replacement=null;fileError='';matrixError='';update();return;}return;}
   if(e.target.matches('[data-cancel-confirmation]')){cancelConfirmation();return;}
   const b=e.target.closest('button,[data-action]');if(!b)return;
   if(b.dataset.entityMenu){entityMenu=entityMenu===b.dataset.entityMenu?null:b.dataset.entityMenu;renderEntityList();root.querySelector(`[data-entity-menu="${CSS.escape(b.dataset.entityMenu)}"]`)?.focus();return;}
@@ -131,7 +132,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.deleteDimension){openConfirmation('dimension',b.dataset.deleteDimension);return;}
   if(b.dataset.deleteEntity){openConfirmation('entity',b.dataset.deleteEntity);return;}
   if(b.dataset.valueClear){profileRandomNotice='';const [entity,dim]=b.dataset.valueClear.split('|');setValue(s,entity,dim,null);update();return;}
-  if(b.dataset.random){const card=b.dataset.random==='card',ids=card?s.dimensions.map(d=>d.id):[b.dataset.random];let count=0;for(const id of ids)if(!card||getValue(s,s.selected,id)===null){setValue(s,s.selected,id,Math.round((Math.random()*2-1)*100)/100);count++;}update();if(count){const button=[...root.querySelectorAll('[data-random]')].find(x=>x.dataset.random===b.dataset.random);button?.focus({preventScroll:true});if(button&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const face=button.querySelector('.dice-face');if(face){face.textContent='⚂';face.classList.add('is-rolling');setTimeout(()=>{if(face.isConnected){face.textContent='⚄';face.classList.remove('is-rolling');}},180);}}}return;}
+  if(b.dataset.random){const card=b.dataset.random==='card',ids=card?s.dimensions.map(d=>d.id):[b.dataset.random];let count=0;for(const id of ids)if(!card||getValue(s,s.selected,id)===null){setValue(s,s.selected,id,Math.round((Math.random()*2-1)*100)/100);count++;}update();if(count){const button=[...root.querySelectorAll('[data-random]')].find(x=>x.dataset.random===b.dataset.random);button?.focus({preventScroll:true});if(button&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const face=button.querySelector('.dice-face');if(face){face.textContent='\u2682';face.classList.add('is-rolling');setTimeout(()=>{if(face.isConnected){face.textContent='\u2684';face.classList.remove('is-rolling');}},180);}}}return;}
   if(b.dataset.matrixPage){s.matrixPage=Math.max(0,s.matrixPage+Number(b.dataset.matrixPage));update();return;}
   if(b.dataset.primaryStep){const list=entities(s),i=list.findIndex(x=>x.id===s.selected),n=list.length;pagerDirection=Number(b.dataset.primaryStep);s.selected=list[(i+pagerDirection+n)%n]?.id;if(s.view==='Radar')radarSelectedDimension=null;update();return;}
   if(b.dataset.waitingStep){const list=waitingCandidates(s),i=list.findIndex(x=>x.id===s.waiting),step=Number(b.dataset.waitingStep);if(list.length){s.waiting=list[i<0?(step>0?0:list.length-1):(i+step+list.length)%list.length].id;s.selected=s.waiting;update();}return;}
@@ -151,12 +152,12 @@ document.addEventListener('change',async e=>{
 });
 document.addEventListener('submit',e=>{if(e.target.getAttribute('id')!=='entity-form')return;e.preventDefault();const value=e.target.elements.namedItem('temporary-entity-name').value.trim(),description=e.target.elements.namedItem('temporary-entity-description').value.trim();if(!value)return;if(editEntityId){const entity=s.tempEntities.find(x=>x.id===editEntityId);if(!entity)return;entity.name=value;if(description)entity.description=description;else delete entity.description;editEntityId=null;}else{let id;do{id='temp:'+uid();}while(entities(s).some(x=>x.id===id));s.tempEntities.push({id,name:value,...(description?{description}:{}),temporary:true});s.selected=id;if(s.view==='Quadrant')s.waiting=id;}s.entityFormOpen=false;update();});
 document.addEventListener('keydown',e=>{
-  if(replacement){if(e.key==='Escape'){e.preventDefault();replacement=null;render();root.querySelector('[data-import-trigger]')?.focus();}else if(e.key==='Tab')trapDialogTab(e,'.confirm-dialog');return;}
+  if(replacement){if(e.key==='Escape'){e.preventDefault();replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();}else if(e.key==='Tab')trapDialogTab(e,'.confirm-dialog');return;}
   if(confirmation){if(e.key==='Escape'){e.preventDefault();cancelConfirmation();return;}if(e.key==='Tab'){const buttons=[...root.querySelectorAll('.confirm-dialog button')],first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}return;}
   if(e.key==='Escape'&&contextMenu){contextMenu=null;render();return;}
   if(e.key==='Escape'&&(s.poolOpen||s.dimensionOpen)){e.preventDefault();closeDrawers();return;}
   if(s.poolOpen||s.dimensionOpen){containDrawerFocus(e,root);return;}
-  if(e.target.matches('[data-import-trigger]')&&['Enter',' '].includes(e.key)){e.preventDefault();root.querySelector('#dataset-file')?.click();return;}
+  if(e.target.closest?.('[data-import-trigger],[data-workspace-restore-trigger]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.stopImmediatePropagation();const inputId=e.target.closest('[data-workspace-restore-trigger]')?'workspace-file':'dataset-file';openWorkspaceFilePicker(inputId);return;}
   if(e.altKey&&['ArrowLeft','ArrowRight'].includes(e.key)&&e.target.matches('[data-matrix-move]')){e.preventDefault();const i=Number(e.target.dataset.matrixMove),j=i+(e.key==='ArrowLeft'?-1:1);if(j>=0&&j<s.matrix.length){[s.matrix[i],s.matrix[j]]=[s.matrix[j],s.matrix[i]];update();root.querySelector(`[data-matrix-move="${j}"]`)?.focus();}return;}
   if(e.key==='Enter'&&e.target.matches('input[type=number][data-value]')){e.preventDefault();commitNumeric(e.target);return;}
   const vertex=e.target.closest?.('[data-vertex]');
@@ -370,7 +371,7 @@ document.addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();const card=button.dataset.random==='card',ids=card?s.dimensions.map(d=>d.id):[button.dataset.random];let count=0,skipped=0;
  for(const id of ids)if(!card||getValue(s,s.selected,id)===null){const value=randomDimensionValue(s.dimensions.find(d=>d.id===id));if(value===null){skipped++;continue;}if(setValue(s,s.selected,id,value))count++;}
  profileRandomNotice=skipped?(count?`Generated ${count} random value${count===1?'':'s'}; skipped ${skipped} Dimension${skipped===1?'':'s'} without a safely generated value under its integer/decimal-grid policy in range.`:'No safely generated value under its integer/decimal-grid policy is available in this range; no value changed.'):'';
- update();if(count){const current=[...root.querySelectorAll('[data-random]')].find(x=>x.dataset.random===button.dataset.random);current?.focus({preventScroll:true});if(current&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const face=current.querySelector('.dice-face');if(face){face.textContent='⚂';face.classList.add('is-rolling');setTimeout(()=>{if(face.isConnected){face.textContent='⚄';face.classList.remove('is-rolling');}},180);}}}
+ update();if(count){const current=[...root.querySelectorAll('[data-random]')].find(x=>x.dataset.random===button.dataset.random);current?.focus({preventScroll:true});if(current&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const face=current.querySelector('.dice-face');if(face){face.textContent='\u2682';face.classList.add('is-rolling');setTimeout(()=>{if(face.isConnected){face.textContent='\u2684';face.classList.remove('is-rolling');}},180);}}}
 },true);
 
 document.addEventListener('keydown',e=>{
@@ -404,7 +405,7 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-action="add-dim
 // Candidate successor shell. The accepted Prototype remains a separate historical
 // source; this runtime consumes the portable Candidate and persists a distinct workspace.
 let pendingEntityDraft=null;
-const runtimeHeader=()=>`<label class="button primary" data-import-trigger tabindex="0" role="button">Open E2R Dataset<input id="dataset-file" type="file" accept=".json,.e2r.json,application/json" hidden></label><label class="button" data-workspace-restore-trigger tabindex="0" role="button">Restore Workspace Backup<input id="workspace-file" type="file" accept=".pp-workspace.json,.json,application/json" hidden></label><button data-successor-export-dataset ${s.readOnly?'disabled':''}>Export E2R JSON</button><button data-successor-backup>Download Workspace Backup</button><button data-action="entities">Entities</button><button data-action="dimensions" ${s.readOnly||s.candidateUnsupported?'disabled title="Dimension Assessment authoring is unavailable for this Dataset"':''}>Dimensions</button>`;
+const runtimeHeader=()=>workspaceActionsMarkup({readOnly:s.readOnly,authoringUnavailable:s.readOnly||s.candidateUnsupported});
 renderEntityList=function(){
  const q=(root.querySelector('#entity-search')?.value||'').toLocaleLowerCase();
  const rows=s.dataset.entities.map((entity,index)=>({entity,index})).filter(({entity,index})=>entity&&typeof entity==='object'&&[label(entity,index),String(entity.description||''),String(entity.id||'')].some(text=>text.toLocaleLowerCase().includes(q)));
@@ -431,7 +432,7 @@ function relationBlockerMarkup(){
 }
 function rescaleMarkup(){
  if(!rescaleProposal)return '';
- const rows=Object.entries(rescaleProposal.values).map(([entityId,value])=>`<li>${esc(localEntityName(entityId))}: ${fmt(getValue(s,entityId,rescaleProposal.dimension.id))} → ${fmt(value,rescaleProposal.dimension)}</li>`).join('');
+ const rows=Object.entries(rescaleProposal.values).map(([entityId,value])=>`<li>${esc(localEntityName(entityId))}: ${fmt(getValue(s,entityId,rescaleProposal.dimension.id))} \u2192 ${fmt(value,rescaleProposal.dimension)}</li>`).join('');
  return `<div class="confirm-scrim" data-cancel-rescale><section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="rescale-title"><h2 id="rescale-title">Review Assessment rescale</h2><p>Changing these bounds makes existing Assessments invalid. Review this linear rescale; nothing changes in the Dataset until you approve it.</p><ul>${rows}</ul><div class="actions"><button data-cancel-rescale>Back to Dimension edit</button><button class="primary" data-approve-rescale>Apply reviewed rescale</button></div></section></div>`;
 }
 function currentReplacementMarkup(){return replacement?replacementMarkup(replacement):'';}
@@ -471,7 +472,8 @@ function activateIncoming(){
  render();
 }
 function importSelectedFile(file,kind){
- if(!file)return;
+  closeWorkspaceMore();
+  if(!file)return;
  (async()=>{try{const parsed=JSON.parse(await file.text());let incoming;if(kind==='workspace'){const restored=readWorkspaceBackup(parsed);incoming=fresh(restored.dataset,{datasetModified:restored.datasetModified,ui:{datasetBaseline:restored.datasetBaseline||undefined}});}else incoming=fresh(readDataset(parsed));if(hasLossSensitiveWork(s))startReplacement(kind,incoming);else{replacement={kind,state:incoming};activateIncoming();}}catch(error){showFileError(error?.message||'The selected file could not be opened.');}})();
 }
 function downloadCurrentBackup(){
@@ -489,20 +491,22 @@ function relationDeletionFeedback(id){
  openConfirmation('entity',id);
 }
 function clearLifecycleNotice(){
- if(!lifecycleNotice)return;
- lifecycleNotice='';
- root.querySelector('.lifecycle-notice')?.remove();
+  if(!lifecycleNotice)return;
+  lifecycleNotice='';
+  root.querySelector('.lifecycle-notice')?.remove();
 }
+function closeWorkspaceMore({restoreFocus=false}={}){const menu=root.querySelector('.workspace-more');if(!menu?.open)return;menu.open=false;if(restoreFocus)menu.querySelector('summary')?.focus();}
+function openWorkspaceFilePicker(inputId){closeWorkspaceMore({restoreFocus:true});root.querySelector(`#${inputId}`)?.click();}
 function captureSuccessorClick(event){
  clearLifecycleNotice();
  const target=event.target.closest('button,[data-action],label');if(!target&&!(rescaleProposal&&event.target.matches('.confirm-scrim[data-cancel-rescale]')))return;
- if(replacement){if(target.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();const trigger=replacement.kind==='workspace'?'[data-workspace-restore-trigger]':'[data-import-trigger]';replacement=null;render();root.querySelector(trigger)?.focus();return;}if(target.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}if(target.closest('[data-backup-current]')){event.preventDefault();event.stopImmediatePropagation();downloadCurrentBackup();return;}return;}
+  if(replacement){if(target.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();return;}if(target.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}if(target.closest('[data-backup-current]')){event.preventDefault();event.stopImmediatePropagation();downloadCurrentBackup();return;}return;}
  if(entityDeleteNotice&&target.closest('[data-close-entity-delete-notice]')){event.preventDefault();event.stopImmediatePropagation();entityDeleteNotice=null;render();return;}
  if(rescaleProposal){const action=rescaleActionFor(target,event.target);if(action==='approve'){event.preventDefault();event.stopImmediatePropagation();const proposal=rescaleProposal;rescaleProposal=null;const result=applyDimensionAndRescale(s,proposal.dimension,proposal.values);if(!result.ok)dimensionError=result.reason;else{s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;s.pendingDraft=false;}update();return;}if(action==='cancel'){event.preventDefault();event.stopImmediatePropagation();rescaleProposal=null;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}return;}
- if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();exportCurrentDataset();return;}
- if(target.closest('[data-successor-backup]')){event.preventDefault();event.stopImmediatePropagation();downloadCurrentBackup();return;}
- if(target.closest('[data-import-trigger]'))return;
- if(target.closest('[data-workspace-restore-trigger]'))return;
+  if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMore();exportCurrentDataset();return;}
+  if(target.closest('[data-successor-backup]')){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMore();downloadCurrentBackup();return;}
+  if(target.closest('[data-import-trigger]')){event.preventDefault();event.stopImmediatePropagation();openWorkspaceFilePicker('dataset-file');return;}
+  if(target.closest('[data-workspace-restore-trigger]')){event.preventDefault();event.stopImmediatePropagation();openWorkspaceFilePicker('workspace-file');return;}
  if(target.closest('[data-edit-entity]')){event.preventDefault();event.stopImmediatePropagation();const id=target.closest('[data-edit-entity]').dataset.editEntity;entityFormError=null;editEntityId=id;entityMenu=null;s.entityFormOpen=true;pendingEntityDraft={editId:id,name:s.dataset.entities.find(item=>item?.id===id)?.name??'',description:s.dataset.entities.find(item=>item?.id===id)?.description??''};render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
  if(target.closest('[data-delete-entity]')){event.preventDefault();event.stopImmediatePropagation();relationDeletionFeedback(target.closest('[data-delete-entity]').dataset.deleteEntity);return;}
  if(target.closest('[data-edit-dimension]')){event.preventDefault();event.stopImmediatePropagation();dimensionDraft=null;dimensionError=null;dimensionWarning=null;s.editDimension=target.closest('[data-edit-dimension]').dataset.editDimension;s.dimensionFormOpen=true;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}
@@ -529,6 +533,8 @@ function captureSuccessorClick(event){
  if(target.dataset.action==='return-waiting'){event.preventDefault();event.stopImmediatePropagation();openConfirmation('axisClear',target.dataset.entity);return;}
 }
 document.addEventListener('click',captureSuccessorClick,true);
+document.addEventListener('click',event=>{const menu=root.querySelector('.workspace-more');if(menu?.open&&!menu.contains(event.target))menu.open=false;});
+document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const menu=root.querySelector('.workspace-more');if(menu?.open){event.preventDefault();menu.open=false;menu.querySelector('summary')?.focus();}});
 document.addEventListener('submit',event=>{
  const form=event.target,formId=formAttributeId(form);if(formId==='entity-form'){
    event.preventDefault();event.stopImmediatePropagation();const name=form.elements.namedItem('dataset-entity-name').value,description=form.elements.namedItem('dataset-entity-description').value;
@@ -562,7 +568,7 @@ document.addEventListener('input',event=>{
 },true);
 installBeforeUnloadProtection(window,()=>s);
 document.addEventListener('keydown',event=>{
- if(replacement||entityDeleteNotice||rescaleProposal){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();const trigger=replacement?.kind==='workspace'?'[data-workspace-restore-trigger]':'[data-import-trigger]';const hadReplacement=Boolean(replacement);if(replacement)replacement=null;if(entityDeleteNotice)entityDeleteNotice=null;if(rescaleProposal)rescaleProposal=null;render();if(hadReplacement)root.querySelector(trigger)?.focus();}else if(event.key==='Tab')trapDialogTab(event,'.confirm-dialog');}
+ if(replacement||entityDeleteNotice||rescaleProposal){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();const hadReplacement=Boolean(replacement);if(replacement)replacement=null;if(entityDeleteNotice)entityDeleteNotice=null;if(rescaleProposal)rescaleProposal=null;render();if(hadReplacement)root.querySelector('.workspace-more-trigger')?.focus();}else if(event.key==='Tab')trapDialogTab(event,'.confirm-dialog');}
 },true);
 
 // Wire endpoint-label and unit presence without normalizing the text itself.

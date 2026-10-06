@@ -41,6 +41,8 @@ test('successor entry point wires replacement rendering, form identity, stale-no
   assert.doesNotMatch(source,/document\.addEventListener\(['"]beforeunload['"]/);
   assert.match(source,/placeholder="Describe this Entity"/);
   assert.doesNotMatch(source,/placeholder="Describe this temporary Entity"/);
+  assert.match(source,/nav class="tabs" aria-label="Views"[^\n]*aria-current="\$\{s\.view===v\?'page':'false'\}"/);
+  assert.doesNotMatch(source,/aria-pressed=/);
 });
 
 test('current Dataset context uses the E2R metadata title and an absent-title fallback',()=>{
