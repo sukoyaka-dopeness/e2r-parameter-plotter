@@ -16,11 +16,16 @@ Human tested the local working tree based on checkpoint
 regression-hardening, and presentation changes listed in the implementation
 checkpoint. That exact accepted source set is now fixed in local commit
 `b9a8e1fee6499c191c66033296e98965d777684e` (`fix: close successor browser
-acceptance gaps`). The source commit contains the previously tested changes;
-no application-source change was made after Human acceptance. This acceptance
-record is a later documentation commit. The source remains unpublished, and
-any later source change must be assessed against this evidence before treating
-it as the accepted implementation.
+acceptance gaps`). The source commit contains the previously tested changes.
+This acceptance record is a later documentation commit. The source remains
+unpublished, and any later source change must be assessed against this evidence
+before treating it as the accepted implementation.
+
+The later local commit `a27b6ef5056291cbe1c5a2ff80e69a43c55aa5c8`
+changes only the direct Dataset Entity Description placeholder from
+“temporary Entity” to “Entity” and adds a regression assertion. It is a
+post-acceptance copy correction; it does not replace or broaden the exact
+Human-accepted source revision above.
 
 The evidence combines direct Human operation in Microsoft Edge, Codex-led
 real-browser operation at `http://localhost:4181/`, and repository-local
