@@ -1,18 +1,25 @@
 import {fmt} from './model.js';
 
 export function hasAuthoredEndpointLabels(dimension){
- return dimension?.endpointLabelsPresent===true;
+ return hasAuthoredEndpointLabel(dimension,'low')||hasAuthoredEndpointLabel(dimension,'high');
+}
+
+export function hasAuthoredEndpointLabel(dimension,side){
+ const label=side==='low'?dimension?.low:dimension?.high;
+ return dimension?.endpointLabelsPresent===true&&typeof label==='string'&&label.length>0;
 }
 
 export function endpointText(dimension,side,format=fmt){
  const low=side==='low',value=format(low?dimension?.min:dimension?.max,dimension);
- if(!hasAuthoredEndpointLabels(dimension))return value;
- return low?dimension.low:dimension.high;
+ return hasAuthoredEndpointLabel(dimension,side)?(low?dimension.low:dimension.high):value;
+}
+
+export function endpointBoundaryText(dimension,side,format=fmt){
+ const low=side==='low',value=format(low?dimension?.min:dimension?.max,dimension);
+ if(!hasAuthoredEndpointLabel(dimension,side))return value;
+ return low?`${dimension.low} · ${value}`:`${value} · ${dimension.high}`;
 }
 
 export function endpointRangeText(dimension,format=fmt){
- const min=format(dimension?.min,dimension),max=format(dimension?.max,dimension);
- return hasAuthoredEndpointLabels(dimension)
-  ?`${dimension.low} · ${min} → ${max} · ${dimension.high}`
-  :`${min} → ${max}`;
+ return `${endpointBoundaryText(dimension,'low',format)} → ${endpointBoundaryText(dimension,'high',format)}`;
 }
