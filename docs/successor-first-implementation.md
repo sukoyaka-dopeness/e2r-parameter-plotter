@@ -59,9 +59,10 @@ The local successor source integrates the E2R Validator's Candidate
 vendor/e2r-validator/. The canonical Validator source remains in
 C:\Users\extra\E2R\e2r-validator; scripts/sync-validator-vendor.mjs
 synchronizes the browser copy from that adjacent checkout. The vendored
-snapshot currently includes Candidate support that is still uncommitted in
-the Validator repository. Review both repository diffs together before either
-source is committed.
+snapshot matches Validator local commit
+`6533e970ddc5d5131a1f39fe88e22d8f6402c416`; the accepted ParameterPlotter
+source including that snapshot is local commit
+`b9a8e1fee6499c191c66033296e98965d777684e`. Both commits remain unpublished.
 
 Application code is still intentionally flat at this first successor
 checkpoint. Domain mutations are isolated in successor-domain.js, workspace
@@ -101,5 +102,7 @@ deployment.
 - The previously recorded Quadrant resize-to-scroll connector defect and
   waiting-Entity plot-click discoverability remain separate follow-ups. This
   implementation does not promote them to blockers.
-- No commit, push, tag, release, deployment, Pages publication, or Hub listing
-  has occurred.
+- The accepted source and acceptance record are fixed in local commits
+  `b9a8e1fee6499c191c66033296e98965d777684e` and
+  `a46c853abe8d4fdf702130c67b21f93daf9aea51`. No push, tag, release,
+  deployment, Pages publication, or Hub listing has occurred.
