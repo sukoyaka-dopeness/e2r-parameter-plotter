@@ -4,6 +4,7 @@ import {renderProfile, renderQuadrant, renderRadar, renderMatrix} from './views.
 import {dimensionRange, rangePosition, valueAtRangePosition, quadrantOutOfRangeEntities} from './model.js';
 import {layoutPlotLabels} from './plot-labels.js';
 import {shortId, duplicateDimension, dimensionDisplayName, dimensionNeedsId, radarAxisName, entityNeedsId, deleteDimension, deleteTemporaryEntity, returnToWaiting} from './workspace-actions.js';
+import {endpointRangeText} from './endpoint-presentation.js';
 import {numericError, showNumericError} from './field-validation.js';
 import {parseFiniteDecimal} from './field-validation.js';
 import {confirmationMarkup} from './confirmation-dialog.js';
@@ -414,7 +415,7 @@ renderEntityList=function(){
 };
 renderDimensionList=function(){
  const q=dimensionQuery.toLocaleLowerCase(),allowed=candidateAuthoringAvailable(s);
- root.querySelector('#dimension-list').innerHTML=s.dimensions.filter(d=>[d.name,d.low,d.high,String(d.min),String(d.max),String(d.unit||'')].some(text=>text.toLocaleLowerCase().includes(q))).map(d=>`<div class="list-row dimension-list-row"><span><strong>${esc(d.name)}</strong><small>${esc(d.low||'Low')} · ${fmt(d.min)} → ${fmt(d.max)} · ${esc(d.high||'High')}</small>${d.unit!==undefined?`<small class="dimension-unit">${esc(d.unit)}</small>`:''}${d.integerOnly===true?'<small>Integer values only</small>':''}${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Delete</button></div>`).join('')||`<p>${s.dimensions.length?'No matching Dimensions':'No portable Dimensions yet.'}</p>`;
+ root.querySelector('#dimension-list').innerHTML=s.dimensions.filter(d=>[d.name,d.low,d.high,String(d.min),String(d.max),String(d.unit||'')].some(text=>text.toLocaleLowerCase().includes(q))).map(d=>`<div class="list-row dimension-list-row"><span><strong>${esc(d.name)}</strong><small>${esc(endpointRangeText(d))}</small>${d.unit!==undefined?`<small class="dimension-unit">${esc(d.unit)}</small>`:''}${d.integerOnly===true?'<small>Integer values only</small>':''}${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Delete</button></div>`).join('')||`<p>${s.dimensions.length?'No matching Dimensions':'No portable Dimensions yet.'}</p>`;
 };
 function localEntityName(id){const index=s.dataset.entities.findIndex(entity=>entity?.id===id);return index<0?'Entity':label(s.dataset.entities[index],index);}
 function diagnosticMarkup(){

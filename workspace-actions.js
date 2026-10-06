@@ -1,4 +1,5 @@
 import {entities, setValue, dimensionRange} from './model.js';
+import {endpointRangeText} from './endpoint-presentation.js';
 
 export const shortId = id => id.length > 12 ? id.slice(-8) : id;
 const same = (a,b) => a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
@@ -14,7 +15,7 @@ export function duplicateDimension(state, draft){
 export function dimensionDisplayName(state, dimension){
  const names=state.dimensions.filter(d=>same(d.name,dimension.name));
  if(names.length<2)return dimension.name;
- const range=dimensionRange(dimension),detail=`${dimension.name} · ${dimension.low} → ${dimension.high} · ${range.min}–${range.max}${dimension.unit?` · ${dimension.unit}`:''}`;
+ const detail=`${dimension.name} · ${endpointRangeText(dimension,(value)=>String(value))}${dimension.unit?` · ${dimension.unit}`:''}`;
  return names.some(d=>{const other=dimensionRange(d);return d.id!==dimension.id&&same(d.low,dimension.low)&&same(d.high,dimension.high)&&other.min===range.min&&other.max===range.max&&same(d.unit||'',dimension.unit||'');})?`${detail} · ${shortId(dimension.id)}`:detail;
 }
 
