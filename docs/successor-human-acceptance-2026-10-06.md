@@ -71,10 +71,12 @@ as a browser PASS. The listed Human and Codex browser cases passed.
 
 The tested worktree includes bounded presentation corrections for Dataset
 title/identity visibility, inactive View-tab affordance, Dimension option
-checkbox association, and stale action-specific notices. Remaining known UI
-follow-ups are the new Dataset Entity Description placeholder and the Low/High
-fallback labels when endpoint labels are absent. They did not block this
-functional acceptance. Existing Prototype 2 Quadrant connector and
+checkbox association, and stale action-specific notices. The new Dataset
+Entity Description placeholder was corrected after acceptance in the
+copy-only follow-up noted above. The remaining known UI follow-up is the
+Low/High fallback labels when endpoint labels are absent; their wording and
+presentation remain a Human choice and did not block this functional
+acceptance. Existing Prototype 2 Quadrant connector and
 waiting-Entity discoverability follow-ups remain separate. This record does
 not claim a separate narrow-viewport visual review of the successor.
 
