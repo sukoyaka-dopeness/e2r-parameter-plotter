@@ -2,7 +2,7 @@
 
 Date: 2026-10-05
 
-Status: **FUNCTIONAL HUMAN ACCEPTANCE COMPLETE / ACCEPTED SOURCE `b9a8e1fee6499c191c66033296e98965d777684e` / CURRENT VERIFIED LOCAL SOURCE `35e8a8c1612d4aa9ce00feef75f255d4d5a6776d` / UNPUBLISHED / CANDIDATE NOT STABLE**
+Status: **FUNCTIONAL HUMAN ACCEPTANCE COMPLETE / ACCEPTED SOURCE `b9a8e1fee6499c191c66033296e98965d777684e` / CURRENT VERIFIED LOCAL SOURCE `623b73b77d055be7f38d8d87ba109e7c8947c0a3` / UNPUBLISHED / CANDIDATE NOT STABLE**
 
 This is a bounded successor implementation in the canonical
 e2r-parameter-plotter repository. It does not change the historical
@@ -101,6 +101,13 @@ retains explicit Candidate labels when present. Both changes have automated
 regression coverage and do not change Candidate semantics or the accepted
 behavior baseline. The exact Human-accepted source remains
 `b9a8e1fee6499c191c66033296e98965d777684e`.
+
+Commit `623b73b77d055be7f38d8d87ba109e7c8947c0a3` further corrected empty
+endpoint-label fields so they do not leave orphan separators. The same
+presentation helper now owns the Profile, Radar, Quadrant, Matrix, and
+Dimension Pool range paths. A 390px real-browser review covered all four views,
+including Radar spoke additions and Quadrant axis selection; this is a
+post-Acceptance correction and does not replace the accepted source revision.
 
 ## Historical references and separate follow-ups
 

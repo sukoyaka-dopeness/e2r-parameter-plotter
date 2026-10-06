@@ -21,13 +21,14 @@ This acceptance record is a later documentation commit. The source remains
 unpublished, and any later source change must be assessed against this evidence
 before treating it as the accepted implementation.
 
-Later local commits `a27b6ef5056291cbe1c5a2ff80e69a43c55aa5c8` and
-`35e8a8c1612d4aa9ce00feef75f255d4d5a6776d` add a copy-only direct Dataset
-Entity Description placeholder correction and implement the Human-decided
-endpoint-label presentation policy, respectively. Automated regression tests
-cover both corrections. Neither revision replaces or broadens the exact
-Human-accepted source above; the later source has not received a new Human
-functional acceptance.
+Later local commits `a27b6ef5056291cbe1c5a2ff80e69a43c55aa5c8`,
+`35e8a8c1612d4aa9ce00feef75f255d4d5a6776d`, and
+`623b73b77d055be7f38d8d87ba109e7c8947c0a3` add a copy-only direct Dataset
+Entity Description placeholder correction, implement the Human-decided
+endpoint-label presentation policy, and suppress orphan separators when label
+fields are present but empty. Automated regression tests cover these
+corrections. None replaces or broadens the exact Human-accepted source above;
+the later source has not received a new Human functional acceptance.
 
 The evidence combines direct Human operation in Microsoft Edge, Codex-led
 real-browser operation at `http://localhost:4181/`, and repository-local
@@ -75,13 +76,15 @@ The tested worktree includes bounded presentation corrections for Dataset
 title/identity visibility, inactive View-tab affordance, Dimension option
 checkbox association, and stale action-specific notices. The Dataset Entity
 Description placeholder and absent-endpoint-label presentation were corrected
-after acceptance in the follow-ups noted above. A separate real-browser narrow
-viewport review of the successor remains **NOT RUN**: Computer Use stopped
-because it could not determine the active Edge URL confidently enough to
-continue. Automated checks do not substitute for that requested review.
-Existing Prototype 2 Quadrant connector and
-waiting-Entity discoverability follow-ups remain separate. This record does
-not claim a separate narrow-viewport visual review of the successor.
+after acceptance in the follow-ups noted above. A subsequent 390px local
+real-browser review checked Profile, Radar (including adding three spokes),
+Quadrant (including selecting both axes), and Matrix. All displayed numeric
+MIN/MAX without empty-label separators; no new clipping or horizontal overflow
+was seen. The Matrix's existing horizontal table scroll remained usable. This
+narrow review is evidence about the post-Acceptance correction only and does
+not change the Human-accepted source boundary. Existing Prototype 2 Quadrant
+connector and waiting-Entity discoverability follow-ups remain separate. This
+record does not claim Human functional acceptance of the later source.
 
 Other browsers, hosted/deployed behavior, Candidate Stable registration, and
 cross-consumer interoperability were **NOT RUN** and are outside this bounded
