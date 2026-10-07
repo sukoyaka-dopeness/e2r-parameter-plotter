@@ -27,7 +27,7 @@ test('Home offers Continue Editing only when caller confirms recoverable local w
 
 test('Application shell provides a shared Footer and a bounded Credits dialog',async()=>{
   const footer=footerMarkup(),dialog=creditsMarkup();
-  assert.match(footer,/E2R Entity comparison[\s\S]*data-open-credits/);
+  assert.match(footer,/E2R comparison editor[\s\S]*data-open-credits/);
   assert.match(dialog,/role="dialog" aria-modal="true"/);
   assert.match(dialog,/Application: ParameterPlotter/);
   assert.match(dialog,/Creator: sukoyaka-dopeness/);
@@ -58,7 +58,7 @@ test('Home uses the white application surface while the workspace remains distin
   assert.match(css,/\.home-actions button\s*\{[^}]*min-height:\s*40px;[^}]*font-size:\s*16px/);
   assert.match(css,/\.credits-dialog\s*\{[^}]*width:\s*min\(100%, 28rem\);[^}]*padding:\s*16px;[^}]*border-radius:\s*6px/);
   assert.match(css,/\.credits-metadata p\s*\{\s*margin:\s*0;?\s*\}/);
-  assert.match(css,/@media \(max-width: 600px\)[\s\S]*\.app-footer \.credits-button \{ min-height: 40px; padding: 8px 12px/);
+  assert.doesNotMatch(css,/@media \(max-width: 600px\)[\s\S]*\.app-footer \.credits-button/);
   assert.match(css,/@media \(max-width: 1024px\) \{ :root \{ font-size: 16px; \} \}/);
 });
 

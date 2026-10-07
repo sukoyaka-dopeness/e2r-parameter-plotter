@@ -24,3 +24,6 @@ test('value-bearing UI phrases translate without changing authored Dimension nam
   assert.equal(translateUiText('Impact selected · Arrow keys adjust Primary by 1. Secondary stays comparison-only.'),'Impactを選択しました · 矢印キーで主エンティティの値を1刻みで調整できます。比較エンティティは表示専用です。');
   assert.equal(translateUiText('Value unchanged · this Dimension accepts integers from -2.7 to 3.6. The recorded value remains in session data.'),'値は変更されませんでした · この評価軸では-2.7〜3.6の整数を入力できます。記録済みの値は保持されます。');
 });
+test('Footer descriptor keeps the approved English and Japanese wording',()=>{
+  assert.equal(translateUiText('E2R comparison editor'),'E2R比較エディター');
+});

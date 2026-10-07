@@ -1,5 +1,5 @@
 export function footerMarkup() {
-  return `<footer class="app-footer"><small>E2R Entity comparison</small><button class="credits-button" data-open-credits>Credits</button></footer>`;
+  return `<footer class="app-footer"><small>E2R comparison editor</small><button class="credits-button" data-open-credits>Credits</button></footer>`;
 }
 
 export function creditsMarkup() {
