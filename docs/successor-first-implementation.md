@@ -225,9 +225,11 @@ removing Backup does not treat memory-only work as saved or waive loss warnings.
 Exact storage-failure retry/recovery UX remains open.
 
 The 2026-10-07 bounded runtime correction removes Workspace Backup/Restore from
-the current local working tree. Browser-local persistence and recovery,
-Dataset Export, replacement/unload loss protection, and visible degraded or
-unsaved handling remain separate responsibilities. This correction does not
-transfer Functional Human Acceptance from source
-`b9a8e1fee6499c191c66033296e98965d777684e` to later source changes; the
-current working tree remains subject to Human Browser Acceptance.
+source `34f72fad67b9d59b011dbad3880ff0f5a09a0f45`. Human accepted this
+correction as a separate checkpoint; see the [Workspace Backup/Restore removal
+acceptance result](workspace-backup-removal-human-acceptance-2026-10-07.md).
+Browser-local persistence and recovery, Dataset Export, replacement/unload
+loss protection, and visible degraded or unsaved handling remain separate
+responsibilities. This correction does not transfer Functional Human
+Acceptance from source `b9a8e1fee6499c191c66033296e98965d777684e` to later
+source changes.
