@@ -147,6 +147,7 @@ ja.set('Dataset title','Datasetタイトル');
 ja.set('Apply','適用');
 ja.set('Workspace actions','作業操作');
 ja.set('Dataset title applied. E2R JSON Export is a separate step.','データセットのタイトルを適用しました。E2R JSONの書き出しは別の操作です。');
+ja.set('Create dimensions to populate the Matrix.','評価軸を作成するとマトリクスに表示されます。');
 export function translateUiText(value) {
   const trimmed=value.trim();
   if(!trimmed)return value;
@@ -175,7 +176,11 @@ export function localizeUi(root,locale) {
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   for(let node=walker.nextNode();node;node=walker.nextNode()){
     if(node.parentElement?.closest(protectedContent)){
-      if(node.parentElement?.matches('.temp-badge')||node.parentElement?.matches('.pager-current strong')&&node.nodeValue.trim()==='Choose Entity')node.nodeValue=translateUiText(node.nodeValue);
+      if(node.parentElement?.matches('.temp-badge')||node.parentElement?.matches('.pager-current strong')&&node.nodeValue.trim()==='Choose Entity'||node.parentElement?.matches('.quadrant-axis-name span')&&node.nodeValue.trim()==='Choose dimension')node.nodeValue=translateUiText(node.nodeValue);
+      continue;
+    }
+    if(node.parentElement?.closest('[data-matrix-empty]')&&node.nodeValue.startsWith('Selected Entity: ')){
+      node.nodeValue=node.nodeValue.replace(/^Selected Entity: /,'選択中のエンティティ: ');
       continue;
     }
     const option=node.parentElement?.closest('option');
@@ -198,6 +203,13 @@ export function localizeUi(root,locale) {
       const label=element.getAttribute('aria-label');
       if(label?.startsWith('Choose Primary Entity'))element.setAttribute('aria-label',label.replace('Choose Primary Entity','主エンティティを選択'));
       if(label?.startsWith('Choose unplotted Entity'))element.setAttribute('aria-label',label.replace('Choose unplotted Entity','未配置のエンティティを選択'));
+      const title=element.getAttribute('title');
+      if(title?.includes(' · Open Entity Pool'))element.setAttribute('title',title.replace(/^Choose Entity/,'エンティティを選択').replace(' · Open Entity Pool',' · エンティティ一覧を開く').replace('; drag to place','。ドラッグして配置'));
+      continue;
+    }
+    if(element.matches('[data-entity-menu]')){
+      const label=element.getAttribute('aria-label');
+      if(label?.startsWith('Actions for '))element.setAttribute('aria-label',`操作: ${label.slice('Actions for '.length)}`);
       continue;
     }
     if(element.matches(protectedContent)||element.closest('.plot-item,.matrix-row-identity')||element.matches('[data-entity-menu],[data-choose-entity],[data-matrix-row-handle],[data-vertex],[data-random]:not([data-random="card"]),.pager-current,.matrix-grip'))continue;
