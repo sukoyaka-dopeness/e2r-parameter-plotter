@@ -1,0 +1,596 @@
+{
+  "version": "1.0",
+  "entities": [
+    {
+      "id": "elara",
+      "name": "Elara Veyne",
+      "description": "Crown princess and reluctant regent."
+    },
+    {
+      "id": "garrick",
+      "name": "Garrick Thorn",
+      "description": "Captain of the royal guard."
+    },
+    {
+      "id": "selene",
+      "name": "Selene Arclight",
+      "description": "Court mage studying the sealed vault."
+    },
+    {
+      "id": "rowan",
+      "name": "Rowan Vale",
+      "description": "Smuggler and information broker."
+    },
+    {
+      "id": "mira",
+      "name": "Mira Fen",
+      "description": "Healer who treats anyone in need."
+    },
+    {
+      "id": "darius",
+      "name": "Darius Halden",
+      "description": "Northern lord with a hidden agenda."
+    },
+    {
+      "id": "ilyan",
+      "name": "Ilyan Merrow",
+      "description": "High priest and guardian of an old sanctuary."
+    },
+    {
+      "id": "nyra",
+      "name": "Nyra Sol",
+      "description": "Foreign envoy seeking a fragile peace."
+    },
+    {
+      "id": "kael",
+      "name": "Kael Rook",
+      "description": "Leader of the Free Banner."
+    },
+    {
+      "id": "vhalgrim",
+      "name": "Vhalgrim",
+      "description": "Ancient dragon beneath Cinder Peak."
+    }
+  ],
+  "events": [
+    {
+      "id": "king-death",
+      "name": "Death of the King",
+      "description": "The old king dies unexpectedly.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 742
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "regency",
+      "name": "Elara Named Regent",
+      "description": "Elara assumes the regency.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 743
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tax-revolt",
+      "name": "Northern Tax Revolt",
+      "description": "Northern houses refuse the crown tax.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 744
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "vault-opened",
+      "name": "Opening of the Sealed Vault",
+      "description": "Selene opens the sealed vault.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 745
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "envoy-arrival",
+      "name": "Arrival of the Foreign Envoy",
+      "description": "Nyra arrives to negotiate peace.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 746
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "regent-attack",
+      "name": "Attempt on the Regent",
+      "description": "An attempt is made on Elara's life.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 747
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "banner-uprising",
+      "name": "Free Banner Uprising",
+      "description": "Kael's rebellion reaches the capital.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 748
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sanctuary-burning",
+      "name": "Burning of Saint Orra's Sanctuary",
+      "description": "The sanctuary burns during the unrest.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 749
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dragon-awakening",
+      "name": "Awakening of Vhalgrim",
+      "description": "The ancient dragon wakes beneath Cinder Peak.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 750
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cinder-pact",
+      "name": "Secret Pact at Cinder Peak",
+      "description": "Elara and Vhalgrim make a dangerous pact.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 751
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asterfall-siege",
+      "name": "Siege of Asterfall",
+      "description": "The rival factions meet at Asterfall.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 752
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ashen-concord",
+      "name": "The Ashen Crown Concord",
+      "description": "The factions agree to a new order.",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 755
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "name": "commands",
+      "sourceId": "elara",
+      "targetId": "garrick"
+    },
+    {
+      "id": "r2",
+      "name": "trusts",
+      "sourceId": "elara",
+      "targetId": "selene"
+    },
+    {
+      "id": "r3",
+      "name": "advises",
+      "sourceId": "nyra",
+      "targetId": "elara"
+    },
+    {
+      "id": "r4",
+      "name": "owes his life to",
+      "sourceId": "garrick",
+      "targetId": "mira"
+    },
+    {
+      "id": "r5",
+      "name": "rivals",
+      "sourceId": "garrick",
+      "targetId": "kael"
+    },
+    {
+      "id": "r6",
+      "name": "disputes with",
+      "sourceId": "selene",
+      "targetId": "ilyan"
+    },
+    {
+      "id": "r7",
+      "name": "passes secrets to",
+      "sourceId": "rowan",
+      "targetId": "nyra"
+    },
+    {
+      "id": "r8",
+      "name": "supplies",
+      "sourceId": "rowan",
+      "targetId": "kael"
+    },
+    {
+      "id": "r9",
+      "name": "treats",
+      "sourceId": "mira",
+      "targetId": "kael"
+    },
+    {
+      "id": "r10",
+      "name": "funds in secret",
+      "sourceId": "darius",
+      "targetId": "kael"
+    },
+    {
+      "id": "r11",
+      "name": "uncle of",
+      "sourceId": "darius",
+      "targetId": "elara"
+    },
+    {
+      "id": "r12",
+      "name": "protects",
+      "sourceId": "ilyan",
+      "targetId": "mira"
+    },
+    {
+      "id": "r13",
+      "name": "bound by oath to",
+      "sourceId": "vhalgrim",
+      "targetId": "selene"
+    },
+    {
+      "id": "r14",
+      "name": "holds a pact with",
+      "sourceId": "elara",
+      "targetId": "vhalgrim"
+    },
+    {
+      "id": "r15",
+      "name": "opposes",
+      "sourceId": "kael",
+      "targetId": "elara"
+    },
+    {
+      "id": "r16",
+      "name": "suspects",
+      "sourceId": "nyra",
+      "targetId": "darius"
+    },
+    {
+      "id": "r17",
+      "name": "blackmails",
+      "sourceId": "darius",
+      "targetId": "rowan"
+    },
+    {
+      "id": "e1",
+      "sourceId": "king-death",
+      "targetId": "elara"
+    },
+    {
+      "id": "e2",
+      "sourceId": "regency",
+      "targetId": "elara"
+    },
+    {
+      "id": "e3",
+      "sourceId": "tax-revolt",
+      "targetId": "darius"
+    },
+    {
+      "id": "e4",
+      "sourceId": "vault-opened",
+      "targetId": "selene"
+    },
+    {
+      "id": "e5",
+      "sourceId": "envoy-arrival",
+      "targetId": "nyra"
+    },
+    {
+      "id": "e6",
+      "sourceId": "regent-attack",
+      "targetId": "elara"
+    },
+    {
+      "id": "e7",
+      "sourceId": "banner-uprising",
+      "targetId": "kael"
+    },
+    {
+      "id": "e8",
+      "sourceId": "sanctuary-burning",
+      "targetId": "ilyan"
+    },
+    {
+      "id": "e9",
+      "sourceId": "dragon-awakening",
+      "targetId": "vhalgrim"
+    },
+    {
+      "id": "e10",
+      "sourceId": "cinder-pact",
+      "targetId": "elara"
+    },
+    {
+      "id": "e11",
+      "sourceId": "cinder-pact",
+      "targetId": "vhalgrim"
+    },
+    {
+      "id": "e12",
+      "sourceId": "asterfall-siege",
+      "targetId": "kael"
+    },
+    {
+      "id": "e13",
+      "sourceId": "asterfall-siege",
+      "targetId": "elara"
+    },
+    {
+      "id": "e14",
+      "sourceId": "ashen-concord",
+      "targetId": "elara"
+    },
+    {
+      "id": "e15",
+      "sourceId": "ashen-concord",
+      "targetId": "kael"
+    },
+    {
+      "id": "p1",
+      "sourceId": "king-death",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p2",
+      "sourceId": "regency",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p3",
+      "sourceId": "regency",
+      "targetId": "darius"
+    },
+    {
+      "id": "p4",
+      "sourceId": "tax-revolt",
+      "targetId": "kael"
+    },
+    {
+      "id": "p5",
+      "sourceId": "tax-revolt",
+      "targetId": "rowan"
+    },
+    {
+      "id": "p6",
+      "sourceId": "vault-opened",
+      "targetId": "ilyan"
+    },
+    {
+      "id": "p7",
+      "sourceId": "vault-opened",
+      "targetId": "elara"
+    },
+    {
+      "id": "p8",
+      "sourceId": "envoy-arrival",
+      "targetId": "elara"
+    },
+    {
+      "id": "p9",
+      "sourceId": "envoy-arrival",
+      "targetId": "rowan"
+    },
+    {
+      "id": "p10",
+      "sourceId": "regent-attack",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p11",
+      "sourceId": "regent-attack",
+      "targetId": "mira"
+    },
+    {
+      "id": "p12",
+      "sourceId": "regent-attack",
+      "targetId": "rowan"
+    },
+    {
+      "id": "p13",
+      "sourceId": "banner-uprising",
+      "targetId": "rowan"
+    },
+    {
+      "id": "p14",
+      "sourceId": "banner-uprising",
+      "targetId": "darius"
+    },
+    {
+      "id": "p15",
+      "sourceId": "banner-uprising",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p16",
+      "sourceId": "sanctuary-burning",
+      "targetId": "mira"
+    },
+    {
+      "id": "p17",
+      "sourceId": "sanctuary-burning",
+      "targetId": "kael"
+    },
+    {
+      "id": "p18",
+      "sourceId": "dragon-awakening",
+      "targetId": "selene"
+    },
+    {
+      "id": "p19",
+      "sourceId": "dragon-awakening",
+      "targetId": "ilyan"
+    },
+    {
+      "id": "p20",
+      "sourceId": "cinder-pact",
+      "targetId": "selene"
+    },
+    {
+      "id": "p21",
+      "sourceId": "asterfall-siege",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p22",
+      "sourceId": "asterfall-siege",
+      "targetId": "mira"
+    },
+    {
+      "id": "p23",
+      "sourceId": "asterfall-siege",
+      "targetId": "nyra"
+    },
+    {
+      "id": "p24",
+      "sourceId": "ashen-concord",
+      "targetId": "nyra"
+    },
+    {
+      "id": "p25",
+      "sourceId": "ashen-concord",
+      "targetId": "ilyan"
+    }
+  ],
+  "extensions": {
+    "metadata": {
+      "datasetId": "ashen-crown-en-v1",
+      "title": "The Ashen Crown"
+    },
+    "draft.github.sukoyaka-dopeness.specification": {
+      "specVersion": "0.1.0",
+      "uses": [
+        {
+          "extension": "metadata",
+          "version": "1.0.0"
+        },
+        {
+          "extension": "history",
+          "version": "2.0.0"
+        }
+      ]
+    }
+  }
+}

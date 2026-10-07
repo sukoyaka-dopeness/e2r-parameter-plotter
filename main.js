@@ -20,7 +20,12 @@ import {acceptsDimensionValue, authoredValueAtPosition, matrixEntities, reorderM
 import {formAttributeId, rescaleActionFor} from './successor-event-wiring.js';
 import {datasetTitleFor} from './dataset-context.js';
 import {workspaceActionsMarkup} from './workspace-actions-menu.js';
+import {homeMarkup} from './home-screen.js';
+import {footerMarkup, creditsMarkup} from './application-shell.js';
 let s = load();
+let surface = 'home';
+let homeError = '';
+let creditsOpen = false;
 let pagerDirection = 0;
 let radarSelectedDimension = null;
 let closingDrawer = null;
@@ -63,11 +68,11 @@ function render() {
   <main><div class="topline"><div><strong>${allEntities.length?`${allEntities.length} ${allEntities.length===1?'Dataset Entity':'Dataset Entities'} available`:'No Dataset Entities available'}</strong><span> · ${s.dimensions.length} portable ${s.dimensions.length===1?'Dimension':'Dimensions'}</span></div><span>Comparison values are Dataset Assessments</span></div>
   <nav class="tabs" aria-label="Views">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<button class="${s.view===v?'active':''}" aria-current="${s.view===v?'page':'false'}" data-view="${v}">${v}</button>`).join('')}</nav><label class="view-select">View <select id="view-select">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<option ${s.view===v?'selected':''}>${v}</option>`).join('')}</select></label>
   <section class="workspace">${!allEntities.length?`<div class="empty"><h2>Start with an E2R Dataset</h2><p>Open a Dataset or create a Dataset Entity. No Assessment is inferred.</p><button data-action="entities">Open Entity Pool</button></div>`:s.view==='Profile'?renderProfile(api):s.view==='Quadrant'?renderQuadrant(api):s.view==='Radar'?renderRadar(api):renderMatrix(api)}</section></main>
-  ${showEntity||showDimension?`<button class="drawer-backdrop ${closingDrawer?'is-closing':''}" data-action="close-drawers" aria-label="Close panel" tabindex="-1"></button>`:''}
+  ${showEntity||showDimension?`<button class="drawer-backdrop is-backdrop-dismissible ${closingDrawer?'is-closing':''}" data-action="close-drawers" aria-label="Close panel" tabindex="-1"></button>`:''}
   ${showEntity?`<aside class="drawer ${closingDrawer==='entity'?'is-closing':'is-open'}" role="dialog" aria-modal="true" aria-label="Entity Pool"><div class="drawer-head"><h2>Entity Pool</h2><button data-action="close-pool">Close</button></div><p>Dataset Entities and session-only Entities can be compared together.</p><div class="pool-action"><button class="primary" data-action="add-entity">Add temporary Entity</button></div>${s.entityFormOpen?`<form id="entity-form" class="drawer-form" autocomplete="off"><h3>${editEntityId?'Edit temporary Entity':'Temporary Entity'}</h3><label>Name<input name="temporary-entity-name" autocomplete="off" required maxlength="80" placeholder="Entity name" value="${esc(s.tempEntities.find(e=>e.id===editEntityId)?.name||'')}"></label><label>Description (optional)<textarea name="temporary-entity-description" autocomplete="off" rows="3" placeholder="Describe this Entity">${esc(s.tempEntities.find(e=>e.id===editEntityId)?.description||'')}</textarea></label><div class="actions"><button class="primary" type="submit">${editEntityId?'Save Entity':'Create Entity'}</button><button type="button" data-action="cancel-entity-form">Cancel</button></div></form>`:''}<label class="pool-search">Search Entity list<input id="entity-search" placeholder="Filter by name" aria-label="Search Entities"></label><div id="entity-list" class="item-list"></div></aside>`:''}
   ${showDimension?`<aside class="drawer dimension-drawer ${closingDrawer==='dimension'?'is-closing':'is-open'}" role="dialog" aria-modal="true" aria-label="Dimension Pool"><div class="drawer-head"><div><p class="eyebrow">TEMPORARY AXES</p><h2>Dimension Pool</h2></div><button data-action="close-dimensions">Close</button></div><div class="pool-action"><button class="primary" data-action="add-dimension">Add dimension</button></div>${s.dimensionFormOpen?`<form id="dimension-form" class="drawer-form" autocomplete="off"><h3>${s.editDimension?'Edit dimension':'New dimension'}</h3><input type="hidden" name="id" value="${esc(s.editDimension||'')}"><label>Name<input name="dimension-name" autocomplete="off" required maxlength="80"></label><div class="field-pair"><label>Low label<input name="dimension-low" autocomplete="off" required maxlength="80"></label><label>High label<input name="dimension-high" autocomplete="off" required maxlength="80"></label></div>${dimensionWarning?`<div class="duplicate-warning" role="alert"><strong>${dimensionWarning.exact?'Possible exact duplicate':'Same name exists'}</strong><p>${dimensionWarning.exact?'A dimension already has this name and the same low/high labels.':'A dimension already has this name. Compare its low/high labels before continuing.'}</p><button type="submit" data-confirm-duplicate class="primary">${s.editDimension?'Save anyway':'Create anyway'}</button></div>`:''}<div class="actions"><button type="submit" class="primary">Save dimension</button><button type="button" data-action="cancel-dimension-form">Cancel</button></div></form>`:''}<label class="pool-search">Search Dimension list<input id="dimension-search" value="${esc(dimensionQuery)}" placeholder="Filter by name or labels" aria-label="Search dimensions"></label><div id="dimension-list" class="item-list dimension-list"></div></aside>`:''}
   ${contextMenu&&s.view==='Quadrant'?`<div class="plot-context-menu" role="menu" aria-label="Entity actions" style="left:${Math.min(contextMenu.x,innerWidth-190)}px;top:${Math.min(contextMenu.y,innerHeight-110)}px"><p>${esc(name(contextMenu.id))}</p><button role="menuitem" data-context-action="profile">Open Profile</button><button role="menuitem" data-context-action="waiting">Return to waiting</button></div>`:''}
-  ${confirmationMarkup(confirmation,s,esc)}${replacement?replacementMarkup():''}`;
+  ${confirmationMarkup(confirmation,s,esc)}${replacement?replacementMarkup(replacement):''}`;
   if(showEntity) renderEntityList(); if(showDimension) {renderDimensionList(); fillDimensionForm();}
   layoutPlotLabels(root);
   sizeRadarLabels(root);
@@ -405,7 +410,7 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-action="add-dim
 // Candidate successor shell. The accepted Prototype remains a separate historical
 // source; this runtime consumes the portable Candidate and persists a distinct workspace.
 let pendingEntityDraft=null;
-const runtimeHeader=()=>workspaceActionsMarkup({readOnly:s.readOnly,authoringUnavailable:s.readOnly||s.candidateUnsupported});
+const runtimeHeader=()=>`<button data-go-home>Home</button>${workspaceActionsMarkup({readOnly:s.readOnly,authoringUnavailable:s.readOnly||s.candidateUnsupported})}`;
 renderEntityList=function(){
  const q=(root.querySelector('#entity-search')?.value||'').toLocaleLowerCase();
  const rows=s.dataset.entities.map((entity,index)=>({entity,index})).filter(({entity,index})=>entity&&typeof entity==='object'&&[label(entity,index),String(entity.description||''),String(entity.id||'')].some(text=>text.toLocaleLowerCase().includes(q)));
@@ -433,12 +438,31 @@ function relationBlockerMarkup(){
 function rescaleMarkup(){
  if(!rescaleProposal)return '';
  const rows=Object.entries(rescaleProposal.values).map(([entityId,value])=>`<li>${esc(localEntityName(entityId))}: ${fmt(getValue(s,entityId,rescaleProposal.dimension.id))} \u2192 ${fmt(value,rescaleProposal.dimension)}</li>`).join('');
- return `<div class="confirm-scrim" data-cancel-rescale><section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="rescale-title"><h2 id="rescale-title">Review Assessment rescale</h2><p>Changing these bounds makes existing Assessments invalid. Review this linear rescale; nothing changes in the Dataset until you approve it.</p><ul>${rows}</ul><div class="actions"><button data-cancel-rescale>Back to Dimension edit</button><button class="primary" data-approve-rescale>Apply reviewed rescale</button></div></section></div>`;
+ return `<div class="confirm-scrim is-backdrop-dismissible" data-cancel-rescale><section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="rescale-title"><h2 id="rescale-title">Review Assessment rescale</h2><p>Changing these bounds makes existing Assessments invalid. Review this linear rescale; nothing changes in the Dataset until you approve it.</p><ul>${rows}</ul><div class="actions"><button data-cancel-rescale>Back to Dimension edit</button><button class="primary" data-approve-rescale>Apply reviewed rescale</button></div></section></div>`;
 }
 function currentReplacementMarkup(){return replacement?replacementMarkup(replacement):'';}
+function renderHome(){
+ const notice=s.persistence.status==='degraded'?s.persistence.message:'';
+ root.innerHTML=homeMarkup({canContinue:s.workspaceCreated&&s.persistence.status==='saved',notice,sampleError:homeError})+footerMarkup()+(creditsOpen?creditsMarkup():'')+currentReplacementMarkup();
+ document.title='ParameterPlotter';
+ root.className='app-frame home-page';
+ root.querySelectorAll('header,main,footer').forEach(element=>element.inert=Boolean(replacement));
+ if(creditsOpen)root.querySelectorAll('header,main,footer').forEach(element=>element.inert=true);
+ if(creditsOpen)root.querySelector('[data-close-credits]')?.focus();
+ if(replacement)root.querySelector('[data-cancel-replacement]')?.focus();
+}
 const baseRender=render;
 render=function(){
+ if(surface==='home'){renderHome();return;}
  baseRender();
+ root.insertAdjacentHTML('beforeend',footerMarkup()+(creditsOpen?creditsMarkup():''));
+ root.className='app-frame workspace-page';
+ root.querySelector(':scope > header')?.classList.add('app-header');
+ root.querySelector(':scope > header h1')?.classList.add('app-brand');
+ root.querySelector(':scope > header .header-actions')?.classList.add('shell-header-actions');
+ root.querySelectorAll(':scope > header .eyebrow, :scope > header .sub')?.forEach(element=>element.hidden=true);
+ root.querySelectorAll('header,main,footer').forEach(element=>element.inert=Boolean(creditsOpen));
+ if(creditsOpen)root.querySelector('[data-close-credits]')?.focus();
  document.title='ParameterPlotter';
  const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER DATASET COMPARISON';
  const subtitle=root.querySelector('header .sub');if(subtitle)subtitle.textContent='Author E2R Entities and Dimension Assessments. Browser-local persistence is separate from E2R Dataset Export.';
@@ -459,22 +483,34 @@ render=function(){
  if(confirmation||replacement||entityDeleteNotice||rescaleProposal)root.querySelector('.confirm-dialog button:not([disabled])')?.focus();
 };
 
-function showFileError(message){fileError=message;lifecycleNotice='';render();}
+function showFileError(message){if(surface==='home'){homeError=message;fileError='';}else fileError=message;lifecycleNotice='';render();}
 function downloadJson(filename,value){
  try{const blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=filename;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return true;}catch(error){lifecycleNotice=`Download could not be handed off: ${error?.message||'browser download unavailable'}`;render();return false;}
 }
-function startReplacement(kind,incoming){replacement={kind,state:incoming};render();root.querySelector('[data-cancel-replacement]')?.focus();}
+function startReplacement(kind,incoming){const homeFocus={ 'new-dataset':'new','sample-dataset':'sample','dataset':'open' };replacement={kind,state:incoming,returnSurface:surface,returnFocus:surface==='home'?homeFocus[kind]:null};render();root.querySelector('[data-cancel-replacement]')?.focus();}
+function cancelReplacement(){const request=replacement;replacement=null;surface=request?.returnSurface||'workspace';render();if(surface==='home'&&request?.returnFocus)root.querySelector(`[data-home-action="${request.returnFocus}"]`)?.focus();else if(surface==='workspace')root.querySelector('.workspace-more-trigger')?.focus();}
+function receiveDataset(kind,dataset){
+ const incoming=fresh(readDataset(dataset),{ui:{workspaceCreated:true}});
+ if(hasLossSensitiveWork(s))startReplacement(kind,incoming);
+ else{replacement={kind,state:incoming,returnSurface:surface};activateIncoming();}
+}
 function activateIncoming(){
  if(!replacement)return;
- const request=replacement;replacement=null;s=request.state;fileError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;s.pendingDraft=false;
+ const request=replacement;replacement=null;surface='workspace';s=request.state;s.workspaceCreated=true;fileError='';homeError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;s.pendingDraft=false;
  save(s);
  lifecycleNotice=s.persistence.status==='degraded'?'The Dataset was opened in memory, but the browser-local copy was not replaced. It remains unsaved and may be lost on reload or browser close.':'';
  render();
+ const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}
 }
 function importSelectedFile(file){
-  closeWorkspaceMore();
+ closeWorkspaceMore();
  if(!file)return;
- (async()=>{try{const incoming=fresh(readDataset(JSON.parse(await file.text())));if(hasLossSensitiveWork(s))startReplacement('dataset',incoming);else{replacement={kind:'dataset',state:incoming};activateIncoming();}}catch(error){showFileError(error?.message||'The selected file could not be opened.');}})();
+ (async()=>{try{receiveDataset('dataset',JSON.parse(await file.text()));}catch(error){homeError=error?.message||'The selected file could not be opened.';showFileError(homeError);}})();
+}
+async function openAshenCrownSample(){
+ homeError='';
+ try{const response=await fetch('./samples/ashen-crown.en.e2r.json');if(!response.ok)throw Error(`The sample Dataset could not be loaded (${response.status}).`);receiveDataset('sample-dataset',await response.json());}
+ catch(error){homeError=error?.message||'The sample Dataset could not be opened.';render();}
 }
 function exportCurrentDataset(){
  if(s.readOnly){lifecycleNotice='E2R Dataset Export is unavailable during diagnostic read-only inspection.';render();return;}
@@ -495,9 +531,20 @@ function clearLifecycleNotice(){
 function closeWorkspaceMore({restoreFocus=false}={}){const menu=root.querySelector('.workspace-more');if(!menu?.open)return;menu.open=false;if(restoreFocus)menu.querySelector('summary')?.focus();}
 function openDatasetFilePicker(){closeWorkspaceMore({restoreFocus:true});root.querySelector('#dataset-file')?.click();}
 function captureSuccessorClick(event){
- clearLifecycleNotice();
+ if(creditsOpen){
+  if(event.target.closest('[data-close-credits]')||event.target.matches('[data-credits-backdrop]')){event.preventDefault();event.stopImmediatePropagation();creditsOpen=false;render();root.querySelector('.credits-button')?.focus();}
+  return;
+ }
  const target=event.target.closest('button,[data-action],label');if(!target&&!(rescaleProposal&&event.target.matches('.confirm-scrim[data-cancel-rescale]')))return;
-  if(replacement){if(target.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();return;}if(target.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}return;}
+ if(target?.closest('[data-open-credits]')){event.preventDefault();event.stopImmediatePropagation();creditsOpen=true;render();root.querySelector('[data-close-credits]')?.focus();return;}
+ clearLifecycleNotice();
+  if(replacement){if(target?.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();cancelReplacement();return;}if(target?.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}return;}
+ if(surface==='home'){
+  const action=target?.dataset.homeAction;
+  if(action){event.preventDefault();event.stopImmediatePropagation();if(action==='continue'){surface='workspace';render();const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}}else if(action==='new')receiveDataset('new-dataset',{version:'1.0',entities:[],events:[],relations:[]});else if(action==='open')openDatasetFilePicker();else if(action==='sample')openAshenCrownSample();}
+  return;
+ }
+  if(target.closest('[data-go-home]')){event.preventDefault();event.stopImmediatePropagation();surface='home';homeError='';render();root.querySelector('[data-home-action="continue"]')?.focus();return;}
  if(entityDeleteNotice&&target.closest('[data-close-entity-delete-notice]')){event.preventDefault();event.stopImmediatePropagation();entityDeleteNotice=null;render();return;}
  if(rescaleProposal){const action=rescaleActionFor(target,event.target);if(action==='approve'){event.preventDefault();event.stopImmediatePropagation();const proposal=rescaleProposal;rescaleProposal=null;const result=applyDimensionAndRescale(s,proposal.dimension,proposal.values);if(!result.ok)dimensionError=result.reason;else{s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;s.pendingDraft=false;}update();return;}if(action==='cancel'){event.preventDefault();event.stopImmediatePropagation();rescaleProposal=null;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}return;}
   if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMore();exportCurrentDataset();return;}
@@ -528,6 +575,20 @@ function captureSuccessorClick(event){
  if(target.dataset.action==='return-waiting'){event.preventDefault();event.stopImmediatePropagation();openConfirmation('axisClear',target.dataset.entity);return;}
 }
 document.addEventListener('click',captureSuccessorClick,true);
+document.addEventListener('keydown',event=>{
+ if(!creditsOpen)return;
+ event.stopImmediatePropagation();
+ if(event.key==='Escape'){
+  event.preventDefault();creditsOpen=false;render();root.querySelector('.credits-button')?.focus();return;
+ }
+ if(event.key!=='Tab')return;
+ const dialog=root.querySelector('.credits-dialog');
+ const items=[...root.querySelectorAll('.credits-dialog a[href],.credits-dialog button:not([disabled])')];
+ if(!items.length){event.preventDefault();dialog?.focus();return;}
+ const first=items[0],last=items.at(-1);
+ if(event.shiftKey&&(document.activeElement===first||!dialog?.contains(document.activeElement))){event.preventDefault();last.focus();}
+ else if(!event.shiftKey&&(document.activeElement===last||!dialog?.contains(document.activeElement))){event.preventDefault();first.focus();}
+},true);
 document.addEventListener('click',event=>{const menu=root.querySelector('.workspace-more');if(menu?.open&&!menu.contains(event.target))menu.open=false;});
 document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const menu=root.querySelector('.workspace-more');if(menu?.open){event.preventDefault();menu.open=false;menu.querySelector('summary')?.focus();}});
 document.addEventListener('submit',event=>{
@@ -563,7 +624,7 @@ document.addEventListener('input',event=>{
 },true);
 installBeforeUnloadProtection(window,()=>s);
 document.addEventListener('keydown',event=>{
- if(replacement||entityDeleteNotice||rescaleProposal){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();const hadReplacement=Boolean(replacement);if(replacement)replacement=null;if(entityDeleteNotice)entityDeleteNotice=null;if(rescaleProposal)rescaleProposal=null;render();if(hadReplacement)root.querySelector('.workspace-more-trigger')?.focus();}else if(event.key==='Tab')trapDialogTab(event,'.confirm-dialog');}
+ if(replacement||entityDeleteNotice||rescaleProposal){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();if(replacement){cancelReplacement();return;}if(entityDeleteNotice)entityDeleteNotice=null;if(rescaleProposal)rescaleProposal=null;render();}else if(event.key==='Tab')trapDialogTab(event,'.confirm-dialog');}
 },true);
 
 // Wire endpoint-label and unit presence without normalizing the text itself.

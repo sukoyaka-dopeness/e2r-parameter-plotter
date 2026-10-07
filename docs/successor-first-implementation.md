@@ -243,3 +243,27 @@ It is a post-Acceptance correction and does not extend either the broad
 functional acceptance at `b9a8e1fee6499c191c66033296e98965d777684e` or the
 bounded Workspace Backup/Restore removal acceptance at
 `34f72fad67b9d59b011dbad3880ff0f5a09a0f45`.
+
+## Home and Dataset acquisition implementation - 2026-10-07
+
+The current local source adds Home as the startup and primary Dataset
+acquisition surface, with **Continue Editing** shown only when a saved,
+recoverable browser-local workspace exists. **New Dataset**, **Open E2R
+Dataset**, and **Open Sample Dataset · The Ashen Crown** are the other Home
+actions. The sample is an unchanged bundled copy of the E2R-SPEC canonical
+English example; see [sample provenance](../samples/README.md).
+
+Workspace actions retain **Home** navigation and the secondary **More** menu
+with **Open E2R Dataset** and **Export E2R JSON**. Browser-local continuity is
+described separately from portable E2R JSON. New, sample, and file acquisition
+reuse the existing replacement confirmation when loss-sensitive work exists;
+Cancel retains the active workspace, and explicit discard activates the
+incoming Dataset. Existing reload/exit, pending-draft, and degraded/unsaved
+protection remains in force. Workspace Backup/Restore is not reintroduced.
+
+This is a post-Acceptance implementation checkpoint, not a transfer of
+Functional Human Acceptance from `b9a8e1fee6499c191c66033296e98965d777684e`
+or Workspace Backup/Restore removal acceptance from
+`34f72fad67b9d59b011dbad3880ff0f5a09a0f45`. Automated and Codex browser
+verification are recorded separately from Human Browser Acceptance in
+[Home and acquisition verification](./home-startup-acquisition-2026-10-07.md).

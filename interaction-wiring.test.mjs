@@ -26,6 +26,29 @@ test('Rescale cancellation is limited to its button or the actual scrim backgrou
   assert.equal(rescaleActionFor(null,dialogText),null);
 });
 
+test('backdrop hover feedback is limited to surfaces that dismiss on backdrop activation',async()=>{
+  const [main,shell,confirmation,replacement,interactionCss,shellCss]=await Promise.all([
+    readFile(new URL('./main.js',import.meta.url),'utf8'),
+    readFile(new URL('./application-shell.js',import.meta.url),'utf8'),
+    readFile(new URL('./confirmation-dialog.js',import.meta.url),'utf8'),
+    readFile(new URL('./replacement-safety.js',import.meta.url),'utf8'),
+    readFile(new URL('./second-pass.css',import.meta.url),'utf8'),
+    readFile(new URL('./home-screen.css',import.meta.url),'utf8'),
+  ]);
+  assert.match(main,/drawer-backdrop is-backdrop-dismissible/);
+  assert.match(main,/confirm-scrim is-backdrop-dismissible" data-cancel-rescale/);
+  assert.match(shell,/credits-scrim is-backdrop-dismissible/);
+  assert.doesNotMatch(confirmation,/is-backdrop-dismissible/);
+  assert.doesNotMatch(replacement,/is-backdrop-dismissible/);
+  assert.match(interactionCss,/\.drawer-backdrop\{[^}]*background:rgba\(8, 6, 13, 0\.28\)/);
+  assert.match(interactionCss,/\.drawer-backdrop\.is-backdrop-dismissible:hover\{background:rgba\(8, 6, 13, 0\.34\)\}/);
+  assert.match(interactionCss,/\.confirm-scrim\{[^}]*background:rgba\(8, 6, 13, 0\.28\)/);
+  assert.match(interactionCss,/\.confirm-scrim\.is-backdrop-dismissible:hover:not\(:has\(> \.confirm-dialog:hover\)\)\{background:rgba\(8, 6, 13, 0\.34\)\}/);
+  assert.match(shellCss,/\.credits-scrim \{[^}]*background: rgba\(8, 6, 13, 0\.28\);/);
+  assert.match(shellCss,/\.credits-scrim\.is-backdrop-dismissible:hover:not\(:has\(> \.credits-dialog:hover\)\) \{ background: rgba\(8, 6, 13, 0\.34\); \}/);
+  assert.match(shellCss,/\.sample-action \{ margin-top: 12px; \}/);
+});
+
 test('successor entry point wires replacement rendering, form identity, stale-notice clearing, and Rescale routing',async()=>{
   const source=await readFile(new URL('./main.js',import.meta.url),'utf8');
   assert.match(source,/import\s*\{\s*replacementMarkup\s*\}\s*from\s*['"]\.\/replacement-safety\.js['"]/);
@@ -73,4 +96,16 @@ test('Dataset replacement renders loss warning with Cancel and explicit discard 
   assert.match(dataset,/data-cancel-replacement/);
   assert.match(dataset,/current workspace will be discarded/);
   assert.doesNotMatch(dataset,/Workspace Backup|Restore|data-backup-current/);
+});
+
+test('Home-origin replacements identify New and Sample actions without bypassing loss protection',()=>{
+  const fresh=replacementMarkup({kind:'new-dataset'}),sample=replacementMarkup({kind:'sample-dataset'});
+  assert.match(fresh,/A new empty E2R Dataset/);
+  assert.match(fresh,/Discard and Create Dataset/);
+  assert.match(sample,/The Ashen Crown sample Dataset/);
+  assert.match(sample,/Discard and Open Sample/);
+  for(const html of [fresh,sample]){
+    assert.match(html,/data-cancel-replacement/);
+    assert.match(html,/Dataset changes or unapplied authoring in the current workspace will be discarded/);
+  }
 });

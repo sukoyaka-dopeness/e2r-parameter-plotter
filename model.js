@@ -108,6 +108,11 @@ export function readDataset(value) {
 }
 
 function candidateOf(dataset){return dataset.extensions&&typeof dataset.extensions==='object'&&!Array.isArray(dataset.extensions)?dataset.extensions[DIMENSION_ASSESSMENT_ID]:undefined;}
+function hasRecoverableDatasetContent(dataset){
+  if(['entities','events','relations'].some(key=>Array.isArray(dataset?.[key])&&dataset[key].length>0))return true;
+  if(dataset?.extensions&&typeof dataset.extensions==='object'&&Object.keys(dataset.extensions).length>0)return true;
+  return Object.keys(dataset||{}).some(key=>!['version','entities','events','relations','extensions'].includes(key));
+}
 function hydrate(dataset,ui={}){
   const payload=candidateOf(dataset),supported=payload?.specVersion===DIMENSION_ASSESSMENT_VERSION&&Array.isArray(payload.dimensions)&&Array.isArray(payload.assessments);
   const dimensions=supported?payload.dimensions.flatMap(d=>d&&typeof d==='object'&&!Array.isArray(d)?[{id:d.id,name:d.name,low:d.lowLabel??'',high:d.highLabel??'',endpointLabelsPresent:Object.hasOwn(d,'lowLabel'),min:d.min,max:d.max,integerOnlyPresent:Object.hasOwn(d,'integerOnly'),unitPresent:Object.hasOwn(d,'unit'),...('integerOnly'in d?{integerOnly:d.integerOnly}:{}),...('unit'in d?{unit:d.unit}:{})}]:[]):[];
@@ -116,6 +121,7 @@ function hydrate(dataset,ui={}){
   const list=entities({dataset}),validIds=new Set(list.map(e=>e.id));
   return {
     dataset,dimensions,values,tempEntities:[],candidateUnsupported:Boolean(payload&&!supported),readOnly:false,
+    workspaceCreated:Boolean(ui.workspaceCreated)||hasRecoverableDatasetContent(dataset),
     selected:validIds.has(ui.selected)?ui.selected:(list[0]?.id||null),view:['Profile','Radar','Quadrant','Matrix'].includes(ui.view)?ui.view:'Profile',
     poolOpen:false,dimensionOpen:false,dimensionFormOpen:false,entityFormOpen:false,editDimension:null,
     waiting:validIds.has(ui.waiting)?ui.waiting:null,quadrant:Array.isArray(ui.quadrant)?[...ui.quadrant.slice(0,2)]:[null,null],
@@ -150,9 +156,10 @@ export function datasetForWorkspace(s){
   return dataset;
 }
 function serializableWorkspace(s,dataset=datasetForWorkspace(s)){
-  return JSON.stringify({format:'parameterplotter-local-workspace',version:1,dataset,ui:{selected:s.selected,view:s.view,waiting:s.waiting,quadrant:s.quadrant,radar:s.radar,secondary:s.secondary,matrix:s.matrix,matrixRows:s.matrixRows,matrixPage:s.matrixPage,datasetModified:s.datasetModified,datasetBaseline:s.datasetBaseline}});
+  return JSON.stringify({format:'parameterplotter-local-workspace',version:1,dataset,ui:{workspaceCreated:s.workspaceCreated,selected:s.selected,view:s.view,waiting:s.waiting,quadrant:s.quadrant,radar:s.radar,secondary:s.secondary,matrix:s.matrix,matrixRows:s.matrixRows,matrixPage:s.matrixPage,datasetModified:s.datasetModified,datasetBaseline:s.datasetBaseline}});
 }
 export function save(s){
+  s.workspaceCreated=true;
   const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);
   if(!validation.valid&&!s.readOnly){s.validation=validation;s.readOnly=true;s.persistence={status:'degraded',message:'The current Dataset no longer passes Validator checks. It remains available for read-only inspection.'};return false;}
   const data=serializableWorkspace(s,dataset);
@@ -167,7 +174,7 @@ export function load(){
   try{
     const raw=localStorage.getItem(KEY);
     if(raw){const stored=JSON.parse(raw);if(stored?.format!=='parameterplotter-local-workspace'||stored.version!==1)throw Error('The saved ParameterPlotter workspace has an unsupported format.');const state=fresh(stored.dataset,{ui:stored.ui||{},datasetModified:stored.ui?.datasetModified});state.datasetBaseline=stored.ui?.datasetBaseline||JSON.stringify(stored.dataset);state.persistence={status:'saved',message:''};return state;}
-    const state=fresh({version:'1.0',entities:[],events:[],relations:[]});save(state);return state;
+    return fresh({version:'1.0',entities:[],events:[],relations:[]});
   }catch(error){const state=fresh({version:'1.0',entities:[],events:[],relations:[]});state.preserveStoredCopy=true;state.persistence={status:'degraded',message:`Saved browser workspace could not be read and was left untouched. Explicitly open another E2R Dataset to replace the active in-memory inspection. ${error?.message||''}`.trim()};return state;}
 }
 export function exportBaseline(s){s.dataset=datasetForWorkspace(s);s.datasetBaseline=JSON.stringify(s.dataset);s.datasetModified=false;}

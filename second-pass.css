@@ -23,7 +23,7 @@
 .plot-item:hover .point-label,.plot-item:focus-within .point-label,.plot-item.selected .point-label{border-color:#df8b55;background:#fff5e9}
 .point-connector{position:absolute;left:0;top:0;width:var(--line-length);border-top:1px solid #8998b9;transform-origin:left center;transform:rotate(var(--line-angle));pointer-events:none}
 .plot-foot{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-top:10px}.plot-foot .small{flex:1}
-.drawer-backdrop{position:fixed;z-index:9;inset:0;width:100%;height:100%;border:0;border-radius:0;background:#18203966}
+.drawer-backdrop{position:fixed;z-index:9;inset:0;width:100%;height:100%;border:0;border-radius:0;background:rgba(8, 6, 13, 0.28)}
 .drawer{z-index:10;width:min(420px,100vw);animation:drawer-enter .18s ease-out both}
 .dimension-drawer{width:min(470px,100vw)}
 .drawer-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.drawer-tools input{flex:1;min-width:140px}.drawer-tools button{white-space:nowrap}
@@ -38,7 +38,8 @@
 @media(prefers-reduced-motion:reduce){.drawer,.entity-content.page-next,.entity-content.page-previous{animation:none!important}}
 
 /* Third interaction pass */
-.drawer-backdrop,.drawer-backdrop:hover,.drawer-backdrop:focus{background:#18203966}
+.drawer-backdrop,.drawer-backdrop:focus{background:rgba(8, 6, 13, 0.28)}
+.drawer-backdrop.is-backdrop-dismissible:hover{background:rgba(8, 6, 13, 0.34)}
 .drawer-backdrop{animation:backdrop-in .18s ease-out both}
 .drawer-backdrop.is-closing{animation:backdrop-out .18s ease-in both;pointer-events:none}
 .drawer.is-closing{animation:drawer-exit .18s ease-in both;pointer-events:none}
@@ -138,7 +139,8 @@
 .entity-row>.danger{flex:none;font-size:.74rem;min-height:30px;padding:4px 7px}
 .duplicate-warning{padding:10px;border:1px solid #d8ac6c;background:#fff8e9;border-radius:7px;font-size:.78rem}
 .duplicate-warning p{margin:4px 0 9px;color:#694c25}
-.confirm-scrim{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:#18203999}
+.confirm-scrim{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgba(8, 6, 13, 0.28)}
+.confirm-scrim.is-backdrop-dismissible:hover:not(:has(> .confirm-dialog:hover)){background:rgba(8, 6, 13, 0.34)}
 .confirm-dialog{width:min(430px,100%);padding:22px;background:white;border-radius:11px;box-shadow:0 15px 50px #10172f55;display:grid;gap:15px}
 .confirm-dialog h2{font-size:1.15rem}.confirm-dialog p{color:#5d6679;font-size:.88rem}
 .confirm-dialog .actions{justify-content:flex-end}
