@@ -2,7 +2,7 @@
 
 Date: 2026-10-05
 
-Status: **FUNCTIONAL HUMAN ACCEPTANCE COMPLETE / ACCEPTED SOURCE `b9a8e1fee6499c191c66033296e98965d777684e` / CURRENT VERIFIED LOCAL SOURCE `623b73b77d055be7f38d8d87ba109e7c8947c0a3` / UNPUBLISHED / CANDIDATE NOT STABLE**
+Status: **FUNCTIONAL HUMAN ACCEPTANCE COMPLETE / ACCEPTED SOURCE `b9a8e1fee6499c191c66033296e98965d777684e` / CURRENT VERIFIED LOCAL SOURCE `111be04898f354efe92856dfdd355ca89845fa59` / UNPUBLISHED / CANDIDATE NOT STABLE**
 
 This is a bounded successor implementation in the canonical
 e2r-parameter-plotter repository. It does not change the historical
@@ -148,6 +148,33 @@ real browser**; current evidence for that failure path is automated only. The
 exact Human-accepted source remains `b9a8e1fee6499c191c66033296e98965d777684e`;
 the current post-Acceptance source has not received a new Human functional
 acceptance. Candidate `0.1.0` remains non-Stable.
+
+## Product / UI completion follow-up - 2026-10-07
+
+Source commit `111be04898f354efe92856dfdd355ca89845fa59` moves Open E2R
+Dataset, Restore Workspace Backup, Export E2R JSON, and Download Workspace
+Backup under a non-primary More disclosure, keeps the native file inputs
+available outside collapsed disclosure content, and corrects View control
+semantics. This is a post-Acceptance correction, not a new Human functional
+acceptance. The separate [Product/UI completion audit](./product-ui-completion-audit-2026-10-07.md)
+records the cross-app surface inventory, evidence limits, and remaining Human
+gates. Its local documentation checkpoint is `e6733aad51cd083e54329a6d59a9de5f364186d3`.
+
+The new disclosure was rendered and reviewed in desktop-sized Edge. Keyboard
+focus, Escape dismissal/restoration, and outside-click dismissal were checked
+in the desktop browser; the disclosure has not received its own 390px browser
+review. The previous 390px review covers the four visualization views only.
+The native file picker was not opened during this audit, and no real
+screen-reader test was performed. The 54/54 application test result and
+syntax/diff checks are automated evidence, not Human Acceptance of this
+source.
+
+The app still has no Home route, EN/JA interface, Footer/Credits surface,
+built-in sample Dataset, or user guide. Those gaps and the choices needed for
+Home/startup behavior, language scope and terminology, sample content and
+provenance, Credits/identity, and Dataset-title authoring are itemized in the
+linked audit. No new Dataset workflow, title editing, sample, release identity,
+or deployment target was chosen here.
 
 ## Historical references and separate follow-ups
 
