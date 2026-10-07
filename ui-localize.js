@@ -143,7 +143,7 @@ phrases.push(
 );
 
 const protectedContent = '.dataset-title,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-card .card-head strong,.point-label,.plot-item,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.credits-metadata a';
-ja.set('Dataset title','データセットのタイトル');
+ja.set('Dataset title','Datasetタイトル');
 ja.set('Apply','適用');
 ja.set('Workspace actions','作業操作');
 ja.set('Dataset title applied. E2R JSON Export is a separate step.','データセットのタイトルを適用しました。E2R JSONの書き出しは別の操作です。');

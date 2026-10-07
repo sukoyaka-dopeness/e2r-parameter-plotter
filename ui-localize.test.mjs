@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {translateUiText} from './ui-localize.js';
 
 test('selected Japanese Product action wording is retained',()=>{
+  assert.equal(translateUiText('Dataset title'),'Datasetタイトル');
   assert.equal(translateUiText(' Fill blanks'),' 未設定の値をランダム入力');
   assert.equal(translateUiText('Review Assessment rescale'),'値の再計算を確認');
   assert.equal(translateUiText('Apply reviewed rescale'),'再計算を適用');
