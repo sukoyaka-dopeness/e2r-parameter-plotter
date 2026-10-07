@@ -2,7 +2,7 @@
 
 Date: 2026-10-05
 
-Status: **FUNCTIONAL HUMAN ACCEPTANCE COMPLETE / ACCEPTED SOURCE `b9a8e1fee6499c191c66033296e98965d777684e` / CURRENT VERIFIED LOCAL SOURCE `111be04898f354efe92856dfdd355ca89845fa59` / UNPUBLISHED / CANDIDATE NOT STABLE**
+Status: **BROAD FUNCTIONAL HUMAN ACCEPTANCE `b9a8e1fee6499c191c66033296e98965d777684e` / WORKSPACE BACKUP REMOVAL HUMAN-ACCEPTED `34f72fad67b9d59b011dbad3880ff0f5a09a0f45` / CURRENT LOCAL SOURCE `2940b3fbf390e185781f3844f263bfe9401757c5` INCLUDES LATER FORMAL-NAME CORRECTION, NOT BROADLY ACCEPTED / UNPUBLISHED / CANDIDATE NOT STABLE**
 
 This is a bounded successor implementation in the canonical
 e2r-parameter-plotter repository. It does not change the historical
@@ -233,3 +233,13 @@ loss protection, and visible degraded or unsaved handling remain separate
 responsibilities. This correction does not transfer Functional Human
 Acceptance from source `b9a8e1fee6499c191c66033296e98965d777684e` to later
 source changes.
+
+## Formal Product identity synchronization - 2026-10-07
+
+Human selected **ParameterPlotter** as the formal Product name. Local source
+commit `2940b3fbf390e185781f3844f263bfe9401757c5` applies that identity to the
+application heading, document/browser title, and local server startup message.
+It is a post-Acceptance correction and does not extend either the broad
+functional acceptance at `b9a8e1fee6499c191c66033296e98965d777684e` or the
+bounded Workspace Backup/Restore removal acceptance at
+`34f72fad67b9d59b011dbad3880ff0f5a09a0f45`.
