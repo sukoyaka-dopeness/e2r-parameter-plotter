@@ -98,12 +98,12 @@ test('Candidate B tempEntities in old sessionStorage are not migrated',()=>{
   finally{globalThis.localStorage=original;globalThis.sessionStorage=originalSession;}
 });
 
-test('failed restored-workspace persistence preserves the prior browser copy and reports degraded state',()=>{
+test('failed browser-local persistence preserves the last stored copy and reports degraded state',()=>{
   const original=globalThis.localStorage,storage=new MemoryStorage();globalThis.localStorage=storage;
   try{
     const prior=fresh(baseDataset());assert.equal(save(prior),true);const old=storage.getItem('e2r-parameter-plotter-local-workspace-v2');
     const incoming=fresh({...baseDataset(),entities:[{id:'new',name:'Incoming'}]});storage.failSet=true;
-    assert.equal(save(incoming,{preservePrevious:true}),false);
+    assert.equal(save(incoming),false);
     assert.equal(storage.getItem('e2r-parameter-plotter-local-workspace-v2'),old);
     assert.equal(incoming.persistence.status,'degraded');
     assert.equal(incoming.dataset.entities[0].id,'new');

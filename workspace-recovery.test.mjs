@@ -1,16 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fresh} from './model.js';
-import {hasLossSensitiveWork,installBeforeUnloadProtection,readWorkspaceBackup,shouldWarnBeforeUnload,workspaceBackupFor} from './workspace-recovery.js';
-
-test('workspace backup is a distinct self-contained artifact carrying the Dataset snapshot',()=>{
-  const dataset={version:'1.0',entities:[{id:'e'}],events:[],relations:[]};
-  const backup=workspaceBackupFor(fresh(dataset));
-  assert.equal(backup.format,'parameterplotter-workspace-backup');
-  assert.deepEqual(backup.dataset,dataset);
-  assert.throws(()=>readWorkspaceBackup(dataset),/different file/);
-  assert.deepEqual(readWorkspaceBackup(backup),{dataset,datasetModified:false,datasetBaseline:JSON.stringify(dataset)});
-});
+import {hasLossSensitiveWork,installBeforeUnloadProtection,shouldWarnBeforeUnload} from './workspace-recovery.js';
 
 test('replacement guard protects Dataset changes and unprotected/degraded work, not persisted view state',()=>{
   const state=fresh({version:'1.0',entities:[],events:[],relations:[]});

@@ -9,7 +9,12 @@ e2r-parameter-plotter repository. It does not change the historical
 Candidate B first-slice acceptance, which remains session-only and
 Human-accepted, or the separate Prototype 2 closure record.
 
-## Product boundary
+## Product boundary at the implementation checkpoint
+
+This section records the Product boundary used to build and accept the tested
+implementation. The latest Human-selected Product direction and the remaining
+implementation gap are recorded at the end of this document; the historical
+implementation and acceptance evidence below is not rewritten.
 
 - Single-user workspace; new Entities are created directly in the active E2R
   Dataset. Candidate B tempEntities are not migrated, restored, converted,
@@ -190,3 +195,39 @@ or deployment target was chosen here.
   `b9a8e1fee6499c191c66033296e98965d777684e` and
   `a46c853abe8d4fdf702130c67b21f93daf9aea51`. No push, tag, release,
   deployment, Pages publication, or Hub listing has occurred.
+
+## Current Human-selected Product direction  E2026-10-07
+
+Human selected **ParameterPlotter** as the formal Product name. Initial Product
+scope includes Dataset title editing using existing Metadata
+(`extensions.metadata.title`), with no new top-level Dataset name. The Ashen
+Crown is the selected main sample direction; semantic sample facts and
+provenance remain Human-authored/approved and this decision did not change
+sample data.
+
+Selected Japanese core terms are Dimension ↁE評価軸 (or 「軸、Ein narrow
+context), Assessment ↁE値, Profile ↁEプロファイル, Radar ↁEレーダー,
+Quadrant ↁE四象陁E and Matrix ↁEマトリクス. This does not settle all
+dialog, confirmation, error, or empty-state copy; those require cross-app
+comparison with NarrativeLine and LiaisonScape. Home/acquisition should align
+with their current pattern: Continue Editing only when recoverable browser-local
+work exists, plus New Dataset, Open E2R Dataset, and Open Sample Dataset. Shell
+visual language should follow their accepted/current evidence; exact CSS,
+markup, and breakpoints remain unselected.
+
+Human explicitly superseded the earlier selection of browser-local persistence
+plus user-managed Workspace Backup/Restore. Current initial Product direction
+retains browser-local automatic persistence and same-browser/profile recovery,
+but excludes Download Workspace Backup and Restore Workspace Backup. E2R
+Dataset JSON remains the portable save/exchange artifact. Existing Dataset
+replacement/exit loss protection and visible degraded/unsaved handling remain;
+removing Backup does not treat memory-only work as saved or waive loss warnings.
+Exact storage-failure retry/recovery UX remains open.
+
+The 2026-10-07 bounded runtime correction removes Workspace Backup/Restore from
+the current local working tree. Browser-local persistence and recovery,
+Dataset Export, replacement/unload loss protection, and visible degraded or
+unsaved handling remain separate responsibilities. This correction does not
+transfer Functional Human Acceptance from source
+`b9a8e1fee6499c191c66033296e98965d777684e` to later source changes; the
+current working tree remains subject to Human Browser Acceptance.

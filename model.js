@@ -4,7 +4,6 @@ export {validateDataset};
 export const DIMENSION_ASSESSMENT_ID='draft.github.sukoyaka-dopeness.dimension-assessment';
 export const DIMENSION_ASSESSMENT_VERSION='0.1.0';
 const KEY = 'e2r-parameter-plotter-local-workspace-v2';
-const STAGING_KEY = `${KEY}.restore-staging`;
 export const uid = () => crypto.randomUUID();
 export const clamp = v => Math.max(-1, Math.min(1, v));
 
@@ -153,16 +152,14 @@ export function datasetForWorkspace(s){
 function serializableWorkspace(s,dataset=datasetForWorkspace(s)){
   return JSON.stringify({format:'parameterplotter-local-workspace',version:1,dataset,ui:{selected:s.selected,view:s.view,waiting:s.waiting,quadrant:s.quadrant,radar:s.radar,secondary:s.secondary,matrix:s.matrix,matrixRows:s.matrixRows,matrixPage:s.matrixPage,datasetModified:s.datasetModified,datasetBaseline:s.datasetBaseline}});
 }
-export function save(s,{preservePrevious=false}={}){
+export function save(s){
   const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);
   if(!validation.valid&&!s.readOnly){s.validation=validation;s.readOnly=true;s.persistence={status:'degraded',message:'The current Dataset no longer passes Validator checks. It remains available for read-only inspection.'};return false;}
   const data=serializableWorkspace(s,dataset);
   try{
-    if(s.preserveStoredCopy&&!preservePrevious)throw Error('A prior browser workspace could not be read and has been left untouched. Restore a valid Workspace Backup or explicitly open another Dataset to replace it.');
-    if(preservePrevious){localStorage.setItem(STAGING_KEY,data);if(localStorage.getItem(STAGING_KEY)!==data)throw Error('Restore preparation could not be verified.');}
+    if(s.preserveStoredCopy)throw Error('A prior browser workspace could not be read and has been left untouched. Explicitly open another E2R Dataset to replace the active in-memory inspection.');
     localStorage.setItem(KEY,data);
     s.dataset=dataset;s.validation=validation;s.preserveStoredCopy=false;s.persistence={status:'saved',message:''};
-    if(preservePrevious){try{localStorage.removeItem(STAGING_KEY);}catch{}}
     return true;
   }catch(error){s.dataset=dataset;s.validation=validation;s.persistence={status:'degraded',message:`Browser-local persistence failed. This active workspace is unsaved and may be lost on reload or when the browser closes. ${error?.message||''}`.trim()};return false;}
 }
@@ -171,9 +168,8 @@ export function load(){
     const raw=localStorage.getItem(KEY);
     if(raw){const stored=JSON.parse(raw);if(stored?.format!=='parameterplotter-local-workspace'||stored.version!==1)throw Error('The saved ParameterPlotter workspace has an unsupported format.');const state=fresh(stored.dataset,{ui:stored.ui||{},datasetModified:stored.ui?.datasetModified});state.datasetBaseline=stored.ui?.datasetBaseline||JSON.stringify(stored.dataset);state.persistence={status:'saved',message:''};return state;}
     const state=fresh({version:'1.0',entities:[],events:[],relations:[]});save(state);return state;
-  }catch(error){const state=fresh({version:'1.0',entities:[],events:[],relations:[]});state.preserveStoredCopy=true;state.persistence={status:'degraded',message:`Saved browser workspace could not be read and was left untouched. Restore a valid Workspace Backup or explicitly open another Dataset to replace it. ${error?.message||''}`.trim()};return state;}
+  }catch(error){const state=fresh({version:'1.0',entities:[],events:[],relations:[]});state.preserveStoredCopy=true;state.persistence={status:'degraded',message:`Saved browser workspace could not be read and was left untouched. Explicitly open another E2R Dataset to replace the active in-memory inspection. ${error?.message||''}`.trim()};return state;}
 }
-export function persistRestoredWorkspace(s){return save(s,{preservePrevious:true});}
 export function exportBaseline(s){s.dataset=datasetForWorkspace(s);s.datasetBaseline=JSON.stringify(s.dataset);s.datasetModified=false;}
 export function markDatasetModified(s){s.datasetModified=true;}
 export function transactDatasetMutation(s,mutator){

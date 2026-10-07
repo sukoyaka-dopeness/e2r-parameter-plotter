@@ -1,5 +1,5 @@
 import {authoredDecimalPlaces, decimalAdd} from './decimal-presentation.js';
-import {load, save, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates, validateDataset, datasetForWorkspace, exportBaseline, persistRestoredWorkspace, transactDatasetMutation} from './model.js';
+import {load, save, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates, validateDataset, datasetForWorkspace, exportBaseline, transactDatasetMutation} from './model.js';
 import {renderProfile, renderQuadrant, renderRadar, renderMatrix} from './views.js';
 import {dimensionRange, rangePosition, valueAtRangePosition, quadrantOutOfRangeEntities} from './model.js';
 import {layoutPlotLabels} from './plot-labels.js';
@@ -12,7 +12,7 @@ import {sizeRadarLabels, PROTOTYPE_SPOKE_CAP, radarPositionAtPoint} from './rada
 import {startQuadrantPointDrag} from './quadrant-drag.js';
 import {keepRadarRowVisible} from './radar-list.js';
 import {containDrawerFocus, focusDrawer} from './drawer-focus.js';
-import {hasLossSensitiveWork, installBeforeUnloadProtection, workspaceBackupFor, readWorkspaceBackup} from './workspace-recovery.js';
+import {hasLossSensitiveWork, installBeforeUnloadProtection} from './workspace-recovery.js';
 import {replacementMarkup} from './replacement-safety.js';
 import {randomDimensionValue} from './profile-random.js';
 import {candidateAuthoringAvailable, createDatasetEntity, editDatasetEntity, entityDeleteEligibility, deleteDatasetEntity, deleteDatasetDimension, rescaledAssessmentValue, applyDimensionAndRescale} from './successor-domain.js';
@@ -157,7 +157,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&contextMenu){contextMenu=null;render();return;}
   if(e.key==='Escape'&&(s.poolOpen||s.dimensionOpen)){e.preventDefault();closeDrawers();return;}
   if(s.poolOpen||s.dimensionOpen){containDrawerFocus(e,root);return;}
-  if(e.target.closest?.('[data-import-trigger],[data-workspace-restore-trigger]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.stopImmediatePropagation();const inputId=e.target.closest('[data-workspace-restore-trigger]')?'workspace-file':'dataset-file';openWorkspaceFilePicker(inputId);return;}
+  if(e.target.closest?.('[data-import-trigger]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.stopImmediatePropagation();openDatasetFilePicker();return;}
   if(e.altKey&&['ArrowLeft','ArrowRight'].includes(e.key)&&e.target.matches('[data-matrix-move]')){e.preventDefault();const i=Number(e.target.dataset.matrixMove),j=i+(e.key==='ArrowLeft'?-1:1);if(j>=0&&j<s.matrix.length){[s.matrix[i],s.matrix[j]]=[s.matrix[j],s.matrix[i]];update();root.querySelector(`[data-matrix-move="${j}"]`)?.focus();}return;}
   if(e.key==='Enter'&&e.target.matches('input[type=number][data-value]')){e.preventDefault();commitNumeric(e.target);return;}
   const vertex=e.target.closest?.('[data-vertex]');
@@ -441,11 +441,11 @@ render=function(){
  baseRender();
  document.title='ParameterPlotter (working name)';
  const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER DATASET COMPARISON';
- const subtitle=root.querySelector('header .sub');if(subtitle)subtitle.textContent='Author E2R Entities and Dimension Assessments. Browser storage, E2R Dataset Export, and Workspace Backup are separate.';
+ const subtitle=root.querySelector('header .sub');if(subtitle)subtitle.textContent='Author E2R Entities and Dimension Assessments. Browser-local persistence is separate from E2R Dataset Export.';
  const actions=root.querySelector('.header-actions');if(actions)actions.innerHTML=runtimeHeader();
- const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);topline.innerHTML=`<div class="dataset-context"><strong class="dataset-title">${esc(datasetTitleFor(s.dataset))}</strong><span>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'} · ${s.dimensions.length} portable Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${s.persistence.status==='saved'?'Saved locally':'Degraded / unsaved'} · Workspace Backup: separate user-managed file</span>`;}
+ const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);topline.innerHTML=`<div class="dataset-context"><strong class="dataset-title">${esc(datasetTitleFor(s.dataset))}</strong><span>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'} · ${s.dimensions.length} portable Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${s.persistence.status==='saved'?'Saved locally':'Degraded / unsaved'}</span>`;}
  let status=root.querySelector('.successor-status');if(!status){status=document.createElement('section');status.className='successor-status';root.querySelector('main')?.prepend(status);}
- if(status)status.innerHTML=`<div class="persistence-status" role="status"><strong>${s.persistence.status==='saved'?'Browser-local workspace saved':'Browser-local workspace degraded / unsaved'}</strong>${s.persistence.message?`<p>${esc(s.persistence.message)}</p>`:'<p>Local persistence is not an E2R Dataset Export or a user-managed Workspace Backup.</p>'}</div><p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p>${lifecycleNotice?`<p class="lifecycle-notice" role="status">${esc(lifecycleNotice)}</p>`:''}${diagnosticMarkup()}`;
+ if(status)status.innerHTML=`<div class="persistence-status" role="status"><strong>${s.persistence.status==='saved'?'Browser-local workspace saved':'Browser-local workspace degraded / unsaved'}</strong>${s.persistence.message?`<p>${esc(s.persistence.message)}</p>`:'<p>Local persistence is not an E2R Dataset Export.</p>'}</div><p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p>${lifecycleNotice?`<p class="lifecycle-notice" role="status">${esc(lifecycleNotice)}</p>`:''}${diagnosticMarkup()}`;
  const entityDrawer=root.querySelector('.drawer[aria-label="Entity Pool"]');if(entityDrawer){const p=entityDrawer.querySelector(':scope > p');if(p)p.textContent='Dataset Entities are edited directly in this Dataset. Dimensions and Assessments are portable Candidate data.';const action=entityDrawer.querySelector('.pool-action button');if(action){action.textContent='Add Dataset Entity';action.disabled=s.readOnly;action.dataset.action='add-entity';}}
  const entityForm=root.querySelector('#entity-form');if(entityForm){const heading=entityForm.querySelector('h3');if(heading)heading.textContent=editEntityId?'Edit Dataset Entity':'New Dataset Entity';const nameInput=entityForm.elements.namedItem('temporary-entity-name'),description=entityForm.elements.namedItem('temporary-entity-description'),entity=s.dataset.entities.find(item=>item?.id===editEntityId);nameInput.name='dataset-entity-name';nameInput.removeAttribute('required');nameInput.removeAttribute('maxlength');nameInput.placeholder='Optional Entity name';description.name='dataset-entity-description';nameInput.value=pendingEntityDraft?.editId===editEntityId?pendingEntityDraft.name:(entity?.name??'');description.value=pendingEntityDraft?.editId===editEntityId?pendingEntityDraft.description:(entity?.description??'');const nameLabel=nameInput.closest('label'),descriptionLabel=description.closest('label');if(nameLabel)nameLabel.firstChild.textContent='Name (optional)';if(descriptionLabel)descriptionLabel.firstChild.textContent='Description (optional)';if(entityFormError){const error=document.createElement('p');error.className='field-error';error.setAttribute('role','alert');error.textContent=entityFormError;entityForm.insertBefore(error,entityForm.querySelector('.actions'));}}
  const dimensionDrawer=root.querySelector('.dimension-drawer');if(dimensionDrawer){const eyebrow2=dimensionDrawer.querySelector('.eyebrow');if(eyebrow2)eyebrow2.textContent='PORTABLE DATA';const h2=dimensionDrawer.querySelector('h2');if(h2)h2.textContent='Dimension Pool';const add=dimensionDrawer.querySelector('[data-action="add-dimension"]');if(add)add.disabled=!candidateAuthoringAvailable(s);const search=root.querySelector('#dimension-search');if(search)search.placeholder='Filter by name, labels, range, or unit';}
@@ -467,24 +467,21 @@ function startReplacement(kind,incoming){replacement={kind,state:incoming};rende
 function activateIncoming(){
  if(!replacement)return;
  const request=replacement;replacement=null;s=request.state;fileError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;s.pendingDraft=false;
- if(request.kind==='workspace')persistRestoredWorkspace(s);else save(s);
- lifecycleNotice=s.persistence.status==='degraded'?`The ${request.kind==='workspace'?'Workspace Backup was restored':'Dataset was opened'} in memory, but the browser-local copy was not replaced. It remains unsaved and may be lost on reload or browser close.`:'';
+ save(s);
+ lifecycleNotice=s.persistence.status==='degraded'?'The Dataset was opened in memory, but the browser-local copy was not replaced. It remains unsaved and may be lost on reload or browser close.':'';
  render();
 }
-function importSelectedFile(file,kind){
+function importSelectedFile(file){
   closeWorkspaceMore();
-  if(!file)return;
- (async()=>{try{const parsed=JSON.parse(await file.text());let incoming;if(kind==='workspace'){const restored=readWorkspaceBackup(parsed);incoming=fresh(restored.dataset,{datasetModified:restored.datasetModified,ui:{datasetBaseline:restored.datasetBaseline||undefined}});}else incoming=fresh(readDataset(parsed));if(hasLossSensitiveWork(s))startReplacement(kind,incoming);else{replacement={kind,state:incoming};activateIncoming();}}catch(error){showFileError(error?.message||'The selected file could not be opened.');}})();
-}
-function downloadCurrentBackup(){
- const value=workspaceBackupFor(s);if(downloadJson('parameterplotter-workspace.pp-workspace.json',value)){lifecycleNotice='Workspace Backup download was handed to the browser. Keep this application-specific recovery file separately; it is not an E2R Dataset Export and does not clear Dataset changes.';render();}
+ if(!file)return;
+ (async()=>{try{const incoming=fresh(readDataset(JSON.parse(await file.text())));if(hasLossSensitiveWork(s))startReplacement('dataset',incoming);else{replacement={kind:'dataset',state:incoming};activateIncoming();}}catch(error){showFileError(error?.message||'The selected file could not be opened.');}})();
 }
 function exportCurrentDataset(){
  if(s.readOnly){lifecycleNotice='E2R Dataset Export is unavailable during diagnostic read-only inspection.';render();return;}
  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);s.validation=validation;
  if(!validation.valid){s.readOnly=true;lifecycleNotice='Export blocked: Validator errors remain. No repair or normalization was applied.';render();return;}
  if(!downloadJson('parameterplotter-dataset.e2r.json',dataset))return;
- exportBaseline(s);save(s);lifecycleNotice='E2R JSON download was handed to the browser. This Dataset snapshot is now the clean Export baseline; keep the downloaded file yourself. Workspace Backup and browser-local persistence are unchanged.';render();
+ exportBaseline(s);save(s);lifecycleNotice='E2R JSON download was handed to the browser. This Dataset snapshot is now the clean Export baseline; keep the downloaded file yourself. Browser-local persistence is unchanged.';render();
 }
 function relationDeletionFeedback(id){
  const result=entityDeleteEligibility(s,id);if(!result.allowed){entityDeleteNotice={id,reason:result.reason,relations:result.relations||[]};render();root.querySelector('.confirm-dialog button')?.focus();return;}
@@ -496,17 +493,15 @@ function clearLifecycleNotice(){
   root.querySelector('.lifecycle-notice')?.remove();
 }
 function closeWorkspaceMore({restoreFocus=false}={}){const menu=root.querySelector('.workspace-more');if(!menu?.open)return;menu.open=false;if(restoreFocus)menu.querySelector('summary')?.focus();}
-function openWorkspaceFilePicker(inputId){closeWorkspaceMore({restoreFocus:true});root.querySelector(`#${inputId}`)?.click();}
+function openDatasetFilePicker(){closeWorkspaceMore({restoreFocus:true});root.querySelector('#dataset-file')?.click();}
 function captureSuccessorClick(event){
  clearLifecycleNotice();
  const target=event.target.closest('button,[data-action],label');if(!target&&!(rescaleProposal&&event.target.matches('.confirm-scrim[data-cancel-rescale]')))return;
-  if(replacement){if(target.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();return;}if(target.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}if(target.closest('[data-backup-current]')){event.preventDefault();event.stopImmediatePropagation();downloadCurrentBackup();return;}return;}
+  if(replacement){if(target.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();return;}if(target.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}return;}
  if(entityDeleteNotice&&target.closest('[data-close-entity-delete-notice]')){event.preventDefault();event.stopImmediatePropagation();entityDeleteNotice=null;render();return;}
  if(rescaleProposal){const action=rescaleActionFor(target,event.target);if(action==='approve'){event.preventDefault();event.stopImmediatePropagation();const proposal=rescaleProposal;rescaleProposal=null;const result=applyDimensionAndRescale(s,proposal.dimension,proposal.values);if(!result.ok)dimensionError=result.reason;else{s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;s.pendingDraft=false;}update();return;}if(action==='cancel'){event.preventDefault();event.stopImmediatePropagation();rescaleProposal=null;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}return;}
   if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMore();exportCurrentDataset();return;}
-  if(target.closest('[data-successor-backup]')){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMore();downloadCurrentBackup();return;}
-  if(target.closest('[data-import-trigger]')){event.preventDefault();event.stopImmediatePropagation();openWorkspaceFilePicker('dataset-file');return;}
-  if(target.closest('[data-workspace-restore-trigger]')){event.preventDefault();event.stopImmediatePropagation();openWorkspaceFilePicker('workspace-file');return;}
+  if(target.closest('[data-import-trigger]')){event.preventDefault();event.stopImmediatePropagation();openDatasetFilePicker();return;}
  if(target.closest('[data-edit-entity]')){event.preventDefault();event.stopImmediatePropagation();const id=target.closest('[data-edit-entity]').dataset.editEntity;entityFormError=null;editEntityId=id;entityMenu=null;s.entityFormOpen=true;pendingEntityDraft={editId:id,name:s.dataset.entities.find(item=>item?.id===id)?.name??'',description:s.dataset.entities.find(item=>item?.id===id)?.description??''};render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
  if(target.closest('[data-delete-entity]')){event.preventDefault();event.stopImmediatePropagation();relationDeletionFeedback(target.closest('[data-delete-entity]').dataset.deleteEntity);return;}
  if(target.closest('[data-edit-dimension]')){event.preventDefault();event.stopImmediatePropagation();dimensionDraft=null;dimensionError=null;dimensionWarning=null;s.editDimension=target.closest('[data-edit-dimension]').dataset.editDimension;s.dimensionFormOpen=true;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}
@@ -557,7 +552,7 @@ document.addEventListener('submit',event=>{
 document.addEventListener('change',event=>{
  clearLifecycleNotice();
  const target=event.target;
- if(target.id==='dataset-file'||target.id==='workspace-file'){const kind=target.id==='workspace-file'?'workspace':'dataset',file=target.files?.[0];target.value='';importSelectedFile(file,kind);event.stopImmediatePropagation();return;}
+ if(target.id==='dataset-file'){const file=target.files?.[0];target.value='';importSelectedFile(file);event.stopImmediatePropagation();return;}
 },true);
 document.addEventListener('input',event=>{
  clearLifecycleNotice();

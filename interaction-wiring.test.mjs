@@ -51,15 +51,11 @@ test('current Dataset context uses the E2R metadata title and an absent-title fa
   assert.equal(datasetTitleFor({extensions:{metadata:{title:'   '}}}),'Untitled Dataset');
 });
 
-test('Dataset replacement and Workspace Restore render distinct loss warnings and explicit actions',()=>{
-  const dataset=replacementMarkup({kind:'dataset'}),workspace=replacementMarkup({kind:'workspace'});
+test('Dataset replacement renders loss warning with Cancel and explicit discard action',()=>{
+  const dataset=replacementMarkup();
   assert.match(dataset,/Open another Dataset\?/);
   assert.match(dataset,/Discard and Open Dataset/);
-  assert.match(workspace,/Restore this workspace\?/);
-  assert.match(workspace,/Discard and Restore/);
-  for(const markup of [dataset,workspace]){
-    assert.match(markup,/data-cancel-replacement/);
-    assert.match(markup,/data-backup-current/);
-    assert.match(markup,/current workspace will be discarded/);
-  }
+  assert.match(dataset,/data-cancel-replacement/);
+  assert.match(dataset,/current workspace will be discarded/);
+  assert.doesNotMatch(dataset,/Workspace Backup|Restore|data-backup-current/);
 });
