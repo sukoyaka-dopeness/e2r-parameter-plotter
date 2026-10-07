@@ -115,3 +115,14 @@ body { min-height: 100svh; }
   .workspace-page > header.app-header { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .workspace-page .shell-header-actions { justify-content: flex-start; margin-top: 0; }
 }
+.locale-control{display:flex;align-items:center}
+.locale-control button,.workspace-action-bar > button,.workspace-action-bar > .workspace-more > summary,.workspace .empty > button,.dataset-title-editor button{min-height:36px;padding:5px 9px;border:1px solid #cbd0dc;border-radius:4px;background:#fff;color:#202331;font-size:15px;line-height:120%;white-space:nowrap;cursor:pointer}
+.locale-control button:focus-visible{outline:3px solid #6259df;outline-offset:2px}
+.workspace-action-bar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.workspace-action-bar > .workspace-more{flex:0 0 auto}
+.workspace-action-bar .workspace-more-panel{right:0}
+.dataset-title-editor{display:block;width:100%;margin-bottom:16px}
+.dataset-title-editor > label{display:block;margin-bottom:6px;color:#202331;font-size:.86rem;font-weight:650}
+.dataset-title-editor-controls{display:flex;align-items:center;gap:8px;width:100%}
+.dataset-title-editor input{flex:1 1 auto;min-width:0;width:100%;min-height:48px;padding:8px 12px;border:1px solid #cbd0dc;border-radius:6px;color:#202331;background:#fff;font-size:clamp(1.2rem,2.2vw,1.75rem);font-weight:600;line-height:120%}
+@media (max-width:600px){.workspace-action-bar{gap:6px}.workspace-action-bar > button,.workspace-action-bar > .workspace-more{min-width:0}.workspace-action-bar > button{white-space:normal}.dataset-title-editor-controls{align-items:stretch}.dataset-title-editor button{flex:0 0 auto}}

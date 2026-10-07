@@ -1,0 +1,206 @@
+// Presentation-only translation of the current application's rendered chrome.
+// Dataset values, IDs, names, descriptions, and authored labels stay in their
+// original language. The English source remains the fallback for new copy.
+const ja = new Map(Object.entries({
+  'Get Started':'はじめる','Compare E2R Entities across Dimensions.':'E2Rのエンティティを評価軸で比較します。',
+  'Continue Editing':'編集を続ける','New Dataset':'新しいデータセット','Open E2R Dataset':'E2Rデータセットを開く',
+  'Open Sample Dataset · The Ashen Crown':'サンプルデータセットを開く · The Ashen Crown',
+  'E2R Entity comparison':'E2Rエンティティの比較','Credits':'クレジット','Close':'閉じる',
+  'Application: ParameterPlotter':'アプリケーション: ParameterPlotter','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
+  'With gratitude to all the AI systems that contributed to this project.':'このプロジェクトに貢献したすべてのAIシステムに感謝します。',
+  'ParameterPlotter repository':'ParameterPlotterリポジトリ','E2R specification repository':'E2R仕様リポジトリ',
+  'Credits links':'クレジット関連リンク','Home':'ホーム','Entities':'エンティティ','Dimensions':'評価軸','More':'その他',
+  'More workspace actions':'その他の操作','Dataset actions':'データセットの操作','Export E2R JSON':'E2R JSONを書き出す',
+  'Profile':'プロファイル','Radar':'レーダー','Quadrant':'四象限','Matrix':'マトリクス','View':'表示',
+  'Views':'表示','Entity Pool':'エンティティ一覧','Dimension Pool':'評価軸一覧','Add Dataset Entity':'データセットにエンティティを追加',
+  'Edit Dataset Entity':'データセットのエンティティを編集','New Dataset Entity':'新しいエンティティ',
+  'Edit Dataset Dimension':'データセットの評価軸を編集','New Dataset Dimension':'新しい評価軸',
+  'PORTABLE DATA':'ポータブルデータ','Filter by name, labels, range, or unit':'名前・端点ラベル・範囲・単位で絞り込む',
+  'Name (optional)':'名前（任意）','Description (optional)':'説明（任意）','Optional Entity name':'エンティティ名（任意）',
+  'Add dimension':'評価軸を追加','Add Dimension':'評価軸を追加','Save Dimension':'評価軸を保存',
+  'Save Entity':'エンティティを保存','Create Entity':'エンティティを作成','Cancel':'キャンセル',
+  'Edit':'編集','Delete':'削除','No matches':'一致する項目はありません','No matching Dimensions':'一致する評価軸はありません',
+  'No portable Dimensions yet.':'ポータブルな評価軸はまだありません。',
+  'Entity profile':'エンティティのプロファイル','Edit this Entity’s Dataset Assessments.':'このエンティティのデータセット内の値を編集します。',
+  'No Entity description':'エンティティの説明はありません','Fill blanks':'未設定の値をランダム入力',
+  'Create a Dimension':'評価軸を作成','Define a numeric MIN/MAX range and optional endpoint labels.':'数値のMIN/MAX範囲と、任意の端点ラベルを設定します。',
+  'Manage Dimensions':'評価軸一覧を開く','Manage dimensions':'評価軸一覧を開く',
+  'Two-axis comparison':'2軸の比較','Multi-axis comparison':'多軸の比較','Values across Entities':'エンティティの値を比較',
+  'Add spoke':'軸を追加','Secondary Entity':'比較するエンティティ','Primary Entity':'主エンティティ',
+  'Primary':'主','Secondary':'比較','Range':'範囲','Unit':'単位','Values':'値','Hint':'補助設定',
+  'Not specified':'未設定','Integer values only':'整数のみ','Decimals allowed':'小数を許可',
+  'Choose dimension…':'評価軸を選択…','Choose Entity':'エンティティを選択','Choose…':'選択…',
+  'Selected Radar dimensions':'レーダーで選択した評価軸','Waiting Entity drop area':'未配置のエンティティを置く場所',
+  'Dimension window':'評価軸の表示範囲','Dimension window position':'評価軸の表示位置',
+  'Entity':'エンティティ','Dataset':'データセット','Temporary':'一時的','Plotted':'配置済み','Selected':'選択中',
+  'No dimensions':'評価軸はありません','No dimensions yet':'評価軸はまだありません',
+  'Start with an E2R Dataset':'E2Rデータセットから始める','Open Entity Pool':'エンティティ一覧を開く',
+  'Review Assessment rescale':'値の再計算を確認','Apply reviewed rescale':'再計算を適用',
+  'Back to Dimension edit':'評価軸の編集に戻る','Clear plotted Assessments?':'配置した値を消去しますか？',
+  'Clear Assessments':'値を消去','Delete Dimension?':'評価軸を削除しますか？',
+  'Delete Dataset Entity?':'データセットのエンティティを削除しますか？','Delete Dimension':'評価軸を削除',
+  'Delete Entity':'エンティティを削除','Create a new Dataset?':'新しいデータセットを作成しますか？',
+  'Open sample Dataset?':'サンプルデータセットを開きますか？','Open another Dataset?':'別のデータセットを開きますか？',
+  'Incoming:':'読み込み先:','A new empty E2R Dataset.':'新しい空のE2Rデータセット。',
+  'The Ashen Crown sample Dataset.':'The Ashen Crownのサンプルデータセット。',
+  'E2R Dataset.':'E2Rデータセット。','Discard and Create Dataset':'破棄してデータセットを作成',
+  'Discard and Open Sample':'破棄してサンプルを開く','Discard and Open Dataset':'破棄してデータセットを開く',
+  'Browser-local workspace saved':'ブラウザー内の作業状態を保存しました',
+  'Browser-local workspace degraded / unsaved':'ブラウザー内の作業状態を保存できていません',
+  'Saved locally':'ブラウザー内に保存済み','Degraded / unsaved':'ブラウザー内の作業状態を保存できていません',
+  'Changes not exported':'変更は未書き出し','Matches last Export baseline':'最後の書き出し内容と一致',
+  'Local persistence is not an E2R Dataset Export.':'ブラウザー内の作業状態はE2Rデータセットの書き出しではありません。',
+  'Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.':'未適用の編集はブラウザー内の作業状態に保存されていません。移動する前に適用またはキャンセルしてください。',
+  'Close panel':'パネルを閉じる','Search Entities':'エンティティを検索','Search dimensions':'評価軸を検索',
+  'Search Entity list':'エンティティ一覧を検索','Search Dimension list':'評価軸一覧を検索',
+  'Filter by name':'名前で絞り込む','Open Profile':'プロファイルを開く','Return to waiting':'未配置に戻す',
+  'Actions for':'操作:','Move up':'上へ移動','Move down':'下へ移動',
+  'Include both endpoint labels':'両方の端点ラベルを含める','Include unit text':'単位の文字列を含める',
+  'Low label':'下限ラベル','High label':'上限ラベル','MIN':'MIN','MAX':'MAX'
+}));
+for(const [english,japanese] of Object.entries({
+  'PROFILE':'プロファイル','RADAR':'レーダー','QUADRANT':'四象限','MATRIX':'マトリクス',
+  'Name':'名前','Description':'説明','Save dimension':'評価軸を保存','Save Dataset Dimension':'評価軸を保存',
+  'Unit (optional free text)':'単位（任意の文字列）',
+  'Application-local input limit: 240 characters. No conversion or parsing.':'このアプリでの入力上限は240文字です。単位の換算や解析は行いません。',
+  'Enter finite numeric bounds with MIN < MAX. Endpoint labels and unit are optional text. Integer-only Dimensions need at least one integer in range. Assessments that would become invalid require a reviewed Rescale before this change is applied.':'有限の数値でMIN < MAXとなる範囲を入力してください。端点ラベルと単位は任意です。整数のみの評価軸には範囲内に少なくとも1つの整数が必要です。既存の値が無効になる変更には、確認済みの再計算が必要です。',
+  'Assessment values must remain valid for this Dimension. Existing records are never silently rounded or removed.':'値はこの評価軸の制約を満たす必要があります。既存の記録値を黙って丸めたり削除したりしません。',
+  'Choose Primary Entity':'主エンティティを選択','Choose Primary Entity · ID':'主エンティティを選択 · ID',
+  'Dataset':'データセット','No Entity description':'エンティティの説明はありません',
+  'Fill unassessed Dimensions only':'未設定の評価軸にのみランダムな値を入力します',
+  'Select Entity':'エンティティを選択','Clear selected Entity’s X/Y Assessments':'選択中のエンティティのX/Yの値を消去',
+  'No matching dimensions':'一致する評価軸はありません','No dimensions yet':'評価軸はまだありません',
+  'Primary value; Arrow keys edit':'主エンティティの値。矢印キーで編集',
+  'Dimension for column':'列の評価軸','Dimension page':'評価軸ページ',
+  'Comparison values are Dataset Assessments':'比較する値はデータセットに記録した値です。',
+  'Add Dataset Entity':'データセットにエンティティを追加',
+  'Search Entity list':'エンティティ一覧を検索'
+}))ja.set(english,japanese);
+for(const [english,japanese] of Object.entries({
+  'X axis':'X軸','Y axis':'Y軸','X axis information':'X軸の情報','Y axis information':'Y軸の情報',
+  'X axis annotations':'X軸の注記','Y axis annotations':'Y軸の注記',
+  'Choose dimension':'評価軸を選択','Choose unplotted Entity':'未配置のエンティティを選択',
+  'Choose Entity':'エンティティを選択','1 remaining':'残り1件',
+  'No Dataset Entities available':'データセットにエンティティはありません'
+}))ja.set(english,japanese);
+for(const [english,japanese] of Object.entries({
+  'Entity deletion unavailable':'エンティティを削除できません',
+  'Resolve these Relations in a Relation-owning application before deleting the Entity. ParameterPlotter does not delete or edit Relations.':'エンティティを削除する前に、リレーションを編集できるアプリでこれらのつながりを解決してください。ParameterPlotterはリレーションを削除・編集しません。',
+  'Diagnostic read-only inspection':'診断のための読み取り専用表示',
+  'Validator warnings':'Validatorの警告',
+  'This Dataset has Validator errors. Authoring and E2R export are unavailable. No repair or normalization was applied.':'このデータセットにはValidatorエラーがあります。編集とE2Rの書き出しはできません。修復や正規化は行っていません。',
+  'Warnings do not by themselves block supported authoring or export. Unsupported content is preserved; operations that cannot be checked safely are unavailable.':'警告だけでは対応済みの編集や書き出しを止めません。未対応の内容は保持します。安全に検証できない操作は利用できません。',
+  'Dimension Assessment version is unsupported here; its payload remains opaque and unchanged.':'このDimension Assessmentのバージョンには対応していません。内容は解釈せず、そのまま保持します。',
+  'No matching Dataset Entities.':'一致するデータセットのエンティティはありません。',
+  'Edit Entity':'エンティティを編集','Delete from Dataset':'データセットから削除',
+  'Dataset Entities are edited directly in this Dataset. Dimensions and Assessments are portable Candidate data.':'データセットのエンティティは直接編集します。評価軸と値はポータブルなCandidateデータです。',
+  'No value changed.':'値は変更されませんでした。',
+  'No safely generated integer candidate in range; review this Dimension\'s bounds.':'この範囲では安全に生成できる整数がありません。評価軸の範囲を確認してください。',
+  'Stored value violates this Dimension policy; enter an allowed replacement':'記録値がこの評価軸の制約に反しています。許容される値に変更してください。'
+}))ja.set(english,japanese);
+
+const phrases = [
+  ['Choose X/Y, then drag an unassessed Entity or tap the plot to author in-range Assessments.','X/Yを選び、値が未設定のエンティティをドラッグするか、図をタップして範囲内の値を記録します。'],
+  ['Drag Primary vertices; Secondary is comparison only.','主エンティティの頂点をドラッグします。比較するエンティティは表示専用です。'],
+  ['Compare and directly edit values; use row and column handles to reorder this Matrix.','値を比較・編集できます。行と列のハンドルでマトリクス内の順序を変更できます。'],
+  ['Values are recorded in each Dimension’s range. Radar and Quadrant positions are derived from that range. Blank means unassessed, not zero.','値は各評価軸の範囲内に記録されます。レーダーと四象限の位置はその範囲から算出されます。空欄は未設定で、ゼロではありません。'],
+  ['Plot midpoint is derived from each selected MIN/MAX range; it does not assert a zero value. Missing Assessments are absent.','図の中点は選択したMIN/MAX範囲から算出され、ゼロを意味しません。未設定の値は表示されません。'],
+  ['Recorded values are retained. Edit a value in Profile or Matrix to replace it with a value allowed by that Dimension.','記録済みの値は保持されます。プロファイルかマトリクスで、その評価軸が許す値に変更してください。'],
+  ['Select a Primary vertex on the chart, then use Arrow keys to edit the recorded value (integer-only Dimensions: 1; others: 0.05). Positions use each Dimension’s MIN/MAX. Missing values remain unassessed; values violating range or integer-only constraints are retained without a chart position.','図の主エンティティの頂点を選び、矢印キーで記録値を編集できます（整数のみの評価軸は1、その他は0.05刻み）。位置は評価軸のMIN/MAXから算出します。未設定値には位置がなく、制約に反する記録値は保持されますが図には配置されません。'],
+  ['Open a Dataset or create a Dataset Entity. No Assessment is inferred.','データセットを開くか、エンティティを作成してください。値は推測して追加されません。'],
+  ['Dataset Entities are edited directly in this Dataset. Dimensions and Assessments are portable Candidate data.','データセットのエンティティは直接編集します。評価軸と値はポータブルなCandidateデータです。'],
+  ['Changing these bounds makes existing Assessments invalid. Review this linear rescale; nothing changes in the Dataset until you approve it.','この範囲変更により既存の値が無効になります。線形の再計算を確認してください。承認するまでデータセットは変更されません。'],
+  ['Opening this Dataset replaces the active Dataset and its comparison workspace. Any Dataset changes or unapplied authoring in the current workspace will be discarded.','このデータセットを開くと、現在のデータセットと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。'],
+  ['Creating this Dataset replaces the active Dataset and its comparison workspace. Any Dataset changes or unapplied authoring in the current workspace will be discarded.','新しいデータセットを作成すると、現在のデータセットと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。'],
+  ['Dataset:','データセット:'],['Browser workspace:','ブラウザー内の作業状態:'],
+  ['Changes not exported','変更は未書き出し'],['Matches last Export baseline','最後の書き出し内容と一致'],
+  ['Saved locally','ブラウザー内に保存済み'],['Degraded / unsaved','ブラウザー内の作業状態を保存できていません'],
+  ['Stored values violating selected Dimension policies · not plotted','選択した評価軸の制約に反する記録値 · 図には表示しません'],
+  ['Stored values violating selected Quadrant Dimension policies','四象限で選択した評価軸の制約に反する記録値'],
+  ['No assessment · move the slider to assign','値は未設定 · スライダーで設定できます'],
+  ['No assessment','値は未設定'],['No value','値はありません'],
+  ['Fill unassessed Dimensions only','未設定の評価軸にのみランダムな値を入力します'],
+  ['Clear assessment','値を消去'],['Previous Entity','前のエンティティ'],['Next Entity','次のエンティティ'],
+  ['Previous dimensions','前の評価軸'],['Next dimensions','次の評価軸'],
+  ['Previous unplotted Entity','前の未配置エンティティ'],['Next unplotted Entity','次の未配置エンティティ'],
+  ['Radar chart derived from each Dimension’s MIN/MAX','各評価軸のMIN/MAXから算出したレーダー図'],
+  ['Drag to reorder Matrix columns. Keyboard: Alt+Left/Right','ドラッグしてマトリクスの列順を変更。キーボード: Alt+左右キー'],
+  ['Drag to reorder Matrix rows. Keyboard: Alt+Up/Down','ドラッグしてマトリクスの行順を変更。キーボード: Alt+上下キー'],
+  ['Include both endpoint labels','両方の端点ラベルを含める'],['Include unit text','単位の文字列を含める']
+];
+
+phrases.push(
+  ['E2R JSON download was handed to the browser. This Dataset snapshot is now the clean Export baseline; keep the downloaded file yourself. Browser-local persistence is unchanged.','E2R JSONのダウンロードをブラウザーに渡しました。ダウンロードしたファイルはご自身で保管してください。ブラウザー内の作業状態は変わりません。'],
+  ['E2R Dataset Export is unavailable during diagnostic read-only inspection.','診断のための読み取り専用表示中はE2Rデータセットを書き出せません。'],
+  ['Export blocked: Validator errors remain. No repair or normalization was applied.','Validatorエラーがあるため書き出せません。修復や正規化は行っていません。'],
+  ['The Dataset was opened in memory, but the browser-local copy was not replaced. It remains unsaved and may be lost on reload or browser close.','データセットはメモリー上で開きましたが、ブラウザー内のコピーは更新されませんでした。作業状態は未保存で、再読み込みやブラウザーを閉じると失われる可能性があります。'],
+  ['Dataset Entity change applied. It is part of the Dataset and is not exported until E2R JSON Export.','データセットのエンティティの変更を適用しました。E2R JSONを書き出すまでファイルには反映されません。'],
+  ['Dimension change applied to the Dataset. E2R JSON Export is a separate step.','評価軸の変更をデータセットに適用しました。E2R JSONの書き出しは別の操作です。'],
+  ['Dimension and its dependent Assessments were removed in one Dataset change.','評価軸と関連する値を、1回のデータセット変更で削除しました。'],
+  ['Rescale cannot produce valid Assessments for this range. Nothing changed.','この範囲では有効な値に再計算できません。変更はありません。'],
+  ['Enter finite numeric MIN and MAX values with MIN < MAX.','有限の数値でMIN < MAXとなる値を入力してください。'],
+  ['This integer-only range has no valid integer candidate.','整数のみの範囲内に有効な整数がありません。']
+);
+
+const protectedContent = '.dataset-title,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-card .card-head strong,.point-label,.plot-item,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.credits-metadata a';
+ja.set('Dataset title','データセットのタイトル');
+ja.set('Apply','適用');
+ja.set('Workspace actions','作業操作');
+ja.set('Dataset title applied. E2R JSON Export is a separate step.','データセットのタイトルを適用しました。E2R JSONの書き出しは別の操作です。');
+export function translateUiText(value) {
+  const trimmed=value.trim();
+  if(!trimmed)return value;
+  const translated=ja.get(trimmed);
+  if(translated!==undefined)return value.replace(trimmed,translated);
+  let result=value;
+  for(const [english,japanese] of phrases)result=result.replaceAll(english,japanese);
+  result=result.replace(/^(\s*)(\d+) Dataset Entit(?:y|ies) · (\d+) portable Dimensions? · (\d+) Assessments?(\s*)$/,
+    (_,before,entities,dimensions,assessments,after)=>`${before}${entities}件のエンティティ · ${dimensions}件の評価軸 · ${assessments}件の値${after}`);
+  result=result.replace(/^(\s*)(\d+) plotted(\s*)$/,(_,before,count,after)=>`${before}${count}件を配置${after}`);
+  result=result.replace(/^(\s*)(\d+) remaining(\s*)$/,(_,before,count,after)=>`${before}残り${count}件${after}`);
+  result=result.replace(/^(\s*)(\d+)–(\d+) of (\d+)(\s*)$/,(_,before,start,end,total,after)=>`${before}${total}件中 ${start}〜${end}件${after}`);
+  result=result.replace(/^(\s*)Dimension page (\d+)(\s*)$/,(_,before,page,after)=>`${before}評価軸ページ ${page}${after}`);
+  result=result.replace(/^(\s*)Dimension for column (\d+)(\s*)$/,(_,before,column,after)=>`${before}${column}列目の評価軸${after}`);
+  result=result.replace(/^(\s*)Recorded assessment ([-+\d.]+)(\s*)$/,(_,before,number,after)=>`${before}記録済みの値 ${number}${after}`);
+  result=result.replace(/^(\s*)Randomize (.+?)(\s*)$/,(_,before,name,after)=>`${before}${name}の未設定値をランダム入力${after}`);
+  result=result.replace(/^(\s*)Clear selected Entity’s X\/Y Assessments(\s*)$/,(_,before,after)=>`${before}選択中のエンティティのX/Yの値を消去${after}`);
+  result=result.replace(/^(\s*)Add (\d+) more dimensions? to draw a Radar chart\.(\s*)$/,(_,before,count,after)=>`${before}レーダー図を描くには評価軸をあと${count}件追加してください。${after}`);
+  result=result.replace(/^(\s*)(\d+) spokes(\s*)$/,(_,before,count,after)=>`${before}${count}軸${after}`);
+  result=result.replace(/^(\s*)Dataset: (.+) · Browser workspace: (.+)(\s*)$/,(_,before,dataset,workspace,after)=>`${before}データセット: ${dataset} · ブラウザー内の作業状態: ${workspace}${after}`);
+  result=result.replace(/^(\s*)(\d+) Dataset Entit(?:y|ies) available · (\d+) portable Dimensions?(\s*)$/,(_,before,entities,dimensions,after)=>`${before}${entities}件のエンティティ · ${dimensions}件のポータブルな評価軸${after}`);
+  return result;
+}
+export function localizeUi(root,locale) {
+  if(locale!=='ja')return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  for(let node=walker.nextNode();node;node=walker.nextNode()){
+    if(node.parentElement?.closest(protectedContent)){
+      if(node.parentElement?.matches('.temp-badge')||node.parentElement?.matches('.pager-current strong')&&node.nodeValue.trim()==='Choose Entity')node.nodeValue=translateUiText(node.nodeValue);
+      continue;
+    }
+    const option=node.parentElement?.closest('option');
+    if(option&&option.closest('select')?.id!=='view-select'&&option.value)continue;
+    node.nodeValue=translateUiText(node.nodeValue);
+  }
+  for(const element of root.querySelectorAll('[aria-label],[title],[placeholder]')){
+    if(element.matches('[data-random]:not([data-random="card"])')){
+      const label=element.getAttribute('aria-label');
+      if(label?.startsWith('Randomize '))element.setAttribute('aria-label',`未設定の値をランダム入力: ${label.slice(10)}`);
+      if(element.hasAttribute('title'))element.setAttribute('title','この評価軸の未設定値をランダム入力します');
+      continue;
+    }
+    if(element.matches('input[type="number"][data-value],input[type="range"][data-value]')){
+      const label=element.getAttribute('aria-label');
+      if(label?.endsWith(' value'))element.setAttribute('aria-label',`${label.slice(0,-6)}の値`);
+      if(label?.endsWith(' slider'))element.setAttribute('aria-label',`${label.slice(0,-7)}のスライダー`);
+    }
+    if(element.matches('.pager-current')){
+      const label=element.getAttribute('aria-label');
+      if(label?.startsWith('Choose Primary Entity'))element.setAttribute('aria-label',label.replace('Choose Primary Entity','主エンティティを選択'));
+      if(label?.startsWith('Choose unplotted Entity'))element.setAttribute('aria-label',label.replace('Choose unplotted Entity','未配置のエンティティを選択'));
+      continue;
+    }
+    if(element.matches(protectedContent)||element.closest('.plot-item,.matrix-row-identity')||element.matches('[data-entity-menu],[data-choose-entity],[data-matrix-row-handle],[data-vertex],[data-random]:not([data-random="card"]),.pager-current,.matrix-grip'))continue;
+    for(const attribute of ['aria-label','title','placeholder'])if(element.hasAttribute(attribute))element.setAttribute(attribute,translateUiText(element.getAttribute(attribute)));
+  }
+}

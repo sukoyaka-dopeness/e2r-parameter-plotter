@@ -22,9 +22,18 @@ import {datasetTitleFor} from './dataset-context.js';
 import {workspaceActionsMarkup} from './workspace-actions-menu.js';
 import {homeMarkup} from './home-screen.js';
 import {footerMarkup, creditsMarkup} from './application-shell.js';
+import {requestedLocale, readSavedLocale, readTemporaryLocale, resolveLocale, chooseTemporaryLocale, chooseSavedLocale, localeFragment} from './locale-preference.js';
+import {localeControlMarkup, localeConflictMarkup} from './locale-shell.js';
+import {localizeUi} from './ui-localize.js';
+const localeRequest=requestedLocale(window.location.hash);
+const savedLocale=readSavedLocale(window.localStorage);
+const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
+let locale=initialLocale.locale;
+let localeConflict=initialLocale.conflict;
 let s = load();
 let surface = 'home';
 let homeError = '';
+let datasetTitleDraft = null;
 let creditsOpen = false;
 let pagerDirection = 0;
 let radarSelectedDimension = null;
@@ -66,7 +75,7 @@ function render() {
   const allEntities=entities(s),showEntity=s.poolOpen||closingDrawer==='entity',showDimension=s.dimensionOpen||closingDrawer==='dimension';
   root.innerHTML=`<header><div><p class="eyebrow">E2R · SINGLE-USER COMPARISON WORKSPACE</p><h1>ParameterPlotter</h1><p class="sub">Compare Entities with dimensions you define. Dataset stays read-only.</p>${fileError?`<p class="field-error" role="alert">${esc(fileError)}</p>`:''}</div><div class="header-actions"><label class="button primary" data-import-trigger tabindex="0" role="button">Import E2R Dataset<input id="dataset-file" type="file" accept=".json,.e2r.json,application/json" hidden></label><button data-action="entities">Entities</button><button data-action="dimensions">Dimensions</button></div></header>
   <main><div class="topline"><div><strong>${allEntities.length?`${allEntities.length} ${allEntities.length===1?'Dataset Entity':'Dataset Entities'} available`:'No Dataset Entities available'}</strong><span> · ${s.dimensions.length} portable ${s.dimensions.length===1?'Dimension':'Dimensions'}</span></div><span>Comparison values are Dataset Assessments</span></div>
-  <nav class="tabs" aria-label="Views">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<button class="${s.view===v?'active':''}" aria-current="${s.view===v?'page':'false'}" data-view="${v}">${v}</button>`).join('')}</nav><label class="view-select">View <select id="view-select">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<option ${s.view===v?'selected':''}>${v}</option>`).join('')}</select></label>
+  <nav class="tabs" aria-label="Views">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<button class="${s.view===v?'active':''}" aria-current="${s.view===v?'page':'false'}" data-view="${v}">${v}</button>`).join('')}</nav><label class="view-select">View <select id="view-select">${['Profile','Radar','Quadrant','Matrix'].map(v=>`<option value="${v}" ${s.view===v?'selected':''}>${v}</option>`).join('')}</select></label>
   <section class="workspace">${!allEntities.length?`<div class="empty"><h2>Start with an E2R Dataset</h2><p>Open a Dataset or create a Dataset Entity. No Assessment is inferred.</p><button data-action="entities">Open Entity Pool</button></div>`:s.view==='Profile'?renderProfile(api):s.view==='Quadrant'?renderQuadrant(api):s.view==='Radar'?renderRadar(api):renderMatrix(api)}</section></main>
   ${showEntity||showDimension?`<button class="drawer-backdrop is-backdrop-dismissible ${closingDrawer?'is-closing':''}" data-action="close-drawers" aria-label="Close panel" tabindex="-1"></button>`:''}
   ${showEntity?`<aside class="drawer ${closingDrawer==='entity'?'is-closing':'is-open'}" role="dialog" aria-modal="true" aria-label="Entity Pool"><div class="drawer-head"><h2>Entity Pool</h2><button data-action="close-pool">Close</button></div><p>Dataset Entities and session-only Entities can be compared together.</p><div class="pool-action"><button class="primary" data-action="add-entity">Add temporary Entity</button></div>${s.entityFormOpen?`<form id="entity-form" class="drawer-form" autocomplete="off"><h3>${editEntityId?'Edit temporary Entity':'Temporary Entity'}</h3><label>Name<input name="temporary-entity-name" autocomplete="off" required maxlength="80" placeholder="Entity name" value="${esc(s.tempEntities.find(e=>e.id===editEntityId)?.name||'')}"></label><label>Description (optional)<textarea name="temporary-entity-description" autocomplete="off" rows="3" placeholder="Describe this Entity">${esc(s.tempEntities.find(e=>e.id===editEntityId)?.description||'')}</textarea></label><div class="actions"><button class="primary" type="submit">${editEntityId?'Save Entity':'Create Entity'}</button><button type="button" data-action="cancel-entity-form">Cancel</button></div></form>`:''}<label class="pool-search">Search Entity list<input id="entity-search" placeholder="Filter by name" aria-label="Search Entities"></label><div id="entity-list" class="item-list"></div></aside>`:''}
@@ -410,18 +419,18 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-action="add-dim
 // Candidate successor shell. The accepted Prototype remains a separate historical
 // source; this runtime consumes the portable Candidate and persists a distinct workspace.
 let pendingEntityDraft=null;
-const runtimeHeader=()=>`<button data-go-home>Home</button>${workspaceActionsMarkup({readOnly:s.readOnly,authoringUnavailable:s.readOnly||s.candidateUnsupported})}`;
+const runtimeHeader=()=>`<button data-go-home>Home</button>`;
 renderEntityList=function(){
  const q=(root.querySelector('#entity-search')?.value||'').toLocaleLowerCase();
  const rows=s.dataset.entities.map((entity,index)=>({entity,index})).filter(({entity,index})=>entity&&typeof entity==='object'&&[label(entity,index),String(entity.description||''),String(entity.id||'')].some(text=>text.toLocaleLowerCase().includes(q)));
  root.querySelector('#entity-list').innerHTML=rows.map(({entity:e,index:i})=>{
   const id=e.id||`inspection:entities:${i}`,eligibility=entityDeleteEligibility(s,id),expanded=entityMenu===id;
   return `<div class="list-row entity-row"><button class="entity-choice" data-choose-entity="${esc(id)}" ${s.view==='Quadrant'&&plottedEntities(s).some(item=>item.id===id)?'disabled':''}><span class="entity-row-title"><strong>${esc(label(e,i))}</strong><small class="temp-badge">Dataset</small></span>${e.description?`<small>${esc(e.description)}</small>`:''}${entityNeedsId(s,e,'pool')?`<small>ID ${esc(e.id)}</small>`:''}<small>${s.selected===id?'Selected':''}</small></button><button class="entity-more" data-entity-menu="${esc(id)}" aria-label="Actions for ${esc(label(e,i))}" aria-expanded="${expanded}">⋯</button>${expanded?`<div class="entity-actions"><button data-edit-entity="${esc(id)}" ${s.readOnly?'disabled':''}>Edit Entity</button><button class="danger" data-delete-entity="${esc(id)}" ${s.readOnly?'disabled':''}>Delete from Dataset</button>${entityDeleteNotice?.id===id?`<small role="status">${esc(entityDeleteNotice.reason)}</small>`:''}</div>`:''}</div>`;
- }).join('')||'<p>No matching Dataset Entities.</p>';
+ }).join('')||'<p>No matching Dataset Entities.</p>';localizeUi(root.querySelector('#entity-list'),locale);
 };
 renderDimensionList=function(){
  const q=dimensionQuery.toLocaleLowerCase(),allowed=candidateAuthoringAvailable(s);
- root.querySelector('#dimension-list').innerHTML=s.dimensions.filter(d=>[d.name,d.low,d.high,String(d.min),String(d.max),String(d.unit||'')].some(text=>text.toLocaleLowerCase().includes(q))).map(d=>`<div class="list-row dimension-list-row"><span><strong>${esc(d.name)}</strong><small>${esc(endpointRangeText(d))}</small>${d.unit!==undefined?`<small class="dimension-unit">${esc(d.unit)}</small>`:''}${d.integerOnly===true?'<small>Integer values only</small>':''}${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Delete</button></div>`).join('')||`<p>${s.dimensions.length?'No matching Dimensions':'No portable Dimensions yet.'}</p>`;
+ root.querySelector('#dimension-list').innerHTML=s.dimensions.filter(d=>[d.name,d.low,d.high,String(d.min),String(d.max),String(d.unit||'')].some(text=>text.toLocaleLowerCase().includes(q))).map(d=>`<div class="list-row dimension-list-row"><span><strong>${esc(d.name)}</strong><small>${esc(endpointRangeText(d))}</small>${d.unit!==undefined?`<small class="dimension-unit">${esc(d.unit)}</small>`:''}${d.integerOnly===true?'<small>Integer values only</small>':''}${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}" ${allowed?'':'disabled'}>Delete</button></div>`).join('')||`<p>${s.dimensions.length?'No matching Dimensions':'No portable Dimensions yet.'}</p>`;localizeUi(root.querySelector('#dimension-list'),locale);
 };
 function localEntityName(id){const index=s.dataset.entities.findIndex(entity=>entity?.id===id);return index<0?'Entity':label(s.dataset.entities[index],index);}
 function diagnosticMarkup(){
@@ -467,7 +476,9 @@ render=function(){
  const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER DATASET COMPARISON';
  const subtitle=root.querySelector('header .sub');if(subtitle)subtitle.textContent='Author E2R Entities and Dimension Assessments. Browser-local persistence is separate from E2R Dataset Export.';
  const actions=root.querySelector('.header-actions');if(actions)actions.innerHTML=runtimeHeader();
+ const main=root.querySelector(':scope > main');if(main){const toolbar=document.createElement('nav');toolbar.className='workspace-action-bar';toolbar.setAttribute('aria-label','Workspace actions');toolbar.innerHTML=workspaceActionsMarkup({readOnly:s.readOnly,authoringUnavailable:s.readOnly||s.candidateUnsupported});main.prepend(toolbar);}
  const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);topline.innerHTML=`<div class="dataset-context"><strong class="dataset-title">${esc(datasetTitleFor(s.dataset))}</strong><span>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'} · ${s.dimensions.length} portable Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${s.persistence.status==='saved'?'Saved locally':'Degraded / unsaved'}</span>`;}
+ if(topline){const title=s.dataset.extensions?.metadata?.title??'',editor=document.createElement('form');editor.className='dataset-title-editor';editor.innerHTML=`<label for="dataset-title-input">Dataset title</label><div class="dataset-title-editor-controls"><input id="dataset-title-input" name="dataset-title" type="text" value="${esc(datasetTitleDraft??title)}" ${s.readOnly?'disabled':''}><button type="submit" ${s.readOnly||(datasetTitleDraft??title)===title?'disabled':''}>Apply</button></div>`;topline.before(editor);}
  let status=root.querySelector('.successor-status');if(!status){status=document.createElement('section');status.className='successor-status';root.querySelector('main')?.prepend(status);}
  if(status)status.innerHTML=`<div class="persistence-status" role="status"><strong>${s.persistence.status==='saved'?'Browser-local workspace saved':'Browser-local workspace degraded / unsaved'}</strong>${s.persistence.message?`<p>${esc(s.persistence.message)}</p>`:'<p>Local persistence is not an E2R Dataset Export.</p>'}</div><p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p>${lifecycleNotice?`<p class="lifecycle-notice" role="status">${esc(lifecycleNotice)}</p>`:''}${diagnosticMarkup()}`;
  const entityDrawer=root.querySelector('.drawer[aria-label="Entity Pool"]');if(entityDrawer){const p=entityDrawer.querySelector(':scope > p');if(p)p.textContent='Dataset Entities are edited directly in this Dataset. Dimensions and Assessments are portable Candidate data.';const action=entityDrawer.querySelector('.pool-action button');if(action){action.textContent='Add Dataset Entity';action.disabled=s.readOnly;action.dataset.action='add-entity';}}
@@ -496,7 +507,7 @@ function receiveDataset(kind,dataset){
 }
 function activateIncoming(){
  if(!replacement)return;
- const request=replacement;replacement=null;surface='workspace';s=request.state;s.workspaceCreated=true;fileError='';homeError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;s.pendingDraft=false;
+ const request=replacement;replacement=null;surface='workspace';s=request.state;s.workspaceCreated=true;fileError='';homeError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;datasetTitleDraft=null;s.pendingDraft=false;
  save(s);
  lifecycleNotice=s.persistence.status==='degraded'?'The Dataset was opened in memory, but the browser-local copy was not replaced. It remains unsaved and may be lost on reload or browser close.':'';
  render();
@@ -531,6 +542,11 @@ function clearLifecycleNotice(){
 function closeWorkspaceMore({restoreFocus=false}={}){const menu=root.querySelector('.workspace-more');if(!menu?.open)return;menu.open=false;if(restoreFocus)menu.querySelector('summary')?.focus();}
 function openDatasetFilePicker(){closeWorkspaceMore({restoreFocus:true});root.querySelector('#dataset-file')?.click();}
 function captureSuccessorClick(event){
+ if(localeConflict&&event.target.matches('[data-locale-backdrop]')){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();return;}
+ const localeTarget=event.target.closest('[data-select-locale],[data-resolve-locale]');
+ if(localeTarget?.dataset.selectLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.selectLocale;localeConflict=false;chooseSavedLocale(window.localStorage,locale,window.sessionStorage);window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+localeFragment(window.location.hash,locale));render();return;}
+ if(localeTarget?.dataset.resolveLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.resolveLocale==='requested'?localeRequest.locale:savedLocale;localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();return;}
+ if(localeConflict){event.preventDefault();event.stopImmediatePropagation();return;}
  if(creditsOpen){
   if(event.target.closest('[data-close-credits]')||event.target.matches('[data-credits-backdrop]')){event.preventDefault();event.stopImmediatePropagation();creditsOpen=false;render();root.querySelector('.credits-button')?.focus();}
   return;
@@ -576,6 +592,7 @@ function captureSuccessorClick(event){
 }
 document.addEventListener('click',captureSuccessorClick,true);
 document.addEventListener('keydown',event=>{
+ if(localeConflict){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();return;}if(event.key==='Tab'){event.stopImmediatePropagation();trapDialogTab(event,'.locale-conflict-scrim .confirm-dialog');return;}event.stopImmediatePropagation();return;}
  if(!creditsOpen)return;
  event.stopImmediatePropagation();
  if(event.key==='Escape'){
@@ -592,7 +609,7 @@ document.addEventListener('keydown',event=>{
 document.addEventListener('click',event=>{const menu=root.querySelector('.workspace-more');if(menu?.open&&!menu.contains(event.target))menu.open=false;});
 document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const menu=root.querySelector('.workspace-more');if(menu?.open){event.preventDefault();menu.open=false;menu.querySelector('summary')?.focus();}});
 document.addEventListener('submit',event=>{
- const form=event.target,formId=formAttributeId(form);if(formId==='entity-form'){
+ const form=event.target,formId=formAttributeId(form);if(form.classList.contains('dataset-title-editor')){event.preventDefault();event.stopImmediatePropagation();const draft=form.elements.namedItem('dataset-title').value,title=draft.trim();const result=transactDatasetMutation(s,()=>{const extensions={...(s.dataset.extensions??{})},metadata={...(extensions.metadata??{})};if(title)metadata.title=title;else delete metadata.title;if(Object.keys(metadata).length)extensions.metadata=metadata;else delete extensions.metadata;if(Object.keys(extensions).length)s.dataset.extensions=extensions;else delete s.dataset.extensions;});if(result.ok){datasetTitleDraft=null;s.pendingDraft=false;lifecycleNotice='Dataset title applied. E2R JSON Export is a separate step.';update();}else{datasetTitleDraft=draft;lifecycleNotice=result.reason;render();root.querySelector('#dataset-title-input')?.focus();}return;}if(formId==='entity-form'){
    event.preventDefault();event.stopImmediatePropagation();const name=form.elements.namedItem('dataset-entity-name').value,description=form.elements.namedItem('dataset-entity-description').value;
    const result=editEntityId?editDatasetEntity(s,editEntityId,{name,description}):createDatasetEntity(s,{name,description});
    if(!result.ok){entityFormError=result.reason;render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
@@ -618,6 +635,7 @@ document.addEventListener('change',event=>{
 document.addEventListener('input',event=>{
  clearLifecycleNotice();
  const target=event.target;
+ if(target.id==='dataset-title-input'){datasetTitleDraft=target.value;s.pendingDraft=datasetTitleDraft!==(s.dataset.extensions?.metadata?.title??'');target.form?.querySelector('button[type="submit"]')?.toggleAttribute('disabled',!s.pendingDraft);root.querySelector('.pending-draft-status')?.toggleAttribute('hidden',!s.pendingDraft);}
  if(target.matches('#entity-form input,#entity-form textarea')){s.pendingDraft=true;pendingEntityDraft={editId:editEntityId,name:root.querySelector('#entity-form [name="dataset-entity-name"]')?.value||'',description:root.querySelector('#entity-form [name="dataset-entity-description"]')?.value||''};}
  if(target.closest('#dimension-form')){s.pendingDraft=true;const form=target.closest('#dimension-form'),field=name=>form.elements.namedItem(name);dimensionDraft={id:field('id').value||undefined,name:field('dimension-name').value,low:field('dimension-low').value,high:field('dimension-high').value,minInput:field('dimension-min')?.value||'',maxInput:field('dimension-max')?.value||'',unit:field('dimension-unit')?.value||'',unitPresent:Boolean(field('dimension-unit-enabled')?.checked),endpointLabelsPresent:Boolean(field('dimension-labels-enabled')?.checked),integerOnly:Boolean(field('dimension-integer-only')?.checked)};for(const name of ['dimension-low','dimension-high']){const input=field(name);if(input)input.disabled=!field('dimension-labels-enabled')?.checked;}const unit=field('dimension-unit');if(unit)unit.disabled=!field('dimension-unit-enabled')?.checked;}
  if(s.pendingDraft)root.querySelector('.pending-draft-status')?.removeAttribute('hidden');
@@ -642,8 +660,13 @@ const initialBuild=buildDimensionFields;
 const originalRender=render;
 render=function(){
  originalRender();
+ document.documentElement.lang=locale;
+ const appHeader=root.querySelector(':scope > header');
+ if(appHeader)(appHeader.querySelector('.header-actions')||appHeader).insertAdjacentHTML('beforeend',localeControlMarkup(locale));
+ if(localeConflict){root.insertAdjacentHTML('beforeend',localeConflictMarkup(locale,localeRequest.locale));root.querySelectorAll(':scope > header,:scope > main,:scope > footer').forEach(element=>element.inert=true);root.querySelector('[data-resolve-locale="saved"]')?.focus();}
  const eyebrow=root.querySelector('header .eyebrow');if(eyebrow)eyebrow.textContent='E2R | SINGLE-USER DATASET COMPARISON';
  document.title='ParameterPlotter';
  const search=root.querySelector('#dimension-search');if(search)search.placeholder='Filter by name, labels, range, or unit';
+ localizeUi(root,locale);
 };
 render();
