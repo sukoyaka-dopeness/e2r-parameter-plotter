@@ -51,6 +51,21 @@ test('current Dataset context uses the E2R metadata title and an absent-title fa
   assert.equal(datasetTitleFor({extensions:{metadata:{title:'   '}}}),'Untitled Dataset');
 });
 
+test('current application and document identity use the Human-selected formal name',async()=>{
+  const [html,main,server]=await Promise.all([
+    readFile(new URL('./index.html',import.meta.url),'utf8'),
+    readFile(new URL('./main.js',import.meta.url),'utf8'),
+    readFile(new URL('./serve.mjs',import.meta.url),'utf8'),
+  ]);
+  assert.match(html,/<title>ParameterPlotter<\/title>/);
+  assert.doesNotMatch(html,/working name/i);
+  assert.match(main,/<h1>ParameterPlotter<\/h1>/);
+  assert.match(main,/document\.title='ParameterPlotter'/);
+  assert.doesNotMatch(main,/working name/i);
+  assert.match(server,/console\.log\(`ParameterPlotter:/);
+  assert.doesNotMatch(server,/working name/i);
+});
+
 test('Dataset replacement renders loss warning with Cancel and explicit discard action',()=>{
   const dataset=replacementMarkup();
   assert.match(dataset,/Open another Dataset\?/);

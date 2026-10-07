@@ -12,4 +12,4 @@ createServer(async(req,res)=>{
   if(!parts.every(part=>/^[\w.-]+$/.test(part)&&part!=='.'&&part!=='..')){res.writeHead(404).end();return;}
   try { const body=await readFile(join(base,file));res.writeHead(200,{'Content-Type':types[file.slice(file.lastIndexOf('.'))]||'application/octet-stream','Cache-Control':'no-store'}).end(body); }
   catch {res.writeHead(404).end();}
-}).listen(port,'127.0.0.1',()=>console.log(`ParameterPlotter (working name): http://localhost:${port}`));
+}).listen(port,'127.0.0.1',()=>console.log(`ParameterPlotter: http://localhost:${port}`));
