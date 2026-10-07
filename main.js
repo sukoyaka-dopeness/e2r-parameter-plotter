@@ -24,6 +24,7 @@ import {footerMarkup, creditsMarkup} from './application-shell.js';
 import {requestedLocale, readSavedLocale, readTemporaryLocale, resolveLocale, chooseTemporaryLocale, chooseSavedLocale, localeFragment} from './locale-preference.js';
 import {localeControlMarkup, localeConflictMarkup} from './locale-shell.js';
 import {localizeUi} from './ui-localize.js';
+import {applyDatasetTitle} from './dataset-title.js';
 const localeRequest=requestedLocale(window.location.hash);
 const savedLocale=readSavedLocale(window.localStorage);
 const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
@@ -181,7 +182,7 @@ document.addEventListener('keydown',e=>{
   }
 });
 document.addEventListener('focusin',e=>{
-  const vertex=e.target.closest?.('[data-vertex]');if(vertex){radarSelectedDimension=vertex.dataset.vertex;root.querySelectorAll('.vertex-hit.is-selected').forEach(x=>x.classList.remove('is-selected'));vertex.classList.add('is-selected');const guide=root.querySelector('.radar-chart>.small');if(guide){const name=s.dimensions.find(d=>d.id===radarSelectedDimension)?.name||'vertex';guide.textContent=`${name} selected · Arrow keys adjust Primary by ${s.dimensions.find(d=>d.id===radarSelectedDimension)?.integerOnly===true?1:0.05}. Secondary stays comparison-only.`;}}
+  const vertex=e.target.closest?.('[data-vertex]');if(vertex){radarSelectedDimension=vertex.dataset.vertex;root.querySelectorAll('.vertex-hit.is-selected').forEach(x=>x.classList.remove('is-selected'));vertex.classList.add('is-selected');const guide=root.querySelector('.radar-chart>.small');if(guide){const name=s.dimensions.find(d=>d.id===radarSelectedDimension)?.name||'vertex';guide.textContent=`${name} selected · Arrow keys adjust Primary by ${s.dimensions.find(d=>d.id===radarSelectedDimension)?.integerOnly===true?1:0.05}. Secondary stays comparison-only.`;localizeUi(guide,locale);}}
   if(confirmation||replacement||!(s.poolOpen||s.dimensionOpen))return;
   const drawer=root.querySelector('.drawer.is-open');
   if(drawer&&!drawer.contains(e.target))focusDrawer(root);
@@ -390,7 +391,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{
  const vertex=e.target.closest?.('[data-vertex]');if(!vertex||!['ArrowUp','ArrowRight','ArrowDown','ArrowLeft'].includes(e.key))return;
  e.preventDefault();e.stopImmediatePropagation();const dim=vertex.dataset.vertex,dimension=s.dimensions.find(d=>d.id===dim),increment=dimension.integerOnly===true?1:0.05,delta=['ArrowUp','ArrowRight'].includes(e.key)?increment:-increment,current=getValue(s,s.selected,dim),range=dimensionBounds(dim);
- if(!setValue(s,s.selected,dim,decimalAdd(current,delta))){const guide=root.querySelector('.radar-chart>.small');if(guide)guide.textContent=`Value unchanged · this Dimension accepts ${dimension.integerOnly===true?'integers from ':''}${fmt(range.min)} to ${fmt(range.max)}. The recorded value remains in session data.`;return;}
+ if(!setValue(s,s.selected,dim,decimalAdd(current,delta))){const guide=root.querySelector('.radar-chart>.small');if(guide){guide.textContent=`Value unchanged · this Dimension accepts ${dimension.integerOnly===true?'integers from ':''}${fmt(range.min)} to ${fmt(range.max)}. The recorded value remains in session data.`;localizeUi(guide,locale);}return;}
  radarSelectedDimension=dim;update();root.querySelector(`[data-vertex="${CSS.escape(dim)}"]`)?.focus();
 },true);
 
@@ -610,7 +611,7 @@ document.addEventListener('keydown',event=>{
 document.addEventListener('click',event=>{const menu=root.querySelector('.workspace-more');if(menu?.open&&!menu.contains(event.target))menu.open=false;});
 document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const menu=root.querySelector('.workspace-more');if(menu?.open){event.preventDefault();menu.open=false;menu.querySelector('summary')?.focus();}});
 document.addEventListener('submit',event=>{
- const form=event.target,formId=formAttributeId(form);if(form.classList.contains('dataset-title-editor')){event.preventDefault();event.stopImmediatePropagation();const draft=form.elements.namedItem('dataset-title').value,title=draft.trim();const result=transactDatasetMutation(s,()=>{const extensions={...(s.dataset.extensions??{})},metadata={...(extensions.metadata??{})};if(title)metadata.title=title;else delete metadata.title;if(Object.keys(metadata).length)extensions.metadata=metadata;else delete extensions.metadata;if(Object.keys(extensions).length)s.dataset.extensions=extensions;else delete s.dataset.extensions;});if(result.ok){datasetTitleDraft=null;s.pendingDraft=false;lifecycleNotice='Dataset title applied. E2R JSON Export is a separate step.';update();}else{datasetTitleDraft=draft;lifecycleNotice=result.reason;render();root.querySelector('#dataset-title-input')?.focus();}return;}if(formId==='entity-form'){
+ const form=event.target,formId=formAttributeId(form);if(form.classList.contains('dataset-title-editor')){event.preventDefault();event.stopImmediatePropagation();const draft=form.elements.namedItem('dataset-title').value,title=draft.trim();const result=transactDatasetMutation(s,()=>applyDatasetTitle(s.dataset,title));if(result.ok){datasetTitleDraft=null;s.pendingDraft=false;lifecycleNotice='Dataset title applied. E2R JSON Export is a separate step.';update();}else{datasetTitleDraft=draft;lifecycleNotice=result.reason;render();root.querySelector('#dataset-title-input')?.focus();}return;}if(formId==='entity-form'){
    event.preventDefault();event.stopImmediatePropagation();const name=form.elements.namedItem('dataset-entity-name').value,description=form.elements.namedItem('dataset-entity-description').value;
    const result=editEntityId?editDatasetEntity(s,editEntityId,{name,description}):createDatasetEntity(s,{name,description});
    if(!result.ok){entityFormError=result.reason;render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}

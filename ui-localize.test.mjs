@@ -17,3 +17,10 @@ test('unknown content, identifiers, and authored names have no lexical translati
   assert.equal(translateUiText('draft.github.sukoyaka-dopeness.dimension-assessment'),'draft.github.sukoyaka-dopeness.dimension-assessment');
   assert.equal(translateUiText('The Ashen Crown'),'The Ashen Crown');
 });
+test('value-bearing UI phrases translate without changing authored Dimension names or numbers',()=>{
+  assert.equal(translateUiText('-2.7 to 3.6'),'-2.7〜3.6');
+  assert.equal(translateUiText('X Low'),'X軸の下限');
+  assert.equal(translateUiText('Symbol or descriptive phrase'),'記号または説明文');
+  assert.equal(translateUiText('Impact selected · Arrow keys adjust Primary by 1. Secondary stays comparison-only.'),'Impactを選択しました · 矢印キーで主エンティティの値を1刻みで調整できます。比較エンティティは表示専用です。');
+  assert.equal(translateUiText('Value unchanged · this Dimension accepts integers from -2.7 to 3.6. The recorded value remains in session data.'),'値は変更されませんでした · この評価軸では-2.7〜3.6の整数を入力できます。記録済みの値は保持されます。');
+});

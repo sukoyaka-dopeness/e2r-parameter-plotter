@@ -148,6 +148,11 @@ ja.set('Apply','適用');
 ja.set('Workspace actions','作業操作');
 ja.set('Dataset title applied. E2R JSON Export is a separate step.','データセットのタイトルを適用しました。E2R JSONの書き出しは別の操作です。');
 ja.set('Create dimensions to populate the Matrix.','評価軸を作成するとマトリクスに表示されます。');
+ja.set('Symbol or descriptive phrase','記号または説明文');
+ja.set('X Low','X軸の下限');
+ja.set('X High','X軸の上限');
+ja.set('Y Low','Y軸の下限');
+ja.set('Y High','Y軸の上限');
 export function translateUiText(value) {
   const trimmed=value.trim();
   if(!trimmed)return value;
@@ -169,6 +174,12 @@ export function translateUiText(value) {
   result=result.replace(/^(\s*)(\d+) spokes(\s*)$/,(_,before,count,after)=>`${before}${count}軸${after}`);
   result=result.replace(/^(\s*)Dataset: (.+) · Browser workspace: (.+)(\s*)$/,(_,before,dataset,workspace,after)=>`${before}データセット: ${dataset} · ブラウザー内の作業状態: ${workspace}${after}`);
   result=result.replace(/^(\s*)(\d+) Dataset Entit(?:y|ies) available · (\d+) portable Dimensions?(\s*)$/,(_,before,entities,dimensions,after)=>`${before}${entities}件のエンティティ · ${dimensions}件のポータブルな評価軸${after}`);
+  result=result.replace(/^(\s*)(-?\d+(?:\.\d+)?) to (-?\d+(?:\.\d+)?)(\s*)$/,
+    (_,before,min,max,after)=>`${before}${min}〜${max}${after}`);
+  result=result.replace(/^(.+) selected · Arrow keys adjust Primary by (1|0\.05)\. Secondary stays comparison-only\.$/,
+    (_,name,step)=>`${name}を選択しました · 矢印キーで主エンティティの値を${step}刻みで調整できます。比較エンティティは表示専用です。`);
+  result=result.replace(/^Value unchanged · this Dimension accepts (integers from )?([-+\d.]+) to ([-+\d.]+)\. The recorded value remains in session data\.$/,
+    (_,integer,min,max)=>`値は変更されませんでした · この評価軸では${min}〜${max}の${integer?'整数':'値'}を入力できます。記録済みの値は保持されます。`);
   return result;
 }
 export function localizeUi(root,locale) {
@@ -176,7 +187,7 @@ export function localizeUi(root,locale) {
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   for(let node=walker.nextNode();node;node=walker.nextNode()){
     if(node.parentElement?.closest(protectedContent)){
-      if(node.parentElement?.matches('.temp-badge')||node.parentElement?.matches('.pager-current strong')&&node.nodeValue.trim()==='Choose Entity'||node.parentElement?.matches('.quadrant-axis-name span')&&node.nodeValue.trim()==='Choose dimension')node.nodeValue=translateUiText(node.nodeValue);
+      if(node.parentElement?.matches('.temp-badge,[data-ui-empty-description]')||node.parentElement?.matches('.pager-current strong')&&node.nodeValue.trim()==='Choose Entity'||node.parentElement?.matches('.quadrant-axis-name span')&&node.nodeValue.trim()==='Choose dimension')node.nodeValue=translateUiText(node.nodeValue);
       continue;
     }
     if(node.parentElement?.closest('[data-matrix-empty]')&&node.nodeValue.startsWith('Selected Entity: ')){
@@ -185,9 +196,53 @@ export function localizeUi(root,locale) {
     }
     const option=node.parentElement?.closest('option');
     if(option&&option.closest('select')?.id!=='view-select'&&option.value)continue;
+    if(node.parentElement?.matches('.dimension-unit,.matrix-unit')&&node.nodeValue.startsWith('Unit: ')){
+      node.nodeValue=`単位: ${node.nodeValue.slice(6)}`;
+      continue;
+    }
+    if(node.parentElement?.matches('[data-radar-value]')){
+      node.nodeValue=node.nodeValue.replace(/^Primary /,'主 ').replace(' · Secondary ',' · 比較 ');
+      continue;
+    }
+    if(node.parentElement?.matches('title')&&node.parentElement.closest('[data-vertex]')&&node.nodeValue.includes('Unit: ')){
+      node.nodeValue=node.nodeValue.replace('Unit: ','単位: ');
+      continue;
+    }
     node.nodeValue=translateUiText(node.nodeValue);
   }
   for(const element of root.querySelectorAll('[aria-label],[title],[placeholder]')){
+    if(element.matches('.dimension-unit,.matrix-unit')){
+      const title=element.getAttribute('title');
+      if(title?.startsWith('Unit: '))element.setAttribute('title',`単位: ${title.slice(6)}`);
+      continue;
+    }
+    if(element.matches('[data-radar-move],[data-radar-remove]')){
+      const label=element.getAttribute('aria-label');
+      const match=label?.match(/^(Move|Remove) (.+?)( up| down)?$/);
+      if(match)element.setAttribute('aria-label',match[1]==='Remove'?`${match[2]}を削除`:`${match[2]}を${match[3]===' up'?'上':'下'}へ移動`);
+      continue;
+    }
+    if(element.matches('[data-vertex]')){
+      const label=element.getAttribute('aria-label');
+      if(label?.endsWith(' Primary value; Arrow keys edit'))element.setAttribute('aria-label',label.replace(' Primary value; Arrow keys edit',' 主エンティティの値。矢印キーで編集'));
+      for(const attribute of ['aria-valuetext','title']){
+        const value=element.getAttribute(attribute);
+        if(value?.includes('Unit: '))element.setAttribute(attribute,value.replace('Unit: ','単位: '));
+      }
+      continue;
+    }
+    if(element.matches('[data-drag-dimension],[data-matrix-row-handle]')){
+      const label=element.getAttribute('aria-label');
+      if(element.matches('[data-drag-dimension]')&&label?.startsWith('Reorder '))element.setAttribute('aria-label',label.replace(/^Reorder /,'列順を変更: ').replace('; drag or use Alt plus Arrow keys','。ドラッグまたはAlt+左右キー'));
+      if(element.matches('[data-matrix-row-handle]')&&label?.startsWith('Reorder '))element.setAttribute('aria-label',label.replace(/^Reorder /,'行順を変更: ').replace('; drag or use Alt plus Up/Down','。ドラッグまたはAlt+上下キー'));
+      const title=element.getAttribute('title');
+      if(title)element.setAttribute('title',translateUiText(title));
+      continue;
+    }
+    if(element.matches('th[data-drop-column]')){
+      const title=element.getAttribute('title');
+      if(title?.includes('Unit: '))element.setAttribute('title',title.replace('Unit: ','単位: '));
+    }
     if(element.matches('[data-random]:not([data-random="card"])')){
       const label=element.getAttribute('aria-label');
       if(label?.startsWith('Randomize '))element.setAttribute('aria-label',`未設定の値をランダム入力: ${label.slice(10)}`);

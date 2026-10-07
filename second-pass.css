@@ -354,3 +354,6 @@ html.drawer-modal-open{overflow:hidden;overscroll-behavior:none}
 .matrix-row-insertion-indicator{position:fixed;z-index:4;height:0;border-top:3px solid #264da4;box-shadow:0 0 0 1px #fff;pointer-events:none;visibility:hidden}
 .matrix-row-insertion-indicator.is-visible{visibility:visible}
 .matrix-row-announcement{position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+
+/* Keep value controls and status text separate in the two-column narrow Matrix. */
+@media(max-width:720px){.matrix-wrap{overflow-x:auto}.matrix-wrap table{min-width:540px}}
