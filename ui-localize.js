@@ -12,9 +12,9 @@ const ja = new Map(Object.entries({
   'Credits links':'クレジット関連リンク','Home':'ホーム','Entities':'エンティティ','Dimensions':'評価軸','More':'その他',
   'More workspace actions':'その他の操作','Dataset actions':'データセットの操作','Export E2R JSON':'E2R JSONを書き出す',
   'Profile':'プロファイル','Radar':'レーダー','Quadrant':'四象限','Matrix':'マトリクス','View':'表示',
-  'Views':'表示','Entity Pool':'エンティティ一覧','Dimension Pool':'評価軸一覧','Add Dataset Entity':'データセットにエンティティを追加',
-  'Edit Dataset Entity':'データセットのエンティティを編集','New Dataset Entity':'新しいエンティティ',
-  'Edit Dataset Dimension':'データセットの評価軸を編集','New Dataset Dimension':'新しい評価軸',
+  'Views':'表示','Entity Pool':'エンティティ一覧','Dimension Pool':'評価軸一覧','Add Entity':'エンティティを追加',
+  'Edit Entity':'エンティティを編集','New Entity':'新しいエンティティ',
+  'Edit Dimension':'評価軸を編集','New Dimension':'新しい評価軸',
   'PORTABLE DATA':'ポータブルデータ','Filter by name, labels, range, or unit':'名前・端点ラベル・範囲・単位で絞り込む',
   'Name (optional)':'名前（任意）','Description (optional)':'説明（任意）','Optional Entity name':'エンティティ名（任意）',
   'Add dimension':'評価軸を追加','Add Dimension':'評価軸を追加','Save Dimension':'評価軸を保存',
@@ -38,7 +38,7 @@ const ja = new Map(Object.entries({
   'Review Assessment rescale':'値の再計算を確認','Apply reviewed rescale':'再計算を適用',
   'Back to Dimension edit':'評価軸の編集に戻る','Clear plotted Assessments?':'配置した値を消去しますか？',
   'Clear Assessments':'値を消去','Delete Dimension?':'評価軸を削除しますか？',
-  'Delete Dataset Entity?':'データセットのエンティティを削除しますか？','Delete Dimension':'評価軸を削除',
+  'Delete Dimension':'評価軸を削除',
   'Delete Entity':'エンティティを削除','Create a new Dataset?':'新しいデータセットを作成しますか？',
   'Open sample Dataset?':'サンプルデータセットを開きますか？','Open another Dataset?':'別のデータセットを開きますか？',
   'Incoming:':'読み込み先:','A new empty E2R Dataset.':'新しい空のE2Rデータセット。',
@@ -73,7 +73,7 @@ for(const [english,japanese] of Object.entries({
   'Primary value; Arrow keys edit':'主エンティティの値。矢印キーで編集',
   'Dimension for column':'列の評価軸','Dimension page':'評価軸ページ',
   'Comparison values are Dataset Assessments':'比較する値はデータセットに記録した値です。',
-  'Add Dataset Entity':'データセットにエンティティを追加',
+  'Add Entity':'エンティティを追加',
   'Search Entity list':'エンティティ一覧を検索'
 }))ja.set(english,japanese);
 for(const [english,japanese] of Object.entries({
@@ -92,8 +92,8 @@ for(const [english,japanese] of Object.entries({
   'Warnings do not by themselves block supported authoring or export. Unsupported content is preserved; operations that cannot be checked safely are unavailable.':'警告だけでは対応済みの編集や書き出しを止めません。未対応の内容は保持します。安全に検証できない操作は利用できません。',
   'Dimension Assessment version is unsupported here; its payload remains opaque and unchanged.':'このDimension Assessmentのバージョンには対応していません。内容は解釈せず、そのまま保持します。',
   'No matching Dataset Entities.':'一致するデータセットのエンティティはありません。',
-  'Edit Entity':'エンティティを編集','Delete from Dataset':'データセットから削除',
-  'Dataset Entities are edited directly in this Dataset. Dimensions and Assessments are portable Candidate data.':'データセットのエンティティは直接編集します。評価軸と値はポータブルなCandidateデータです。',
+  'Edit Entity':'エンティティを編集','Delete':'削除','Delete Entity?':'エンティティを削除しますか？',
+  'Entities are edited directly in this Dataset. Dimensions and values are saved in the Dataset and included in exports.':'エンティティはこのDataset内で直接編集します。評価軸と値はDatasetに保存され、書き出しにも含まれます。',
   'No value changed.':'値は変更されませんでした。',
   'No safely generated integer candidate in range; review this Dimension\'s bounds.':'この範囲では安全に生成できる整数がありません。評価軸の範囲を確認してください。',
   'Stored value violates this Dimension policy; enter an allowed replacement':'記録値がこの評価軸の制約に反しています。許容される値に変更してください。'
@@ -108,7 +108,7 @@ const phrases = [
   ['Recorded values are retained. Edit a value in Profile or Matrix to replace it with a value allowed by that Dimension.','記録済みの値は保持されます。プロファイルかマトリクスで、その評価軸が許す値に変更してください。'],
   ['Select a Primary vertex on the chart, then use Arrow keys to edit the recorded value (integer-only Dimensions: 1; others: 0.05). Positions use each Dimension’s MIN/MAX. Missing values remain unassessed; values violating range or integer-only constraints are retained without a chart position.','図の主エンティティの頂点を選び、矢印キーで記録値を編集できます（整数のみの評価軸は1、その他は0.05刻み）。位置は評価軸のMIN/MAXから算出します。未設定値には位置がなく、制約に反する記録値は保持されますが図には配置されません。'],
   ['Open a Dataset or create a Dataset Entity. No Assessment is inferred.','データセットを開くか、エンティティを作成してください。値は推測して追加されません。'],
-  ['Dataset Entities are edited directly in this Dataset. Dimensions and Assessments are portable Candidate data.','データセットのエンティティは直接編集します。評価軸と値はポータブルなCandidateデータです。'],
+  ['Entities are edited directly in this Dataset. Dimensions and values are saved in the Dataset and included in exports.','エンティティはこのDataset内で直接編集します。評価軸と値はDatasetに保存され、書き出しにも含まれます。'],
   ['Changing these bounds makes existing Assessments invalid. Review this linear rescale; nothing changes in the Dataset until you approve it.','この範囲変更により既存の値が無効になります。線形の再計算を確認してください。承認するまでデータセットは変更されません。'],
   ['Opening this Dataset replaces the active Dataset and its comparison workspace. Any Dataset changes or unapplied authoring in the current workspace will be discarded.','このデータセットを開くと、現在のデータセットと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。'],
   ['Creating this Dataset replaces the active Dataset and its comparison workspace. Any Dataset changes or unapplied authoring in the current workspace will be discarded.','新しいデータセットを作成すると、現在のデータセットと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。'],
@@ -186,6 +186,7 @@ export function localizeUi(root,locale) {
   if(locale!=='ja')return;
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   for(let node=walker.nextNode();node;node=walker.nextNode()){
+    if(node.parentElement?.matches('.temp-badge')&&node.nodeValue.trim()==='Dataset')continue;
     if(node.parentElement?.closest(protectedContent)){
       if(node.parentElement?.matches('.temp-badge,[data-ui-empty-description]')||node.parentElement?.matches('.pager-current strong')&&node.nodeValue.trim()==='Choose Entity'||node.parentElement?.matches('.quadrant-axis-name span')&&node.nodeValue.trim()==='Choose dimension')node.nodeValue=translateUiText(node.nodeValue);
       continue;

@@ -8,7 +8,7 @@ export function confirmationMarkup(request,state,esc){
   if(!item)return '';
   const payload=state.dataset.extensions?.[DIMENSION_ASSESSMENT_ID];
   const dependent=Array.isArray(payload?.assessments)?payload.assessments.filter(a=>dimension?a.dimensionId===request.id:a.entityId===request.id).length:0;
-  const title=dimension?'Delete Dimension?':'Delete Dataset Entity?';
+  const title=dimension?'Delete Dimension?':'Delete Entity?';
   const detail=dimension
     ?`This removes ${esc(item.name)} (ID ${esc(shortId(item.id))}) and its ${dependent} dependent Assessment record${dependent===1?'':'s'} from the Dataset in the same change.`
     :`This removes ${esc(item.name||'unnamed Entity')} (ID ${esc(shortId(item.id))}) and its ${dependent} Dimension Assessment record${dependent===1?'':'s'} from the Dataset. Relations are never cascade-deleted.`;

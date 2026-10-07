@@ -27,3 +27,15 @@ test('value-bearing UI phrases translate without changing authored Dimension nam
 test('Footer descriptor keeps the approved English and Japanese wording',()=>{
   assert.equal(translateUiText('E2R comparison editor'),'E2R比較エディター');
 });
+test('Entity and Dimension drawer wording avoids redundant Dataset and Candidate jargon',()=>{
+  assert.equal(translateUiText('Add Entity'),'エンティティを追加');
+  assert.equal(translateUiText('Edit Entity'),'エンティティを編集');
+  assert.equal(translateUiText('Delete'),'削除');
+  assert.equal(translateUiText('New Entity'),'新しいエンティティ');
+  assert.equal(translateUiText('Edit Dimension'),'評価軸を編集');
+  assert.equal(translateUiText('New Dimension'),'新しい評価軸');
+  assert.equal(translateUiText('Delete Entity?'),'エンティティを削除しますか？');
+  assert.equal(translateUiText('Entities are edited directly in this Dataset. Dimensions and values are saved in the Dataset and included in exports.'),'エンティティはこのDataset内で直接編集します。評価軸と値はDatasetに保存され、書き出しにも含まれます。');
+  assert.equal(translateUiText('Entity Pool'),'エンティティ一覧');
+  assert.equal(translateUiText('Dimension Pool'),'評価軸一覧');
+});
