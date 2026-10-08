@@ -66,3 +66,14 @@ Browser Acceptance remains pending.
 The accepted Drawer UX checkpoint remains closed and unchanged. The separate
 Cross-App More-menu follow-up and the non-blocking Primary hue observation
 were not changed. No Human Acceptance status was expanded by this checkpoint.
+
+
+## Navigation-width follow-on - 2026-10-08
+
+Human Browser Review agreed that the prior vertical alignment and Entity-name clipping correction improved those reported issues, but found the navigation group's apparent width and left edge shifting between views. Source review found that the shared View Header grid already gave `.view-control` a common column, while its direct children kept different sizing behavior: Entity pagers filled the column, the Quadrant `.waiting-header` was content/minimum-width sized, and the Matrix `.matrix-nav` remained intrinsic-width.
+
+The CSS now makes each of those three direct control roots fill the same `.view-control` column with a zero minimum width. Their internal information and operations remain view-specific. The natural-height and narrow single-column rules are unchanged. The focused regression test now also checks the shared-width rule.
+
+Edge CDP geometry was measured against the running application at `http://127.0.0.1:4183/` in an isolated profile. EN and JA were each checked at 1280px, 700px, and 390px for all four views (24 states). In every state the navigation root's left edge and width matched `.view-control` exactly: 320px at 1280px, 623px at 700px, and 313px at 390px; no horizontal document overflow was observed. At 390px, a long Japanese Entity name wrapped in the Profile and Radar pagers under both UI locales without overflow. Long English name wrapping was also checked in the prior checkpoint and again in this follow-on. No page errors were observed.
+
+These are automated test and browser geometry results, not Human visual acceptance. Human Browser Acceptance remains PENDING for the complete View Header checkpoint. The prior Human observations and the currently Accepted Drawer UX closure are unchanged. The independent Cross-App More-menu follow-up remains OPEN.

@@ -448,3 +448,6 @@ Cross-App More-menu presentation remains OPEN and unimplemented.
 ## View Header UX bounded implementation - 2026-10-08
 
 **Status: IMPLEMENTED / AUTOMATED CHECKS PASS / HUMAN BROWSER ACCEPTANCE PENDING**. The Profile, Radar, Quadrant, and Matrix headers now top-align in a natural-height responsive grid, and Entity pager names can wrap without clipping. Source findings, Edge geometry evidence, tests, and Human review checklist are in the [View Header implementation checkpoint](./view-header-ux-implementation-2026-10-08.md). The accepted Drawer UX closure and independent Cross-App More-menu follow-up remain unchanged.
+
+
+A same-checkpoint follow-on then made the Profile/Radar Entity pager, Quadrant waiting-Entity area, and Matrix page navigator fill the common right-side control column. Edge geometry matched that column in EN/JA at 1280px, 700px, and 390px. The complete View Header Human Browser Acceptance remains **PENDING**; details are appended in the [implementation checkpoint](./view-header-ux-implementation-2026-10-08.md).

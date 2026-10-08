@@ -58,4 +58,5 @@ test('View Header CSS uses natural-height top alignment and permits Entity-name 
  assert.match(css,/\.view-head \.entity-pager>\.pager-current\{height:auto;min-height:52px;overflow:visible;line-height:1\.25\}/);
  assert.match(css,/\.view-head \.entity-pager \.pager-current strong\{line-height:1\.25;white-space:normal;overflow:visible;overflow-wrap:anywhere;text-overflow:clip\}/);
  assert.match(css,/\.view-head \.entity-pager \.pager-meta\{flex-wrap:wrap;white-space:normal;line-height:1\.25\}/);
+ assert.match(css,/\.view-control>\.entity-pager,\.view-control>\.waiting-header,\.view-control>\.matrix-nav\{width:100%;min-width:0\}/);
 });
