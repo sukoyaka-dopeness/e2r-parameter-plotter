@@ -301,6 +301,16 @@ the Computer Use state call failed during Windows sandbox setup with
 results are not browser evidence or Human Browser Acceptance. Human Browser
 Acceptance of the locale presentation remains pending.
 
+## EN/JA locale Human Browser Acceptance — 2026-10-08
+
+The bounded EN/JA locale presentation milestone is now **HUMAN BROWSER
+ACCEPTED / PASS / CLOSED** for source commit
+`5d7c23647ec14b9c7738d52056c4c1b05895f8b9`. The detailed Human evidence and
+coverage limits are recorded in [the locale acceptance result](./locale-human-acceptance-2026-10-08.md).
+This acceptance closes the locale milestone only; it does not establish
+complete Product acceptance, overall public-release readiness, or publication
+authorization. Candidate `0.1.0` remains non-Stable.
+
 ## Human-observed Entity drawer menu visibility follow-up — 2026-10-08
 
 **Status: OPEN / NOT IMPLEMENTED / NOT HUMAN-ACCEPTED**
