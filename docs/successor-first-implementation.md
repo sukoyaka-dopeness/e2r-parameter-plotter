@@ -451,3 +451,5 @@ Cross-App More-menu presentation remains OPEN and unimplemented.
 
 
 A same-checkpoint follow-on then made the Profile/Radar Entity pager, Quadrant waiting-Entity area, and Matrix page navigator fill the common right-side control column. Edge geometry matched that column in EN/JA at 1280px, 700px, and 390px. The complete View Header Human Browser Acceptance remains **PENDING**; details are appended in the [implementation checkpoint](./view-header-ux-implementation-2026-10-08.md).
+
+Keyboard activation of Header arrows now restores focus to the same navigation role after rerender, with an enabled-arrow fallback at Matrix page boundaries. Quadrant plotted-point focus and keyboard behavior were investigated but not changed; keyboard activation of the point control currently has no action, so a Human interaction-contract decision remains separate. Automated checks pass; Computer Use initialization failed before browser interaction. View Header Human Browser Acceptance remains **PENDING**. See the [keyboard focus investigation](./view-header-keyboard-focus-investigation-2026-10-08.md).
