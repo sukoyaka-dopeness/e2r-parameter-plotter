@@ -12,6 +12,13 @@ test('selected Japanese Product action wording is retained',()=>{
   assert.equal(translateUiText('Export E2R JSON'),'E2R JSONを書き出す');
   assert.equal(translateUiText('Browser-local workspace degraded / unsaved'),'ブラウザー内の作業状態を保存できていません');
 });
+test('browser-local status and Dimension pool copy use the approved wording',()=>{
+  assert.equal(translateUiText('Workspace saved in this browser'),'ブラウザー内に作業状態を保存しました');
+  assert.equal(translateUiText('To save an E2R Dataset file, use Export E2R JSON.'),'E2Rデータセットのファイル保存は、別途「E2R JSONを書き出す」から行います。');
+  assert.equal(translateUiText('No Dimensions yet.'),'評価軸はまだありません。');
+  assert.equal(translateUiText('2 Dataset Entities · 3 Dimensions · 4 Assessments'),'2件のエンティティ · 3件の評価軸 · 4件の値');
+  assert.equal(translateUiText('2 Dataset Entities available · 3 Dimensions'),'2件のエンティティ · 3件の評価軸');
+});
 test('unknown content, identifiers, and authored names have no lexical translation',()=>{
   assert.equal(translateUiText('ParameterPlotter'),'ParameterPlotter');
   assert.equal(translateUiText('draft.github.sukoyaka-dopeness.dimension-assessment'),'draft.github.sukoyaka-dopeness.dimension-assessment');

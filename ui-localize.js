@@ -15,12 +15,12 @@ const ja = new Map(Object.entries({
   'Views':'表示','Entity Pool':'エンティティ一覧','Dimension Pool':'評価軸一覧','Add Entity':'エンティティを追加',
   'Edit Entity':'エンティティを編集','New Entity':'新しいエンティティ',
   'Edit Dimension':'評価軸を編集','New Dimension':'新しい評価軸',
-  'PORTABLE DATA':'ポータブルデータ','Filter by name, labels, range, or unit':'名前・端点ラベル・範囲・単位で絞り込む',
+  'Filter by name, labels, range, or unit':'名前・端点ラベル・範囲・単位で絞り込む',
   'Name (optional)':'名前（任意）','Description (optional)':'説明（任意）','Optional Entity name':'エンティティ名（任意）',
   'Add dimension':'評価軸を追加','Add Dimension':'評価軸を追加','Save Dimension':'評価軸を保存',
   'Save Entity':'エンティティを保存','Create Entity':'エンティティを作成','Cancel':'キャンセル',
   'Edit':'編集','Delete':'削除','No matches':'一致する項目はありません','No matching Dimensions':'一致する評価軸はありません',
-  'No portable Dimensions yet.':'ポータブルな評価軸はまだありません。',
+  'No Dimensions yet.':'評価軸はまだありません。',
   'Entity profile':'エンティティのプロファイル','Edit this Entity’s Dataset Assessments.':'このエンティティのデータセット内の値を編集します。',
   'No Entity description':'エンティティの説明はありません','Fill blanks':'未設定の値をランダム入力',
   'Create a Dimension':'評価軸を作成','Define a numeric MIN/MAX range and optional endpoint labels.':'数値のMIN/MAX範囲と、任意の端点ラベルを設定します。',
@@ -45,11 +45,11 @@ const ja = new Map(Object.entries({
   'The Ashen Crown sample Dataset.':'The Ashen Crownのサンプルデータセット。',
   'E2R Dataset.':'E2Rデータセット。','Discard and Create Dataset':'破棄してデータセットを作成',
   'Discard and Open Sample':'破棄してサンプルを開く','Discard and Open Dataset':'破棄してデータセットを開く',
-  'Browser-local workspace saved':'ブラウザー内の作業状態を保存しました',
+  'Workspace saved in this browser':'ブラウザー内に作業状態を保存しました',
   'Browser-local workspace degraded / unsaved':'ブラウザー内の作業状態を保存できていません',
   'Saved locally':'ブラウザー内に保存済み','Degraded / unsaved':'ブラウザー内の作業状態を保存できていません',
   'Changes not exported':'変更は未書き出し','Matches last Export baseline':'最後の書き出し内容と一致',
-  'Local persistence is not an E2R Dataset Export.':'ブラウザー内の作業状態はE2Rデータセットの書き出しではありません。',
+  'To save an E2R Dataset file, use Export E2R JSON.':'E2Rデータセットのファイル保存は、別途「E2R JSONを書き出す」から行います。',
   'Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.':'未適用の編集はブラウザー内の作業状態に保存されていません。移動する前に適用またはキャンセルしてください。',
   'Close panel':'パネルを閉じる','Search Entities':'エンティティを検索','Search dimensions':'評価軸を検索',
   'Search Entity list':'エンティティ一覧を検索','Search Dimension list':'評価軸一覧を検索',
@@ -160,7 +160,7 @@ export function translateUiText(value) {
   if(translated!==undefined)return value.replace(trimmed,translated);
   let result=value;
   for(const [english,japanese] of phrases)result=result.replaceAll(english,japanese);
-  result=result.replace(/^(\s*)(\d+) Dataset Entit(?:y|ies) · (\d+) portable Dimensions? · (\d+) Assessments?(\s*)$/,
+  result=result.replace(/^(\s*)(\d+) Dataset Entit(?:y|ies) · (\d+) Dimensions? · (\d+) Assessments?(\s*)$/,
     (_,before,entities,dimensions,assessments,after)=>`${before}${entities}件のエンティティ · ${dimensions}件の評価軸 · ${assessments}件の値${after}`);
   result=result.replace(/^(\s*)(\d+) plotted(\s*)$/,(_,before,count,after)=>`${before}${count}件を配置${after}`);
   result=result.replace(/^(\s*)(\d+) remaining(\s*)$/,(_,before,count,after)=>`${before}残り${count}件${after}`);
@@ -173,7 +173,7 @@ export function translateUiText(value) {
   result=result.replace(/^(\s*)Add (\d+) more dimensions? to draw a Radar chart\.(\s*)$/,(_,before,count,after)=>`${before}レーダー図を描くには評価軸をあと${count}件追加してください。${after}`);
   result=result.replace(/^(\s*)(\d+) spokes(\s*)$/,(_,before,count,after)=>`${before}${count}軸${after}`);
   result=result.replace(/^(\s*)Dataset: (.+) · Browser workspace: (.+)(\s*)$/,(_,before,dataset,workspace,after)=>`${before}データセット: ${dataset} · ブラウザー内の作業状態: ${workspace}${after}`);
-  result=result.replace(/^(\s*)(\d+) Dataset Entit(?:y|ies) available · (\d+) portable Dimensions?(\s*)$/,(_,before,entities,dimensions,after)=>`${before}${entities}件のエンティティ · ${dimensions}件のポータブルな評価軸${after}`);
+  result=result.replace(/^(\s*)(\d+) Dataset Entit(?:y|ies) available · (\d+) Dimensions?(\s*)$/,(_,before,entities,dimensions,after)=>`${before}${entities}件のエンティティ · ${dimensions}件の評価軸${after}`);
   result=result.replace(/^(\s*)(-?\d+(?:\.\d+)?) to (-?\d+(?:\.\d+)?)(\s*)$/,
     (_,before,min,max,after)=>`${before}${min}〜${max}${after}`);
   result=result.replace(/^(.+) selected · Arrow keys adjust Primary by (1|0\.05)\. Secondary stays comparison-only\.$/,
