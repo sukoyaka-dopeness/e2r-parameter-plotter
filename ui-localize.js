@@ -22,7 +22,7 @@ const ja = new Map(Object.entries({
   'Edit':'編集','Delete':'削除','No matches':'一致する項目はありません','No matching Dimensions':'一致する評価軸はありません',
   'No Dimensions yet.':'評価軸はまだありません。',
   'Entity profile':'エンティティのプロファイル','Edit this Entity’s Dataset Assessments.':'このエンティティのデータセット内の値を編集します。',
-  'No Entity description':'エンティティの説明はありません','Fill blanks':'未設定の値をランダム入力',
+  'No Entity description':'エンティティの説明はありません','Describe this Entity':'エンティティの説明を入力','Fill blanks':'未設定の値をランダム入力',
   'Create a Dimension':'評価軸を作成','Define a numeric MIN/MAX range and optional endpoint labels.':'数値のMIN/MAX範囲と、任意の端点ラベルを設定します。',
   'Manage Dimensions':'評価軸一覧を開く','Manage dimensions':'評価軸一覧を開く',
   'Two-axis comparison':'2軸の比較','Multi-axis comparison':'多軸の比較','Values across Entities':'エンティティの値を比較',

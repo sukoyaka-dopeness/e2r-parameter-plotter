@@ -19,6 +19,10 @@ test('browser-local status and Dimension pool copy use the approved wording',()=
   assert.equal(translateUiText('2 Dataset Entities · 3 Dimensions · 4 Assessments'),'2件のエンティティ · 3件の評価軸 · 4件の値');
   assert.equal(translateUiText('2 Dataset Entities available · 3 Dimensions'),'2件のエンティティ · 3件の評価軸');
 });
+test('new Entity description placeholder is localized without changing authored content',()=>{
+  assert.equal(translateUiText('Describe this Entity'),'エンティティの説明を入力');
+  assert.equal(translateUiText('Independent Entity'),'Independent Entity');
+});
 test('unknown content, identifiers, and authored names have no lexical translation',()=>{
   assert.equal(translateUiText('ParameterPlotter'),'ParameterPlotter');
   assert.equal(translateUiText('draft.github.sukoyaka-dopeness.dimension-assessment'),'draft.github.sukoyaka-dopeness.dimension-assessment');
