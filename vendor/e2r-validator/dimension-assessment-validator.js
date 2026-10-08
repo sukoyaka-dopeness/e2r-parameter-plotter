@@ -2,6 +2,7 @@ import { diagnostic, SEVERITIES } from "./diagnostics.js";
 
 export const DIMENSION_ASSESSMENT_EXTENSION_ID = "draft.github.sukoyaka-dopeness.dimension-assessment";
 export const DIMENSION_ASSESSMENT_VERSION = "0.1.0";
+export const DIMENSION_ASSESSMENT_VERSIONS = Object.freeze([DIMENSION_ASSESSMENT_VERSION, "0.2.0"]);
 export const SPECIFICATION_EXTENSION_ID = "draft.github.sukoyaka-dopeness.specification";
 
 const isObject = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -11,8 +12,12 @@ const allowed = {
   dimension: new Set(["id", "name", "min", "max", "integerOnly", "unit", "lowLabel", "highLabel"]),
   assessment: new Set(["entityId", "dimensionId", "value"]),
 };
+const allowedDimensionFields = new Map(DIMENSION_ASSESSMENT_VERSIONS.map((version) => [
+  version,
+  new Set([...allowed.dimension, ...(version === "0.2.0" ? ["description"] : [])]),
+]));
 
-/** Semantic validator for the Human-adopted Dimension Assessment Candidate 0.1.0. */
+/** Semantic validator for exact supported Dimension Assessment Candidate versions. */
 export function validateDimensionAssessment(dataset, occurrences = new Map()) {
   const diagnostics = [];
   const payloadPath = `/extensions/${pointer(DIMENSION_ASSESSMENT_EXTENSION_ID)}`;
@@ -28,10 +33,11 @@ export function validateDimensionAssessment(dataset, occurrences = new Map()) {
     return diagnostics;
   }
   for (const key of Object.keys(payload)) if (!allowed.payload.has(key)) add("dimension_assessment_field_unknown", `${payloadPath}/${pointer(key)}`);
-  if (payload.specVersion !== DIMENSION_ASSESSMENT_VERSION) {
+  if (!allowedDimensionFields.has(payload.specVersion)) {
     diagnostics.push(diagnostic(SEVERITIES.WARNING, "dimension_assessment_version_unsupported", `${payloadPath}/specVersion`));
     return diagnostics;
   }
+  const dimensionFields = allowedDimensionFields.get(payload.specVersion);
   if (!Array.isArray(payload.dimensions)) add("dimension_assessment_dimensions_invalid", `${payloadPath}/dimensions`);
   if (!Array.isArray(payload.assessments)) add("dimension_assessment_assessments_invalid", `${payloadPath}/assessments`);
   if (!Array.isArray(payload.dimensions) || !Array.isArray(payload.assessments)) return diagnostics;
@@ -40,7 +46,7 @@ export function validateDimensionAssessment(dataset, occurrences = new Map()) {
   for (const [index, dimension] of payload.dimensions.entries()) {
     const path = `${payloadPath}/dimensions/${index}`;
     if (!isObject(dimension)) { add("dimension_assessment_dimension_invalid", path); continue; }
-    for (const key of Object.keys(dimension)) if (!allowed.dimension.has(key)) add("dimension_assessment_field_unknown", `${path}/${pointer(key)}`);
+    for (const key of Object.keys(dimension)) if (!dimensionFields.has(key)) add("dimension_assessment_field_unknown", `${path}/${pointer(key)}`);
     if (typeof dimension.id !== "string" || dimension.id.length === 0) add("dimension_assessment_dimension_id_invalid", `${path}/id`);
     else if (dimensions.has(dimension.id)) add("dimension_assessment_dimension_id_duplicate", `${path}/id`);
     else dimensions.set(dimension.id, dimension);
@@ -50,6 +56,10 @@ export function validateDimensionAssessment(dataset, occurrences = new Map()) {
     if ("integerOnly" in dimension && typeof dimension.integerOnly !== "boolean") add("dimension_assessment_integer_only_invalid", `${path}/integerOnly`);
     if (dimension.integerOnly === true && Number.isFinite(dimension.min) && Number.isFinite(dimension.max) && Math.ceil(dimension.min) > Math.floor(dimension.max)) add("dimension_assessment_no_integer_candidate", path);
     for (const field of ["unit", "lowLabel", "highLabel"]) if (field in dimension && typeof dimension[field] !== "string") add("dimension_assessment_text_field_invalid", `${path}/${field}`);
+    if (payload.specVersion === "0.2.0" && "description" in dimension
+      && (typeof dimension.description !== "string" || !/\S/u.test(dimension.description))) {
+      add("dimension_assessment_description_invalid", `${path}/description`);
+    }
     if (Object.hasOwn(dimension, "lowLabel") !== Object.hasOwn(dimension, "highLabel")) add("dimension_assessment_endpoint_labels_unpaired", path);
   }
 

@@ -7,7 +7,7 @@ import {
 import { NAMES_DRAFT_EXTENSION_ID } from "./names-draft-uniqueness-detector.js";
 import { NAMES_DRAFT_VERSION } from "./names-draft-validator.js";
 import { PRESENTATION_EXTENSION_ID, PRESENTATION_VERSION } from "./presentation-validator.js";
-import { DIMENSION_ASSESSMENT_EXTENSION_ID, DIMENSION_ASSESSMENT_VERSION } from "./dimension-assessment-validator.js";
+import { DIMENSION_ASSESSMENT_EXTENSION_ID, DIMENSION_ASSESSMENT_VERSIONS } from "./dimension-assessment-validator.js";
 
 export const HISTORY_VERSION = "2.0.0";
 export const RELATIVE_TIME_EXTENSION_ID = "draft.github.sukoyaka-dopeness.relative-time";
@@ -64,7 +64,7 @@ const LOCAL_SUPPORT = new Map([
     versions: new Set([COORDINATE_DRAFT_VERSION]),
     features: new Set(),
   }],
-  [DIMENSION_ASSESSMENT_EXTENSION_ID, { versions: new Set([DIMENSION_ASSESSMENT_VERSION]), features: new Set() }],
+  [DIMENSION_ASSESSMENT_EXTENSION_ID, { versions: new Set(DIMENSION_ASSESSMENT_VERSIONS), features: new Set() }],
   [NAMES_DRAFT_EXTENSION_ID, {
     versions: new Set([NAMES_DRAFT_VERSION]),
     features: new Set(),
