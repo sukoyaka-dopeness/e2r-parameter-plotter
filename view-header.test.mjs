@@ -10,7 +10,7 @@ function viewApi(){
  const state={
   dataset:{version:'1.0',entities:[entity],events:[],relations:[]},
   dimensions,values:{e1:{d1:3,d2:5,d3:8}},selected:'e1',readOnly:false,
-  candidateUnsupported:false,view:'Profile',quadrant:['d1','d2'],waiting:null,
+  candidateUnsupported:false,view:'Profile',quadrant:['d1','d2'],waiting:null,popover:null,plotEntities:null,
   radar:['d1','d2','d3'],secondary:null,matrix:['d1','d2','d3'],matrixRows:[],matrixPage:0,
  };
  return {
@@ -23,7 +23,7 @@ function viewApi(){
   dimensionOptions:()=>'<option value="d1">Dimension 1</option>',
   entityOptions:()=>'<option value="e1">Neil Armstrong</option>',
   get:(entityId,dimensionId)=>state.values[entityId]?.[dimensionId]??null,
-  fmt:value=>String(value),randomNotice:()=>'',plotted:()=>[],waitingCandidates:()=>[],
+  fmt:value=>String(value),randomNotice:()=>'',plotted:()=>state.plotEntities||[],quadrantAssessmentPopover:()=>state.popover,waitingCandidates:()=>[],
   quadrantOutOfRange:()=>[],matrixError:()=>null,
  };
 }
@@ -49,6 +49,35 @@ test('all four views retain a shared header structure and their navigation contr
  }finally{
   if(previousWidth===undefined)delete globalThis.innerWidth;else globalThis.innerWidth=previousWidth;
  }
+});
+
+test('Matrix header navigator reports page count and disables both controls for a single page',()=>{
+ const api=viewApi(),previousWidth=globalThis.innerWidth;
+ try{
+  globalThis.innerWidth=390;
+  let output=renderMatrix(api);
+  assert.match(output,/class="matrix-nav"[^>]*data-matrix-page-count="2"/);
+  assert.match(output,/data-matrix-page="-1"(?! disabled)/);
+  assert.match(output,/data-matrix-page="1"(?! disabled)/);
+  globalThis.innerWidth=1280;
+  output=renderMatrix(api);
+  assert.match(output,/class="matrix-nav"[^>]*data-matrix-page-count="1"/);
+  assert.match(output,/data-matrix-page="-1" disabled/);
+  assert.match(output,/data-matrix-page="1" disabled/);
+ }finally{
+  if(previousWidth===undefined)delete globalThis.innerWidth;else globalThis.innerWidth=previousWidth;
+ }
+});
+
+test('Quadrant renderer inserts an all-Dimension assessment popover for the selected plotted Entity',()=>{
+ const api=viewApi();
+ api.state().popover='e1';
+ api.state().plotEntities=[api.state().dataset.entities[0]];
+ const output=renderQuadrant(api);
+ assert.match(output,/class="quadrant-assessment-popover" role="dialog"/);
+ assert.match(output,/Neil Armstrong/);
+ for(const dimension of dimensions)assert.ok(output.includes(dimension.name));
+ assert.match(output,/data-point="e1"/);
 });
 
 test('View Header CSS uses natural-height top alignment and permits Entity-name wrapping',async()=>{

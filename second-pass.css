@@ -376,3 +376,16 @@ html.drawer-modal-open{overflow:hidden;overscroll-behavior:none}
 .view-head .entity-pager .pager-meta{flex-wrap:wrap;white-space:normal;line-height:1.25}
 @media(max-width:720px){.view-head{grid-template-columns:minmax(0,1fr);gap:13px}.view-control{justify-content:stretch}}
 .view-control>.entity-pager,.view-control>.waiting-header,.view-control>.matrix-nav{width:100%;min-width:0}
+
+.quadrant-assessment-popover{position:absolute;z-index:8;top:8px;right:8px;width:min(340px,calc(100% - 16px));max-height:calc(100% - 16px);overflow:auto;padding:12px;border:1px solid #cbd3e4;border-radius:9px;background:#fff;box-shadow:0 8px 25px #18203938;display:grid;gap:9px;text-align:left}
+.quadrant-assessment-popover-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.quadrant-assessment-popover-head h3{font-size:.95rem;line-height:1.25;overflow-wrap:anywhere}
+.quadrant-assessment-popover-head h3:focus{outline:2px solid #4b60b1;outline-offset:3px}
+.quadrant-assessment-popover-head p{margin-top:3px;overflow-wrap:anywhere;color:#526078;font-size:.82rem}
+.quadrant-assessment-popover-head button{flex:none;min-height:30px;padding:4px 8px;font-size:.8rem}
+.quadrant-assessment-list{display:grid;gap:4px;margin:0}
+.quadrant-assessment-list:focus-visible{outline:2px solid #4b60b1;outline-offset:2px}
+.quadrant-assessment-row{display:grid;grid-template-columns:minmax(0,1fr) max-content;align-items:start;gap:10px;padding-top:4px;border-top:1px solid #e4e8ef}
+.quadrant-assessment-row dt{min-width:0;overflow-wrap:anywhere;font-size:.78rem}
+.quadrant-assessment-row dd{margin:0;text-align:right;font-size:.78rem;font-variant-numeric:tabular-nums}
+.quadrant-assessment-missing{color:#657084;font-style:italic}
