@@ -392,3 +392,38 @@ Implementation details, test evidence, and the browser-tool limitation are in
 the [Candidate 0.2.0 implementation checkpoint](./candidate-0.2.0-parameterplotter-implementation-2026-10-08.md).
 Human Browser Acceptance remains pending; both Candidate versions remain
 non-Stable, and the Entity drawer menu-visibility follow-up remains open.
+
+## Right Drawer UX bounded implementation — 2026-10-08
+
+**Status: IMPLEMENTED / AUTOMATED CHECKS PASS / HUMAN BROWSER ACCEPTANCE PENDING**
+
+Source review confirmed two independent causes for the Human-observed Drawer
+issues. Workspace ordinary actions use the 36px, 15px, 5px-by-9px, 4px-radius
+geometry declared in `home-screen.css`; ordinary Drawer buttons inherited the
+older 34px, 18px, 6px-by-11px base geometry. Entity selection cards and the
+ellipsis utility control have separate roles and remain outside this sizing
+rule. Primary and destructive color treatments are also retained.
+
+The Entity action list is rendered inside the scrollable Entity list, but
+opening the inline actions previously had no visibility check. After opening,
+ParameterPlotter now measures the actions and adjusts only the list scrollport
+by the clipped amount when needed. It checks the Drawer scrollport afterward
+for any remaining clipping. A fully visible menu causes no scroll. The menu
+opener keeps focus without browser-driven scrolling; the existing native
+button order, Drawer focus containment, Escape behavior, and page scroll lock
+remain in place.
+
+Five focused automated checks cover minimal bottom/top correction, no movement
+when already visible, nested list/Drawer clipping, the ordinary-action
+geometry reference, and the post-render scroll wiring. `npm.cmd run check`
+passed with 27 application modules syntax-checked and 100/100 tests passing.
+Codex browser verification could not run: the
+Windows Computer Use helper exited with `helper_unknown_error: setup refresh
+had errors` while initializing its trusted Node process. No Codex browser PASS
+or Human acceptance is claimed. Human Browser Review remains pending for
+EN/JA, ordinary and narrow viewports, end-of-list and already-visible menu
+cases, focus/keyboard behavior, and Edit/Delete operation. This work is
+independent of the OPEN Cross-App More-menu presentation follow-up; that
+follow-up and all previously accepted checkpoints remain unchanged. This
+implementation result supersedes the earlier OPEN / NOT IMPLEMENTED status
+for these two Drawer observations; Human Browser Acceptance remains pending.

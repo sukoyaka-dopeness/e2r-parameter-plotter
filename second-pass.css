@@ -347,6 +347,9 @@ html.drawer-modal-open{overflow:hidden;overscroll-behavior:none}
 .dimension-integer-option input[type=checkbox]{width:16px;min-height:16px;margin:0;flex:none;accent-color:#344b9b}
 .dimension-value-policy{font-weight:600}
 
+/* Keep Drawer action controls aligned with the accepted Workspace ordinary-action geometry. */
+.drawer button:not(.entity-choice):not(.entity-more){min-height:36px;padding:5px 9px;border-radius:4px;font-size:15px;line-height:120%}
+
 /* Matrix-local Entity presentation order; identity text never selects. */
 .matrix-row-heading{display:flex;align-items:flex-start;gap:7px;min-width:0}
 .matrix-wrap tbody th .matrix-row-grip{display:inline-flex;flex:none;white-space:nowrap}

@@ -25,6 +25,7 @@ import {requestedLocale, readSavedLocale, readTemporaryLocale, resolveLocale, ch
 import {localeControlMarkup, localeConflictMarkup} from './locale-shell.js';
 import {localizeUi} from './ui-localize.js';
 import {applyDatasetTitle} from './dataset-title.js';
+import {revealWithinScrollport} from './drawer-visibility.js';
 const localeRequest=requestedLocale(window.location.hash);
 const savedLocale=readSavedLocale(window.localStorage);
 const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
@@ -134,7 +135,7 @@ document.addEventListener('click',e=>{
   if(replacement){if(e.target.closest('[data-cancel-replacement]')){replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();return;}if(e.target.closest('[data-confirm-replacement]')){s=fresh(replacement);replacement=null;fileError='';matrixError='';update();return;}return;}
   if(e.target.matches('[data-cancel-confirmation]')){cancelConfirmation();return;}
   const b=e.target.closest('button,[data-action]');if(!b)return;
-  if(b.dataset.entityMenu){entityMenu=entityMenu===b.dataset.entityMenu?null:b.dataset.entityMenu;renderEntityList();root.querySelector(`[data-entity-menu="${CSS.escape(b.dataset.entityMenu)}"]`)?.focus();return;}
+  if(b.dataset.entityMenu){const id=b.dataset.entityMenu;entityMenu=entityMenu===id?null:id;renderEntityList();const selector=`[data-entity-menu="${CSS.escape(id)}"]`,opener=root.querySelector(selector);opener?.focus({preventScroll:true});if(entityMenu===id){requestAnimationFrame(()=>{if(entityMenu!==id)return;const currentOpener=root.querySelector(selector),actions=currentOpener?.closest('.entity-row')?.querySelector('.entity-actions'),list=actions?.closest('.item-list'),drawer=actions?.closest('.drawer');if(!actions?.isConnected)return;revealWithinScrollport(actions,list);revealWithinScrollport(actions,drawer);});}return;}
   if(b.dataset.openProfile){s.selected=b.dataset.openProfile;s.view='Profile';entityMenu=null;closeDrawers();return;}
   if(b.dataset.confirmDelete!==undefined&&confirmation){const {kind,id}=confirmation;confirmation=null;if(kind==='dimension')deleteDimension(s,id);else {deleteTemporaryEntity(s,id);entityMenu=null;if(matrixFocus?.id===id)matrixFocus=null;if(contextMenu?.id===id)contextMenu=null;}update();return;}
   if(b.dataset.contextAction){const id=contextMenu?.id,action=b.dataset.contextAction;contextMenu=null;if(!id)return;s.selected=id;if(action==='profile')s.view='Profile';else returnToWaiting(s,id);update();return;}
