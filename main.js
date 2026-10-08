@@ -44,7 +44,6 @@ let closingDrawer = null;
 let closeTimer = null;
 let dimensionQuery = '';
 let contextMenu = null;
-let quadrantAssessmentPopover = null;
 let confirmation = null;
 let dimensionWarning = null;
 let dimensionError = null;
@@ -72,9 +71,8 @@ const name = id => { const list=entities(s),i=list.findIndex(e=>e.id===id); retu
 function options(items, current, first='Choose…') { return `<option value="">${first}</option>`+items.map(x=>`<option value="${esc(x.id)}" ${x.id===current?'selected':''}>${esc(x.name)}</option>`).join(''); }
 function dimensionOptions(current, exclude=[]) { return options(s.dimensions.filter(x=>!exclude.includes(x.id)).map(d=>({...d,name:dimensionDisplayName(s,d)})),current); }
 function entityOptions(current, exclude=[]) { return options(entities(s).filter(x=>!exclude.includes(x.id)).map((x,i)=>({id:x.id,name:x.name||`Entity ${i+1}`})),current); }
-const api={esc,name,options,dimensionOptions,entityOptions,get:(e,d)=>getValue(s,e,d),fmt, state:()=>s,entities:()=>entities(s),plotted:()=>plottedEntities(s),waitingCandidates:()=>waitingCandidates(s),matrixError:()=>matrixError,randomNotice:()=>profileRandomNotice,quadrantAssessmentPopover:()=>quadrantAssessmentPopover?.id||null,entityId:(id,surface)=>entityNeedsId(s,entities(s).find(e=>e.id===id),surface)?shortId(id):'',dimensionId:(id,surface)=>dimensionNeedsId(s,s.dimensions.find(d=>d.id===id),surface)?shortId(id):'',dimensionName:id=>dimensionDisplayName(s,s.dimensions.find(d=>d.id===id)),axisName:id=>radarAxisName(s,s.dimensions.find(d=>d.id===id))};
+const api={esc,name,options,dimensionOptions,entityOptions,get:(e,d)=>getValue(s,e,d),fmt, state:()=>s,entities:()=>entities(s),plotted:()=>plottedEntities(s),waitingCandidates:()=>waitingCandidates(s),matrixError:()=>matrixError,randomNotice:()=>profileRandomNotice,entityId:(id,surface)=>entityNeedsId(s,entities(s).find(e=>e.id===id),surface)?shortId(id):'',dimensionId:(id,surface)=>dimensionNeedsId(s,s.dimensions.find(d=>d.id===id),surface)?shortId(id):'',dimensionName:id=>dimensionDisplayName(s,s.dimensions.find(d=>d.id===id)),axisName:id=>radarAxisName(s,s.dimensions.find(d=>d.id===id))};
 function render() {
-  if(quadrantAssessmentPopover&&(s.view!=='Quadrant'||s.poolOpen||s.dimensionOpen||confirmation||replacement||!plottedEntities(s).some(entity=>entity.id===quadrantAssessmentPopover.id)))quadrantAssessmentPopover=null;
   Object.assign(api,{quadrantOutOfRange:()=>quadrantOutOfRangeEntities(s),dimension:id=>s.dimensions.find(d=>d.id===id),rangeMidpoint:id=>valueAtRangePosition(s.dimensions.find(d=>d.id===id),0.5)});
   const oldRadarList=root.querySelector('.radar-spoke-list');if(oldRadarList)radarScroll=oldRadarList.scrollTop;
   if(s.waiting&&!waitingCandidates(s).some(e=>e.id===s.waiting))s.waiting=null;
@@ -105,15 +103,6 @@ function renderEntityList(){const q=(document.querySelector('#entity-search')?.v
 function renderDimensionList(){const q=dimensionQuery.toLowerCase();document.querySelector('#dimension-list').innerHTML=s.dimensions.filter(d=>[d.name,d.low,d.high].some(x=>x.toLowerCase().includes(q))).map(d=>`<div class="list-row"><span><strong>${esc(d.name)}</strong><small>${esc(d.low)} → ${esc(d.high)}</small>${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}">Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}">Delete</button></div>`).join('')||`<p>${s.dimensions.length?'No matching dimensions':'No dimensions yet'}</p>`;}
 function fillDimensionForm(){const f=document.querySelector('#dimension-form'),d=dimensionDraft||s.dimensions.find(x=>x.id===s.editDimension);if(!d||!f)return;f.elements.namedItem('dimension-name').value=d.name;f.elements.namedItem('dimension-low').value=d.low;f.elements.namedItem('dimension-high').value=d.high;}
 function update(){save(s);render();}
-function openQuadrantAssessmentPopover(id){
-  if(s.view!=='Quadrant'||!plottedEntities(s).some(entity=>entity.id===id))return;
-  contextMenu=null;s.selected=id;quadrantAssessmentPopover={id};update();
-  root.querySelector('#quadrant-assessment-title')?.focus({preventScroll:true});
-}
-function closeQuadrantAssessmentPopover({restoreFocus=true}={}){
-  const prior=quadrantAssessmentPopover;quadrantAssessmentPopover=null;render();
-  if(restoreFocus&&prior)root.querySelector(`[data-point="${CSS.escape(prior.id)}"]`)?.focus({preventScroll:true});
-}
 function openConfirmation(kind,id){confirmation={kind,id};render();}
 function cancelConfirmation(){const prior=confirmation;confirmation=null;render();if(prior){const key=prior.kind==='dimension'?'deleteDimension':'entityMenu';[...root.querySelectorAll(`[data-${key.replace(/[A-Z]/g,x=>'-'+x.toLowerCase())}]`)].find(x=>x.dataset[key]===prior.id)?.focus();}}
 function trapDialogTab(event,selector){
@@ -151,10 +140,8 @@ document.addEventListener('click',e=>{
   if(b.dataset.entityMenu){const id=b.dataset.entityMenu;entityMenu=entityMenu===id?null:id;renderEntityList();const selector=`[data-entity-menu="${CSS.escape(id)}"]`,opener=root.querySelector(selector);opener?.focus({preventScroll:true});if(entityMenu===id){requestAnimationFrame(()=>{if(entityMenu!==id)return;const currentOpener=root.querySelector(selector),actions=currentOpener?.closest('.entity-row')?.querySelector('.entity-actions'),list=actions?.closest('.item-list'),drawer=actions?.closest('.drawer');if(!actions?.isConnected)return;revealWithinScrollport(actions,list);revealWithinScrollport(actions,drawer);});}return;}
   if(b.dataset.openProfile){s.selected=b.dataset.openProfile;s.view='Profile';entityMenu=null;closeDrawers();return;}
   if(b.dataset.confirmDelete!==undefined&&confirmation){const {kind,id}=confirmation;confirmation=null;if(kind==='dimension')deleteDimension(s,id);else {deleteTemporaryEntity(s,id);entityMenu=null;if(matrixFocus?.id===id)matrixFocus=null;if(contextMenu?.id===id)contextMenu=null;}update();return;}
-  if(b.dataset.closeQuadrantAssessments){closeQuadrantAssessmentPopover();return;}
   if(b.dataset.contextAction){const id=contextMenu?.id,action=b.dataset.contextAction;contextMenu=null;if(!id)return;s.selected=id;if(action==='profile')s.view='Profile';else returnToWaiting(s,id);update();return;}
   if(contextMenu)contextMenu=null;
-  if(b.dataset.point){if(e.detail===0)openQuadrantAssessmentPopover(b.dataset.point);return;}
   if(b.dataset.view){s.view=b.dataset.view;update();return;}
   if(b.dataset.chooseEntity){if(s.view==='Quadrant'&&!waitingCandidates(s).some(e=>e.id===b.dataset.chooseEntity))return;if(s.view==='Matrix'){focusMatrixRow(b.dataset.chooseEntity);return;}if(s.view==='Radar'&&s.selected!==b.dataset.chooseEntity){const list=entities(s),from=list.findIndex(x=>x.id===s.selected),to=list.findIndex(x=>x.id===b.dataset.chooseEntity);pagerDirection=to>=from?1:-1;radarSelectedDimension=null;}s.selected=b.dataset.chooseEntity;if(s.view==='Quadrant')s.waiting=b.dataset.chooseEntity;closeDrawers();return;}
   if(b.dataset.selectEntity){s.selected=b.dataset.selectEntity;update();return;}
@@ -186,7 +173,6 @@ document.addEventListener('keydown',e=>{
   if(replacement){if(e.key==='Escape'){e.preventDefault();replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();}else if(e.key==='Tab')trapDialogTab(e,'.confirm-dialog');return;}
   if(confirmation){if(e.key==='Escape'){e.preventDefault();cancelConfirmation();return;}if(e.key==='Tab'){const buttons=[...root.querySelectorAll('.confirm-dialog button')],first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}return;}
   if(e.key==='Escape'&&contextMenu){contextMenu=null;render();return;}
-  if(e.key==='Escape'&&quadrantAssessmentPopover){e.preventDefault();closeQuadrantAssessmentPopover();return;}
   if(e.key==='Escape'&&(s.poolOpen||s.dimensionOpen)){e.preventDefault();closeDrawers();return;}
   if(s.poolOpen||s.dimensionOpen){containDrawerFocus(e,root);return;}
   if(e.target.closest?.('[data-import-trigger]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.stopImmediatePropagation();openDatasetFilePicker();return;}
@@ -226,7 +212,7 @@ function showMatrixInsertion(event,col){
 }
 document.addEventListener('dragstart',e=>{const id=e.target.dataset.dragEntity||e.target.dataset.dragDimension;if(id)e.dataTransfer.setData(e.target.dataset.dragEntity?'entity':'dimension',id);matrixDragId=e.target.dataset.dragDimension||null;});
 document.addEventListener('dragend',()=>{matrixDragId=null;clearMatrixDrop();});
-document.addEventListener('contextmenu',e=>{const item=e.target.closest('.plot-item');if(!item||s.view!=='Quadrant')return;e.preventDefault();quadrantAssessmentPopover=null;contextMenu={id:item.dataset.entity,x:e.clientX,y:e.clientY};render();root.querySelector('.plot-context-menu button')?.focus();});
+document.addEventListener('contextmenu',e=>{const item=e.target.closest('.plot-item');if(!item||s.view!=='Quadrant')return;e.preventDefault();contextMenu={id:item.dataset.entity,x:e.clientX,y:e.clientY};render();root.querySelector('.plot-context-menu button')?.focus();});
 document.addEventListener('dragover',e=>{const col=e.target.closest('[data-drop-column]');if(matrixDragId&&col){if(showMatrixInsertion(e,col)!==null)e.preventDefault();return;}if(matrixDragId)clearMatrixDrop();if(e.target.closest('[data-plot],[data-waiting]'))e.preventDefault();});
 document.addEventListener('drop',e=>{const plot=e.target.closest('[data-plot]'),wait=e.target.closest('[data-waiting]'),col=e.target.closest('[data-drop-column]');if(plot){clearMatrixDrop();matrixDragId=null;e.preventDefault();const id=e.dataTransfer.getData('entity');if(id)placeOnPlot(id,e,plot);}if(wait){clearMatrixDrop();matrixDragId=null;e.preventDefault();const id=e.dataTransfer.getData('entity');if(id&&plottedEntities(s).some(entity=>entity.id===id))openConfirmation('axisClear',id);}if(col){e.preventDefault();const id=e.dataTransfer.getData('dimension'),to=showMatrixInsertion(e,col),from=s.matrix.indexOf(id);clearMatrixDrop();matrixDragId=null;if(from>=0&&to!==null&&from!==to){s.matrix.splice(from,1);s.matrix.splice(to,0,id);update();}}});
 function placeOnPlot(id,e,plot){
@@ -249,7 +235,7 @@ document.addEventListener('pointerdown',e=>{
   const point=e.target.closest('[data-point]'),vertex=e.target.closest('[data-vertex]');
   if(point){
     const id=point.dataset.point,plot=point.closest('[data-plot]');
-    startQuadrantPointDrag(e,{point,plot,waiting:root.querySelector('[data-waiting]'),onPlace:x=>{quadrantAssessmentPopover=null;placeOnPlot(id,x,plot);},onReturn:()=>{quadrantAssessmentPopover=null;openConfirmation('axisClear',id);},onSelect:()=>openQuadrantAssessmentPopover(id),onCancel:()=>{quadrantAssessmentPopover=null;s.selected=id;update();}});
+    startQuadrantPointDrag(e,{point,plot,waiting:root.querySelector('[data-waiting]'),onPlace:x=>placeOnPlot(id,x,plot),onReturn:()=>{openConfirmation('axisClear',id);},onSelect:()=>{s.selected=id;update();}});
   }
   if(vertex){
     if(e.button!==0||!e.isPrimary)return;

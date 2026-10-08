@@ -39,14 +39,6 @@ test('value-bearing UI phrases translate without changing authored Dimension nam
 test('Footer descriptor keeps the approved English and Japanese wording',()=>{
   assert.equal(translateUiText('E2R comparison editor'),'E2R比較エディター');
 });
-test('Quadrant Assessment popover uses Japanese fixed chrome while preserving Dataset-authored names',async()=>{
-  assert.equal(translateUiText('Assessment details'),'評価値の詳細');
-  assert.equal(translateUiText('Close assessment details'),'評価値の詳細を閉じる');
-  assert.equal(translateUiText('No assessment'),'値は未設定');
-  const source=await readFile(new URL('./ui-localize.js',import.meta.url),'utf8');
-  assert.match(source,/quadrant-assessment-popover \.authored-entity-name/);
-  assert.match(source,/quadrant-assessment-popover \.authored-dimension-name/);
-});
 test('Entity and Dimension drawer wording avoids redundant Dataset and Candidate jargon',()=>{
   assert.equal(translateUiText('Add Entity'),'エンティティを追加');
   assert.equal(translateUiText('Edit Entity'),'エンティティを編集');

@@ -6,7 +6,6 @@ const ja = new Map(Object.entries({
   'Continue Editing':'編集を続ける','New Dataset':'新しいデータセット','Open E2R Dataset':'E2Rデータセットを開く',
   'Open Sample Dataset · The Ashen Crown':'サンプルデータセットを開く · The Ashen Crown',
   'E2R comparison editor':'E2R比較エディター','Credits':'クレジット','Close':'閉じる',
-  'Assessment details':'評価値の詳細','Close assessment details':'評価値の詳細を閉じる',
   'Application: ParameterPlotter':'アプリケーション: ParameterPlotter','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
   'With gratitude to all the AI systems that contributed to this project.':'このプロジェクトに貢献したすべてのAIシステムに感謝します。',
   'ParameterPlotter repository':'ParameterPlotterリポジトリ','E2R specification repository':'E2R仕様リポジトリ',
@@ -153,7 +152,7 @@ phrases.push(
   ['This integer-only range has no valid integer candidate.','整数のみの範囲内に有効な整数がありません。']
 );
 
-const protectedContent = '.dataset-title,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-description,.dimension-card .card-head strong,.point-label,.plot-item,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.quadrant-assessment-popover .authored-entity-name,.quadrant-assessment-popover .authored-dimension-name,.credits-metadata a';
+const protectedContent = '.dataset-title,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-description,.dimension-card .card-head strong,.point-label,.plot-item,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.credits-metadata a';
 ja.set('Dataset title','Datasetタイトル');
 ja.set('Apply','適用');
 ja.set('Workspace actions','作業操作');

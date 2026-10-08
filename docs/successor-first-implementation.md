@@ -465,3 +465,17 @@ distinguishes recorded values from missing Assessments. Drag and context-menu
 paths remain separate. Automated checks pass; Computer Use initialization
 failed before browser interaction. Human Browser Acceptance remains
 **PENDING**. See the [Matrix and Quadrant follow-up checkpoint](./matrix-circular-navigation-quadrant-assessment-popover-2026-10-08.md).
+
+
+## Quadrant lightweight-information follow-up - 2026-10-09
+
+Human Browser Review found the all-Dimension Assessment Details popover too
+large for the graph. That feature was withdrawn; the earlier implementation
+record remains historical evidence. The existing hover `title` and accessible
+name continue to expose the plotted Entity's selected X/Y values. The point
+remains a native focusable button, but Enter/Space has no application action;
+the appropriate interaction role remains for Human decision. The narrow
+context-menu focus outline is now inset to avoid overlap with neighboring
+items while remaining visible. Automated checks pass; Computer Use could not
+initialize and Human Browser Acceptance remains pending. See the [Quadrant
+lightweight-information checkpoint](./quadrant-lightweight-info-and-context-focus-2026-10-09.md).

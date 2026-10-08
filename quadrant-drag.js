@@ -1,6 +1,6 @@
 const inside=(x,y,rect,pad=0)=>rect&&x>=rect.left-pad&&x<=rect.right+pad&&y>=rect.top-pad&&y<=rect.bottom+pad;
 
-export function startQuadrantPointDrag(event,{point,plot,waiting,onPlace,onReturn,onSelect,onCancel}){
+export function startQuadrantPointDrag(event,{point,plot,waiting,onPlace,onReturn,onSelect}){
  if(event.button!==0||!event.isPrimary)return false;
  event.preventDefault();
  const item=point.closest('.plot-item'),pointerId=event.pointerId,startX=event.clientX,startY=event.clientY;
@@ -52,7 +52,7 @@ export function startQuadrantPointDrag(event,{point,plot,waiting,onPlace,onRetur
   else if(moved)onPlace(e);
   else onSelect();
  };
- const cancel=e=>{if(e.pointerId!==pointerId)return;cleanup();if(onCancel)onCancel(e);else onSelect(e);};
+ const cancel=e=>{if(e.pointerId!==pointerId)return;cleanup();onSelect();};
  window.addEventListener('pointermove',move,true);
  window.addEventListener('pointerup',up,true);
  window.addEventListener('pointercancel',cancel,true);
