@@ -7,7 +7,10 @@ The current SHA-256 of both files is
 `044187116106ce27178eb2457df8f0dad3ee68d6bb656800bede68900e306552`.
 E2R-SPEC remains the source of truth; this copy exists so ParameterPlotter can
 open the English sample from its Home screen. The Home acquisition path is
-unchanged. See the [sample sync result](../docs/ashen-crown-bundled-sample-sync-2026-10-08.md).
+unchanged. The bounded Human Browser Acceptance is recorded in the
+[sample review closure](../docs/ashen-crown-bundled-sample-human-browser-closure-2026-10-08.md);
+the original [sync result](../docs/ashen-crown-bundled-sample-sync-2026-10-08.md)
+retains its earlier Pending status as historical evidence.
 
 The E2R-SPEC [public sample provenance record](https://github.com/sukoyaka-dopeness/e2r-spec/blob/main/docs/public-samples/public-sample-provenance.md)
 records the Ashen Crown sample's project authorship and redistribution

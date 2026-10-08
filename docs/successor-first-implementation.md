@@ -337,6 +337,21 @@ independently from locale acceptance; it does not withdraw or alter any
 previously recorded locale PASS result. No implementation or Human acceptance
 of this UX follow-up is implied.
 
+## Human-observed Workspace / right Drawer button-size follow-up — 2026-10-08
+
+**Status: OPEN / NOT IMPLEMENTED / NOT HUMAN-ACCEPTED**
+
+Human identified a visual size mismatch between same-role buttons in the
+Workspace and the right-side Drawer in both EN and JA. The specific controls,
+measured dimensions, and CSS cause have not been audited in this follow-up
+record. During a later bounded UI improvement pass, compare role-equivalent
+controls across the Workspace and right Drawer in both locales and address the
+mismatch with the other Human-selected UI corrections. Do not infer fixed
+widths or undertake a broader redesign from this observation alone.
+
+This is an independent Human-observed UI follow-up. No source change, browser
+measurement, implementation, or Human Acceptance is recorded here.
+
 ## Dimension display-name functional-quality follow-up — 2026-10-08
 
 The independent `dimensionDisplayName()` undefined-`range` failure has been
