@@ -364,3 +364,14 @@ html.drawer-modal-open{overflow:hidden;overscroll-behavior:none}
 
 /* Keep value controls and status text separate in the two-column narrow Matrix. */
 @media(max-width:720px){.matrix-wrap{overflow-x:auto}.matrix-wrap table{min-width:540px}}
+
+/* Keep View Headers top-aligned while allowing their content to set their height. */
+.view-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,min(35%,320px));align-items:start;min-height:0}
+.view-heading{min-width:0;overflow-wrap:anywhere}
+.view-heading h2,.view-heading p:not(.eyebrow){overflow-wrap:anywhere}
+.view-control{width:100%;min-width:0;align-self:start}
+.view-head .entity-pager{height:auto;min-height:52px;align-items:center}
+.view-head .entity-pager>.pager-current{height:auto;min-height:52px;overflow:visible;line-height:1.25}
+.view-head .entity-pager .pager-current strong{line-height:1.25;white-space:normal;overflow:visible;overflow-wrap:anywhere;text-overflow:clip}
+.view-head .entity-pager .pager-meta{flex-wrap:wrap;white-space:normal;line-height:1.25}
+@media(max-width:720px){.view-head{grid-template-columns:minmax(0,1fr);gap:13px}.view-control{justify-content:stretch}}

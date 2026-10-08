@@ -443,3 +443,8 @@ Radar, Quadrant, and Matrix. It remains **OPEN / NOT IMPLEMENTED / NOT
 HUMAN-ACCEPTED**; cause and implementation are not selected. Human accepts the
 current purple/navy Primary hue for now, so it is not a blocker. The separate
 Cross-App More-menu presentation remains OPEN and unimplemented.
+
+
+## View Header UX bounded implementation - 2026-10-08
+
+**Status: IMPLEMENTED / AUTOMATED CHECKS PASS / HUMAN BROWSER ACCEPTANCE PENDING**. The Profile, Radar, Quadrant, and Matrix headers now top-align in a natural-height responsive grid, and Entity pager names can wrap without clipping. Source findings, Edge geometry evidence, tests, and Human review checklist are in the [View Header implementation checkpoint](./view-header-ux-implementation-2026-10-08.md). The accepted Drawer UX closure and independent Cross-App More-menu follow-up remain unchanged.
