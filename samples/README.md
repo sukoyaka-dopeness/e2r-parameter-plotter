@@ -1,11 +1,15 @@
 # Built-in sample Dataset
 
-`ashen-crown.en.e2r.json` is an unchanged copy of the canonical English sample
-at `e2r-spec/examples/ashen-crown.en.e2r.json`. E2R-SPEC remains the source of
-truth; this copy exists only so ParameterPlotter can open the selected sample
-from its Home screen. The SHA-256 of both files at introduction is
-`6dc26f6f8c848be464e3d040fbb10284c6e5b309148ac57cc97a60b0afd31437`.
+`ashen-crown.en.e2r.json` is a byte-for-byte copy of the canonical English
+sample at `e2r-spec/examples/ashen-crown.en.e2r.json`, synchronized from
+E2R-SPEC commit `25de41d2bd3b502d6e53b7ff775776d4a6e21ddf` on 2026-10-08.
+The current SHA-256 of both files is
+`044187116106ce27178eb2457df8f0dad3ee68d6bb656800bede68900e306552`.
+E2R-SPEC remains the source of truth; this copy exists so ParameterPlotter can
+open the English sample from its Home screen. The Home acquisition path is
+unchanged. See the [sample sync result](../docs/ashen-crown-bundled-sample-sync-2026-10-08.md).
 
 The E2R-SPEC [public sample provenance record](https://github.com/sukoyaka-dopeness/e2r-spec/blob/main/docs/public-samples/public-sample-provenance.md)
 records the Ashen Crown sample's project authorship and redistribution
-readiness. ParameterPlotter adds no sample facts or Dataset metadata.
+readiness, including the Human-adopted Dimension Assessments. ParameterPlotter
+adds no sample facts or Dataset metadata.

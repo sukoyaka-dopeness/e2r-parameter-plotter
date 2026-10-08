@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {homeMarkup} from './home-screen.js';
 import {creditsMarkup, footerMarkup} from './application-shell.js';
-import {validateDataset} from './model.js';
+import {DIMENSION_ASSESSMENT_ID,entities,fresh,getValue,label,plottedEntities,quadrantOutOfRangeEntities,validateDataset,waitingCandidates} from './model.js';
+import {renderMatrix,renderProfile,renderQuadrant,renderRadar} from './views.js';
 
 test('Home uses the Human-selected start copy and presents primary Dataset acquisition',()=>{
   const html=homeMarkup();
@@ -62,11 +64,70 @@ test('Home uses the white application surface while the workspace remains distin
   assert.match(css,/@media \(max-width: 1024px\) \{ :root \{ font-size: 16px; \} \}/);
 });
 
-test('bundled Ashen Crown sample remains an unmodified, valid Dataset artifact',async()=>{
-  const dataset=JSON.parse(await readFile(new URL('./samples/ashen-crown.en.e2r.json',import.meta.url),'utf8'));
+test('bundled Ashen Crown sample includes the canonical Candidate 0.2.0 assessments',async()=>{
+  const bytes=await readFile(new URL('./samples/ashen-crown.en.e2r.json',import.meta.url));
+  const dataset=JSON.parse(bytes.toString('utf8'));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),'044187116106ce27178eb2457df8f0dad3ee68d6bb656800bede68900e306552');
   assert.equal(dataset.extensions.metadata.title,'The Ashen Crown');
   assert.equal(dataset.entities.length,10);
+  assert.equal(dataset.events.length,12);
+  assert.equal(dataset.relations.length,57);
+  const payload=dataset.extensions[DIMENSION_ASSESSMENT_ID];
+  assert.equal(payload.specVersion,'0.2.0');
+  assert.equal(payload.dimensions.length,7);
+  assert.equal(payload.assessments.length,70);
+  assert.equal(payload.dimensions.every(d=>d.integerOnly===true&&typeof d.description==='string'),true);
+  assert.equal(payload.assessments.some(a=>a.value===0),true);
+  assert.equal(payload.assessments.find(a=>a.entityId==='darius'&&a.dimensionId==='ashen.concord')?.value,-4);
+  const declarations=dataset.extensions['draft.github.sukoyaka-dopeness.specification'].uses.filter(x=>x.extension===DIMENSION_ASSESSMENT_ID);
+  assert.deepEqual(declarations,[{extension:DIMENSION_ASSESSMENT_ID,version:'0.2.0'}]);
   assert.equal(validateDataset(dataset).valid,true);
+});
+
+test('bundled Ashen Crown Dimensions and Assessments render in all four views',async()=>{
+  const dataset=JSON.parse(await readFile(new URL('./samples/ashen-crown.en.e2r.json',import.meta.url),'utf8'));
+  const s=fresh(dataset);
+  s.selected='elara';
+  const allEntities=()=>entities(s);
+  const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const options=(items,current,first='Choose…')=>`<option value="">${first}</option>`+items.map(x=>`<option value="${escape(x.id)}" ${x.id===current?'selected':''}>${escape(x.name)}</option>`).join('');
+  const api={
+    name:id=>{const list=allEntities(),i=list.findIndex(e=>e.id===id);return i<0?'Select Entity':label(list[i],i);},
+    options,
+    dimensionOptions:(current,exclude=[])=>options(s.dimensions.filter(d=>!exclude.includes(d.id)).map(d=>({...d,name:d.name})),current),
+    entityOptions:(current,exclude=[])=>options(allEntities().filter(e=>!exclude.includes(e.id)).map((e,i)=>({id:e.id,name:e.name||`Entity ${i+1}`})),current),
+    get:(entityId,dimensionId)=>getValue(s,entityId,dimensionId),
+    fmt:value=>String(value),state:()=>s,entities:allEntities,plotted:()=>plottedEntities(s),waitingCandidates:()=>waitingCandidates(s),
+    matrixError:()=>null,randomNotice:()=>'',entityId:()=>'',dimensionId:()=>'',dimensionName:id=>s.dimensions.find(d=>d.id===id)?.name||'',axisName:id=>s.dimensions.find(d=>d.id===id)?.name||'',
+    dimension:id=>s.dimensions.find(d=>d.id===id),quadrantOutOfRange:()=>quadrantOutOfRangeEntities(s),
+  };
+  s.view='Profile';
+  const profile=renderProfile(api);
+  assert.match(profile,/Command Authority/);
+  assert.match(profile,/value="6"/);
+  s.view='Radar';s.radar=['ashen.command','ashen.combat','ashen.concord'];s.secondary='darius';
+  const radar=renderRadar(api);
+  assert.match(radar,/<polygon class="primary-poly"/);
+  assert.match(radar,/data-vertex="ashen.concord"/);
+  s.view='Quadrant';s.quadrant=['ashen.combat','ashen.concord'];
+  const quadrant=renderQuadrant(api);
+  assert.match(quadrant,/data-entity="darius"/);
+  assert.match(quadrant,/-4/);
+  const previousInnerWidth=globalThis.innerWidth;
+  globalThis.innerWidth=1280;
+  try{
+    s.view='Matrix';s.matrix=s.dimensions.map(d=>d.id);s.matrixPage=0;
+    const firstPage=renderMatrix(api);
+    assert.match(firstPage,/Information Leverage/);
+    assert.match(firstPage,/value="0"/);
+    s.matrixPage=1;
+    const concordPage=renderMatrix(api);
+    assert.match(concordPage,/Contribution to Concord/);
+    assert.match(concordPage,/data-value="darius\|ashen\.concord"/);
+    assert.match(concordPage,/value="-4"/);
+  }finally{
+    if(previousInnerWidth===undefined)delete globalThis.innerWidth;else globalThis.innerWidth=previousInnerWidth;
+  }
 });
 
 test('Home entry uses native Dataset file acquisition and a bundled sample path',async()=>{

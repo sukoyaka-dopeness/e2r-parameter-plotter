@@ -579,6 +579,433 @@
       "datasetId": "ashen-crown-en-v1",
       "title": "The Ashen Crown"
     },
+    "draft.github.sukoyaka-dopeness.dimension-assessment": {
+      "specVersion": "0.2.0",
+      "dimensions": [
+        {
+          "id": "ashen.command",
+          "name": "Command Authority",
+          "min": 0,
+          "max": 6,
+          "integerOnly": true,
+          "lowLabel": "No command authority",
+          "highLabel": "Realm-scale command",
+          "description": "Rates the authority to direct people or organized groups across the story represented in this Dataset. 0 is the scale minimum: no command authority; 6 is command authority capable of shaping the realm's course."
+        },
+        {
+          "id": "ashen.combat",
+          "name": "Combat Capability",
+          "min": 0,
+          "max": 10,
+          "integerOnly": true,
+          "lowLabel": "No combat capability",
+          "highLabel": "Exceptional combatant",
+          "description": "Rates direct combat capability across the story represented in this Dataset. 0 is the scale minimum: no combat capability; 10 is exceptional capability in direct conflict."
+        },
+        {
+          "id": "ashen.information",
+          "name": "Information Leverage",
+          "min": 0,
+          "max": 8,
+          "integerOnly": true,
+          "lowLabel": "No information leverage",
+          "highLabel": "Can redirect realm events",
+          "description": "Rates access to consequential information and the ability to use it to influence events across the story represented in this Dataset. 0 is the scale minimum: no information leverage; 8 can redirect events across the realm."
+        },
+        {
+          "id": "ashen.arcane",
+          "name": "Arcane Power",
+          "min": 0,
+          "max": 12,
+          "integerOnly": true,
+          "lowLabel": "No arcane power",
+          "highLabel": "World-shaping power",
+          "description": "Rates supernatural or arcane power across the story represented in this Dataset. 0 is the scale minimum: no arcane power; 12 is power capable of changing the realm's fate."
+        },
+        {
+          "id": "ashen.healing",
+          "name": "Healing Practice",
+          "min": 0,
+          "max": 6,
+          "integerOnly": true,
+          "lowLabel": "No healing practice",
+          "highLabel": "Master healer",
+          "description": "Rates the skill to treat injury or illness across the story represented in this Dataset. 0 is the scale minimum: no healing practice; 6 is exceptional restorative skill."
+        },
+        {
+          "id": "ashen.diplomacy",
+          "name": "Diplomatic Skill",
+          "min": 0,
+          "max": 5,
+          "integerOnly": true,
+          "lowLabel": "Ineffective negotiator",
+          "highLabel": "Exceptional negotiator",
+          "description": "Rates negotiation and tactical bargaining ability across the story represented in this Dataset. It measures skill, not whether that skill is used for peace, political strategy, or division. 0 is the scale minimum; 5 is exceptional negotiating ability."
+        },
+        {
+          "id": "ashen.concord",
+          "name": "Contribution to Concord",
+          "min": -4,
+          "max": 6,
+          "integerOnly": true,
+          "lowLabel": "Deepens division",
+          "highLabel": "Builds lasting concord",
+          "description": "Rates the net effect on unity and settlement across the whole story represented in this Dataset. Negative values deepen division, 0 is a neutral overall effect, and positive values contribute to lasting concord."
+        }
+      ],
+      "assessments": [
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.command",
+          "value": 6
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.combat",
+          "value": 3
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.information",
+          "value": 6
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.diplomacy",
+          "value": 4
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.concord",
+          "value": 6
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.command",
+          "value": 5
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.combat",
+          "value": 9
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.information",
+          "value": 3
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.healing",
+          "value": 1
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.diplomacy",
+          "value": 2
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.concord",
+          "value": 2
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.command",
+          "value": 2
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.combat",
+          "value": 3
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.information",
+          "value": 7
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.arcane",
+          "value": 8
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.healing",
+          "value": 2
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.diplomacy",
+          "value": 3
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.concord",
+          "value": 2
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.command",
+          "value": 1
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.combat",
+          "value": 5
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.information",
+          "value": 8
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.diplomacy",
+          "value": 4
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.concord",
+          "value": 0
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.command",
+          "value": 0
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.combat",
+          "value": 1
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.information",
+          "value": 2
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.healing",
+          "value": 6
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.diplomacy",
+          "value": 3
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.concord",
+          "value": 3
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.command",
+          "value": 5
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.combat",
+          "value": 4
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.information",
+          "value": 7
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.diplomacy",
+          "value": 5
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.concord",
+          "value": -4
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.command",
+          "value": 4
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.combat",
+          "value": 3
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.information",
+          "value": 5
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.healing",
+          "value": 4
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.diplomacy",
+          "value": 4
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.concord",
+          "value": 5
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.command",
+          "value": 3
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.combat",
+          "value": 3
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.information",
+          "value": 7
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.diplomacy",
+          "value": 5
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.concord",
+          "value": 6
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.command",
+          "value": 6
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.combat",
+          "value": 8
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.information",
+          "value": 5
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.diplomacy",
+          "value": 3
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.concord",
+          "value": 1
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.command",
+          "value": 1
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.combat",
+          "value": 10
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.information",
+          "value": 4
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.arcane",
+          "value": 12
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.diplomacy",
+          "value": 2
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.concord",
+          "value": 2
+        }
+      ]
+    },
     "draft.github.sukoyaka-dopeness.specification": {
       "specVersion": "0.1.0",
       "uses": [
@@ -589,6 +1016,10 @@
         {
           "extension": "history",
           "version": "2.0.0"
+        },
+        {
+          "extension": "draft.github.sukoyaka-dopeness.dimension-assessment",
+          "version": "0.2.0"
         }
       ]
     }
