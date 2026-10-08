@@ -62,11 +62,11 @@ automated checks are recorded separately: at documentation time,
   worked. This is an independent, **OPEN / NOT IMPLEMENTED / NOT ACCEPTED** UX
   follow-up, recorded in the [current implementation status](./successor-first-implementation.md).
   It is not a locale failure.
-- **`dimensionDisplayName()` undefined `range` reference:** the current
-  `workspace-actions.js` contains a reference to `range` in this function with
-  no local definition. Its triggering conditions and user-visible impact have
-  not been verified. It remains an independent, **UNINVESTIGATED / UNFIXED**
-  functional-quality follow-up, not a locale failure.
+- **`dimensionDisplayName()` undefined `range` reference:** this independent
+  functional-quality follow-up was reproduced and fixed after the locale
+  acceptance checkpoint. The trigger, bounded fix, and automated evidence are
+  recorded in the [Dimension display-name correction result](./dimension-display-name-quality-follow-up-2026-10-08.md).
+  It was not a locale failure and does not change this locale PASS.
 
 Neither follow-up withdraws or changes this bounded locale PASS. The broader
 real-browser overlay audit, full Product acceptance, final pre-public-release

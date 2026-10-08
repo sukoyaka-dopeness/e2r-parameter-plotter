@@ -336,3 +336,14 @@ screen-reader behavior were not checked as part of this observation. Track it
 independently from locale acceptance; it does not withdraw or alter any
 previously recorded locale PASS result. No implementation or Human acceptance
 of this UX follow-up is implied.
+
+## Dimension display-name functional-quality follow-up — 2026-10-08
+
+The independent `dimensionDisplayName()` undefined-`range` failure has been
+reproduced and fixed. Same-name Dimensions with matching endpoint labels no
+longer interrupt display-name checks or Profile rendering. Regression coverage
+for exact duplicates, different numeric ranges, visually similar names, and
+Profile markup is recorded in the [correction result](./dimension-display-name-quality-follow-up-2026-10-08.md).
+Automated checks pass; this does not add Human Browser Acceptance. The bounded
+EN/JA locale acceptance remains PASS, and the Entity drawer menu-visibility
+follow-up above remains open and unimplemented.

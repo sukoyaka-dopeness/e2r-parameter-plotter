@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDatasetEntity} from './successor-domain.js';
 import {entities,fresh,label,load,save} from './model.js';
-import {entityNeedsId} from './workspace-actions.js';
+import {dimensionDisplayName, dimensionNeedsId, entityNeedsId} from './workspace-actions.js';
+import {renderProfile} from './views.js';
 
 const dataset=entities=>({version:'1.0',entities,events:[],relations:[]});
 
@@ -63,4 +64,52 @@ test('saved workspaces recover unnamed Entities without changing IDs or fallback
     if(original===undefined)delete globalThis.localStorage;
     else globalThis.localStorage=original;
   }
+});
+
+test('duplicate Dimension display names disambiguate exact duplicates without throwing',()=>{
+  const first={id:'dimension-alpha-001',name:'Confidence',low:'Low',high:'High',min:0,max:10,unit:'points'};
+  const second={...first,id:'dimension-alpha-002'};
+  const state={dimensions:[first,second]};
+
+  assert.equal(dimensionDisplayName(state,first),'Confidence · 0 → 10 · points · lpha-001');
+  assert.equal(dimensionDisplayName(state,second),'Confidence · 0 → 10 · points · lpha-002');
+
+  const renderState={selected:'entity-1',readOnly:false,candidateUnsupported:false,dimensions:[first,second]};
+  const api={
+    state:()=>renderState,
+    entities:()=>[{id:'entity-1',name:'Elara Veyne'}],
+    name:id=>id==='entity-1'?'Elara Veyne':'',
+    entityId:()=>'',
+    randomNotice:()=>'',
+    dimension:id=>renderState.dimensions.find(d=>d.id===id),
+    dimensionName:id=>dimensionDisplayName(renderState,renderState.dimensions.find(d=>d.id===id)),
+    get:()=>null,
+  };
+  const profile=renderProfile(api);
+  assert.match(profile,/Confidence · 0 → 10 · points · lpha-001/);
+  assert.match(profile,/Confidence · 0 → 10 · points · lpha-002/);
+});
+
+test('same-name Dimensions with different ranges keep range labels and do not receive unnecessary IDs',()=>{
+  const first={id:'dimension-alpha-001',name:'Confidence',low:'Low',high:'High',min:0,max:10,unit:'points'};
+  const second={...first,id:'dimension-alpha-002',min:0,max:100};
+  const state={dimensions:[first,second]};
+
+  assert.doesNotThrow(()=>dimensionDisplayName(state,first));
+  assert.doesNotThrow(()=>dimensionDisplayName(state,second));
+  assert.equal(dimensionDisplayName(state,first),'Confidence · 0 → 10 · points');
+  assert.equal(dimensionDisplayName(state,second),'Confidence · 0 → 100 · points');
+  assert.equal(dimensionNeedsId(state,first,'selector'),true);
+  assert.equal(dimensionNeedsId(state,second,'selector'),true);
+});
+
+test('visually similar Dimension names retain existing surface-specific ID disambiguation',()=>{
+  const prefix='A deliberately long shared Dimension name prefix ';
+  const first={id:'dimension-alpha-001',name:`${prefix}one`,low:'Low',high:'High',min:0,max:10};
+  const second={id:'dimension-alpha-002',name:`${prefix}two`,low:'Low',high:'High',min:0,max:10};
+  const state={dimensions:[first,second]};
+
+  assert.equal(dimensionDisplayName(state,first),first.name);
+  assert.equal(dimensionNeedsId(state,first,'selector'),true);
+  assert.equal(dimensionNeedsId(state,second,'selector'),true);
 });
