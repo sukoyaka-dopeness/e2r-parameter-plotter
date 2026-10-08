@@ -49,3 +49,13 @@ of populated views with duplicate Dimensions was not performed in this
 checkpoint. The locale milestone remains Human Accepted within its documented
 scope; full Product acceptance and the independent Entity drawer menu-scroll
 follow-up remain separate.
+
+## Subsequent Human browser evidence — 2026-10-08
+
+Human later confirmed that a new tab running the corrected source renders a
+Dataset with 24 Dimensions, including duplicate names, in Matrix and Profile.
+The incident details and coverage boundary are recorded in the [Human
+investigation](./dimension-duplicate-incident-human-investigation-2026-10-08.md).
+This adds a limited browser regression check; Dimension creation/save on the
+corrected source was not repeated, so this is not comprehensive Dimension
+authoring acceptance.

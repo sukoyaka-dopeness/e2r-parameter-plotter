@@ -347,3 +347,21 @@ Profile markup is recorded in the [correction result](./dimension-display-name-q
 Automated checks pass; this does not add Human Browser Acceptance. The bounded
 EN/JA locale acceptance remains PASS, and the Entity drawer menu-visibility
 follow-up above remains open and unimplemented.
+
+## Duplicate Dimension addition incident — Human investigation — 2026-10-08
+
+Human traced the apparent failed saves to a pre-fix JavaScript copy already
+loaded in the first tab. That tab raised the now-fixed undefined-`range`
+exception during Matrix rerender; a separate tab fetched the corrected source.
+Some additions had succeeded before rerender failed, leaving 24 test Dimensions
+with unique IDs. Human confirmed the corrected source renders those duplicates
+in Matrix and Profile, then restored a separate Dataset JSON with the 24 test
+Dimensions removed. The preserved original Export and canonical sample remain
+unchanged. Detailed evidence and limits are in the [incident record](./dimension-duplicate-incident-human-investigation-2026-10-08.md).
+
+This is limited Human browser regression evidence, not acceptance of new
+Dimension saving on the corrected source. Why closing the old tab did not show
+a draft-discard prompt remains unresolved and is not established as a
+beforeunload defect. Locale remains accepted within its existing scope; the
+Entity drawer menu-visibility follow-up remains open; Candidate `0.1.0` remains
+non-Stable.
