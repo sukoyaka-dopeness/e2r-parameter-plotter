@@ -427,3 +427,19 @@ independent of the OPEN Cross-App More-menu presentation follow-up; that
 follow-up and all previously accepted checkpoints remain unchanged. This
 implementation result supersedes the earlier OPEN / NOT IMPLEMENTED status
 for these two Drawer observations; Human Browser Acceptance remains pending.
+
+## Right Drawer UX Human Browser Acceptance — 2026-10-08
+
+The Human Browser Review for source `020734933114b5dccda64b461d379f18c4802822`
+is **HUMAN BROWSER ACCEPTED / PASS / CLOSED (BOUNDED PARAMETERPLOTTER DRAWER
+UX IMPROVEMENT)**. Human PASS covers EN/JA ordinary and narrow-width control
+alignment, action-role distinction, menu reveal and no-scroll cases, background
+scroll isolation, Tab/Escape/focus, and Edit/Delete confirmation/cancellation.
+The detailed evidence and limits are in the [acceptance closure](./drawer-ux-human-browser-acceptance-closure-2026-10-08.md).
+
+The same review opened an independent View Header follow-up for a clipped `g`
+in the Profile Entity switcher and vertical inconsistency across Profile,
+Radar, Quadrant, and Matrix. It remains **OPEN / NOT IMPLEMENTED / NOT
+HUMAN-ACCEPTED**; cause and implementation are not selected. Human accepts the
+current purple/navy Primary hue for now, so it is not a blocker. The separate
+Cross-App More-menu presentation remains OPEN and unimplemented.
