@@ -2,12 +2,16 @@
 
 Date: 2026-10-05
 
-Status: **BROAD FUNCTIONAL HUMAN ACCEPTANCE `b9a8e1fee6499c191c66033296e98965d777684e` / WORKSPACE BACKUP REMOVAL HUMAN-ACCEPTED `34f72fad67b9d59b011dbad3880ff0f5a09a0f45` / CURRENT LOCAL SOURCE `2940b3fbf390e185781f3844f263bfe9401757c5` INCLUDES LATER FORMAL-NAME CORRECTION, NOT BROADLY ACCEPTED / UNPUBLISHED / CANDIDATE NOT STABLE**
+Status: **BROAD FUNCTIONAL HUMAN ACCEPTANCE `b9a8e1fee6499c191c66033296e98965d777684e` / WORKSPACE BACKUP REMOVAL HUMAN-ACCEPTED `34f72fad67b9d59b011dbad3880ff0f5a09a0f45` / CURRENT LOCAL SOURCE `6a3737ddae0b1303c5e8e56d1bf04e04bbe1644f` INCLUDES HUMAN-APPROVED EN/JA LOCALE WORDING CLEANUP, HUMAN BROWSER ACCEPTANCE PENDING / UNPUBLISHED / CANDIDATE NOT STABLE**
 
 This is a bounded successor implementation in the canonical
 e2r-parameter-plotter repository. It does not change the historical
 Candidate B first-slice acceptance, which remains session-only and
 Human-accepted, or the separate Prototype 2 closure record.
+
+The dated implementation and audit sections below preserve their original
+checkpoint status. The latest locale checkpoint and its remaining Human
+review boundary are recorded at the end of this document.
 
 ## Product boundary at the implementation checkpoint
 
@@ -267,3 +271,26 @@ or Workspace Backup/Restore removal acceptance from
 `34f72fad67b9d59b011dbad3880ff0f5a09a0f45`. Automated and Codex browser
 verification are recorded separately from Human Browser Acceptance in
 [Home and acquisition verification](./home-startup-acquisition-2026-10-07.md).
+
+## Current EN/JA locale wording checkpoint - 2026-10-08
+
+Current local source is `6a3737ddae0b1303c5e8e56d1bf04e04bbe1644f`. The
+Human-approved browser-local status says **Workspace saved in this browser** /
+**ブラウザー内に作業状態を保存しました**, followed by **To save an E2R
+Dataset file, use Export E2R JSON.** / **E2Rデータセットのファイル保存は、別途
+「E2R JSONを書き出す」から行います。** This changes presentation copy only;
+browser-local persistence and E2R JSON Export remain separate behaviors.
+
+The Dimension drawer starts with **Dimension Pool** / **評価軸一覧**, without
+the `PORTABLE DATA` eyebrow. Its empty state is **No Dimensions yet.** /
+**評価軸はまだありません。** Workspace summaries use ordinary Dimension
+counts. Technical and developer-facing Candidate/portable references remain
+outside this normal-UI wording change; Candidate `0.1.0` remains non-Stable.
+
+Machine validation on this source: `npm.cmd run check` passed syntax checks
+for 26 application modules and all 79 tests. The local server returned HTTP
+200 at `http://localhost:4180/`. Real-browser inspection was not completed:
+the Computer Use state call failed during Windows sandbox setup with
+`helper_unknown_error: setup refresh had errors`. HTTP availability and test
+results are not browser evidence or Human Browser Acceptance. Human Browser
+Acceptance of the locale presentation remains pending.
