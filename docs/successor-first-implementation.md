@@ -2,7 +2,7 @@
 
 Date: 2026-10-05
 
-Status: **BROAD FUNCTIONAL HUMAN ACCEPTANCE `b9a8e1fee6499c191c66033296e98965d777684e` / WORKSPACE BACKUP REMOVAL HUMAN-ACCEPTED `34f72fad67b9d59b011dbad3880ff0f5a09a0f45` / CURRENT LOCAL SOURCE `6a3737ddae0b1303c5e8e56d1bf04e04bbe1644f` INCLUDES HUMAN-APPROVED EN/JA LOCALE WORDING CLEANUP, HUMAN BROWSER ACCEPTANCE PENDING / UNPUBLISHED / CANDIDATE NOT STABLE**
+Status: **BROAD FUNCTIONAL HUMAN ACCEPTANCE `b9a8e1fee6499c191c66033296e98965d777684e` / WORKSPACE BACKUP REMOVAL HUMAN-ACCEPTED `34f72fad67b9d59b011dbad3880ff0f5a09a0f45` / CURRENT LOCAL SOURCE `88e6348d077167757f96c7e01e59063cbc90035b` INCLUDES HUMAN-APPROVED EN/JA LOCALE WORDING CORRECTIONS, HUMAN BROWSER ACCEPTANCE PENDING / UNPUBLISHED / CANDIDATE NOT STABLE**
 
 This is a bounded successor implementation in the canonical
 e2r-parameter-plotter repository. It does not change the historical
@@ -274,7 +274,7 @@ verification are recorded separately from Human Browser Acceptance in
 
 ## Current EN/JA locale wording checkpoint - 2026-10-08
 
-Current local source is `6a3737ddae0b1303c5e8e56d1bf04e04bbe1644f`. The
+Current local source is `88e6348d077167757f96c7e01e59063cbc90035b`. The
 Human-approved browser-local status says **Workspace saved in this browser** /
 **ブラウザー内に作業状態を保存しました**, followed by **To save an E2R
 Dataset file, use Export E2R JSON.** / **E2Rデータセットのファイル保存は、別途
@@ -287,8 +287,14 @@ the `PORTABLE DATA` eyebrow. Its empty state is **No Dimensions yet.** /
 counts. Technical and developer-facing Candidate/portable references remain
 outside this normal-UI wording change; Candidate `0.1.0` remains non-Stable.
 
+Human Browser Review later found the JA Entity creation textarea still had the
+fixed-UI placeholder `Describe this Entity`. Source commit
+`88e6348d077167757f96c7e01e59063cbc90035b` localizes it as
+**エンティティの説明を入力**. Dataset-authored names and descriptions remain
+unchanged.
+
 Machine validation on this source: `npm.cmd run check` passed syntax checks
-for 26 application modules and all 79 tests. The local server returned HTTP
+for 26 application modules and all 80 tests. The local server returned HTTP
 200 at `http://localhost:4180/`. Real-browser inspection was not completed:
 the Computer Use state call failed during Windows sandbox setup with
 `helper_unknown_error: setup refresh had errors`. HTTP availability and test
