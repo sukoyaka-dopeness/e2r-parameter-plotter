@@ -300,3 +300,29 @@ the Computer Use state call failed during Windows sandbox setup with
 `helper_unknown_error: setup refresh had errors`. HTTP availability and test
 results are not browser evidence or Human Browser Acceptance. Human Browser
 Acceptance of the locale presentation remains pending.
+
+## Human-observed Entity drawer menu visibility follow-up — 2026-10-08
+
+**Status: OPEN / NOT IMPLEMENTED / NOT HUMAN-ACCEPTED**
+
+During Human Browser Acceptance, the English Entity Pool showed 13 Entities.
+Opening the ellipsis menu for the unnamed final Entity, **Entity 13**, placed
+**Edit Entity** and **Delete** partly outside the drawer's visible area. A
+manual scroll inside the drawer revealed both actions, and selecting **Edit
+Entity** opened the edit form normally. This is an action-visibility and
+drawer-scroll UX issue, not a localization gap or an Entity editing failure.
+
+The requested follow-up is to reveal both menu actions when opening a menu
+would clip them, scrolling only as far as needed inside the Entity drawer. If
+both actions are already visible, opening the menu should not scroll. The page
+and background Workspace should not scroll. Existing menu behavior, focus,
+keyboard interaction, and accessibility must be preserved. The implementation
+method is intentionally undecided until the current code and browser behavior
+are examined during that follow-up.
+
+This is Human-observed evidence for the English, 13-Entity, bottom-of-list
+case. Narrow layouts, Japanese UI, keyboard-only operation, focus behavior, and
+screen-reader behavior were not checked as part of this observation. Track it
+independently from locale acceptance; it does not withdraw or alter any
+previously recorded locale PASS result. No implementation or Human acceptance
+of this UX follow-up is implied.
