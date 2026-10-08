@@ -23,7 +23,13 @@ const visiblePrefix = (name, limit) => Array.from(String(name||'').trim().toLoca
 export function visuallyAmbiguous(items, item, limit){
  if(!item)return false;
  const name=String(item.name||'').trim();
- return items.some(other=>other.id!==item.id&&(same(other.name,name)||(Array.from(name).length>limit&&Array.from(String(other.name||'')).length>limit&&visiblePrefix(other.name,limit)===visiblePrefix(name,limit))));
+ if(!name)return false;
+ return items.some(other=>{
+  if(other.id===item.id)return false;
+  const otherName=String(other.name||'').trim();
+  if(!otherName)return false;
+  return same(otherName,name)||(Array.from(name).length>limit&&Array.from(otherName).length>limit&&visiblePrefix(otherName,limit)===visiblePrefix(name,limit));
+ });
 }
 export function dimensionNeedsId(state, dimension, surface='pool'){
  return visuallyAmbiguous(state.dimensions,dimension,{matrix:9,radar:13,selector:18,pool:24}[surface]||16);
