@@ -29,6 +29,14 @@ npm run check
 The focused tests cover the four views, Candidate payload semantics, Entity and Dimension authoring, Assessment rescale, Validator eligibility, unknown Extension preservation, Dataset Export baseline, local persistence, local persistence failure, replacement and unload protection, and no-migration behavior. They are supporting machine evidence, not Human acceptance of post-Acceptance corrections to the successor. The earlier Candidate B result is recorded in the [historical acceptance result](docs/first-slice-human-acceptance-2026-10-04.md).
 The GitHub Actions check runs the same command with read-only repository access; it does not deploy or publish the application.
 
+## Current Candidate 0.2.0 implementation checkpoint
+
+The local successor supports exact Dimension Assessment Candidate `0.1.0` and
+`0.2.0`. New Datasets use `0.2.0` when the first Dimension is saved; existing
+`0.1.0` Datasets require a confirmed explicit upgrade before adding optional
+Dimension Descriptions. See the [implementation checkpoint](docs/candidate-0.2.0-parameterplotter-implementation-2026-10-08.md)
+for scope, verification evidence, and Human Browser Acceptance boundaries.
+
 ## Source relationship
 
 Prototype 2 remains accepted and closed as a behavioral reference and evidence baseline in e2r-spec. The successor source here now consumes the adopted Dimension Assessment Candidate and the local browser distribution of the E2R Validator. The canonical Validator repository remains the Validator source authority; the vendored snapshot is synchronized from the adjacent checkout by `node scripts/sync-validator-vendor.mjs`. The Prototype directory is not production source authority. See the [Prototype 2 closure evidence](https://github.com/sukoyaka-dopeness/e2r-spec/blob/main/research/prototypes/parameterplotter-1/prototype-2-bounded-implementation-result-2026-10-02.md) for its unchanged historical status.

@@ -50,3 +50,9 @@ test('Entity and Dimension drawer wording avoids redundant Dataset and Candidate
   assert.equal(translateUiText('Entity Pool'),'エンティティ一覧');
   assert.equal(translateUiText('Dimension Pool'),'評価軸一覧');
 });
+test('Candidate 0.2.0 description and upgrade chrome localize while authored descriptions remain untouched',()=>{
+  assert.equal(translateUiText('Describe this Dimension'),'評価軸の説明を入力');
+  assert.equal(translateUiText('Upgrade to 0.2.0'),'0.2.0にアップグレード');
+  assert.equal(translateUiText('Upgrade Dimension Assessment?'),'Dimension Assessmentをアップグレードしますか？');
+  assert.equal(translateUiText('The Ashen Crown measures arcane power.'),'The Ashen Crown measures arcane power.');
+});

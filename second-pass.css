@@ -334,6 +334,10 @@
 
 /* Human observation refinement: close the Dimension Pool list's top edge. */
 .drawer-form textarea{width:100%;min-height:76px;border:1px solid #bfc5d1;border-radius:6px;background:#fff;color:#202331;padding:7px 8px;resize:vertical}
+.candidate-upgrade{display:grid;gap:8px;padding:10px;border:1px solid #d8dfec;border-radius:8px;background:#f7f9fc;font-size:.78rem;color:#526078}
+.dimension-description{white-space:pre-wrap;overflow-wrap:anywhere;color:#526078}
+.dimension-description-field{display:grid;gap:4px;font-size:.78rem;color:#526078}
+.dimension-description-field textarea{width:100%;min-height:76px;border:1px solid #bfc5d1;border-radius:6px;background:#fff;color:#202331;padding:7px 8px;resize:vertical}
 .radar-spoke-list{border-top:1px solid #e4e8ef;padding-top:4px}
 html.drawer-modal-open{overflow:hidden;overscroll-behavior:none}
 .drawer{overscroll-behavior:contain}

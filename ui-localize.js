@@ -99,6 +99,16 @@ for(const [english,japanese] of Object.entries({
   'Stored value violates this Dimension policy; enter an allowed replacement':'記録値がこの評価軸の制約に反しています。許容される値に変更してください。'
 }))ja.set(english,japanese);
 
+for(const [english,japanese] of Object.entries({
+  'Upgrade to Candidate 0.2.0 to add optional Dimension descriptions. Existing Dimensions and Assessments will be preserved.':'Candidate 0.2.0にアップグレードすると、評価軸の説明を追加できます。既存の評価軸と値は保持されます。',
+  'Upgrade to 0.2.0':'0.2.0にアップグレード','Describe this Dimension':'評価軸の説明を入力',
+  'Plain text included in the Dataset. Line breaks are preserved.':'プレーンテキストでDatasetに保存されます。改行はそのまま保持されます。',
+  'Enter a description with at least one non-whitespace character, or leave it blank.':'説明を入力する場合は、空白以外の文字を1文字以上入力してください。空欄にもできます。',
+  'Upgrade Dimension Assessment?':'Dimension Assessmentをアップグレードしますか？',
+  "Upgrade this Dataset's Dimension Assessment payload from 0.1.0 to 0.2.0. Existing Dimensions, Assessments, IDs, values, and other Dataset content will be preserved. No descriptions will be generated.":'このDatasetのDimension Assessmentを0.1.0から0.2.0へアップグレードします。既存の評価軸、値、ID、その他のDataset内容は保持されます。説明は自動作成されません。',
+  'Dimension Assessment upgraded to Candidate 0.2.0. Existing Dataset values were preserved.':'Dimension AssessmentをCandidate 0.2.0にアップグレードしました。既存のDataset値は保持されています。'
+}))ja.set(english,japanese);
+
 const phrases = [
   ['Choose X/Y, then drag an unassessed Entity or tap the plot to author in-range Assessments.','X/Yを選び、値が未設定のエンティティをドラッグするか、図をタップして範囲内の値を記録します。'],
   ['Drag Primary vertices; Secondary is comparison only.','主エンティティの頂点をドラッグします。比較するエンティティは表示専用です。'],
@@ -142,7 +152,7 @@ phrases.push(
   ['This integer-only range has no valid integer candidate.','整数のみの範囲内に有効な整数がありません。']
 );
 
-const protectedContent = '.dataset-title,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-card .card-head strong,.point-label,.plot-item,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.credits-metadata a';
+const protectedContent = '.dataset-title,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-description,.dimension-card .card-head strong,.point-label,.plot-item,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.credits-metadata a';
 ja.set('Dataset title','Datasetタイトル');
 ja.set('Apply','適用');
 ja.set('Workspace actions','作業操作');

@@ -365,3 +365,15 @@ a draft-discard prompt remains unresolved and is not established as a
 beforeunload defect. Locale remains accepted within its existing scope; the
 Entity drawer menu-visibility follow-up remains open; Candidate `0.1.0` remains
 non-Stable.
+
+## Dimension Assessment Candidate 0.2.0 application implementation — 2026-10-08
+
+ParameterPlotter now supports exact Candidate versions `0.1.0` and `0.2.0`.
+New Datasets create a `0.2.0` payload on their first saved Dimension;
+`0.1.0` remains unchanged through ordinary edits until an explicit,
+Validator-checked upgrade is confirmed. Candidate `0.2.0` optional plain-text
+Dimension Descriptions can be edited and viewed without locale translation.
+Implementation details, test evidence, and the browser-tool limitation are in
+the [Candidate 0.2.0 implementation checkpoint](./candidate-0.2.0-parameterplotter-implementation-2026-10-08.md).
+Human Browser Acceptance remains pending; both Candidate versions remain
+non-Stable, and the Entity drawer menu-visibility follow-up remains open.

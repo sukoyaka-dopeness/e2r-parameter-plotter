@@ -2,7 +2,8 @@ import {decimalInterpolate, presentDecimal} from './decimal-presentation.js';
 import {validateDataset} from './vendor/e2r-validator/index.js';
 export {validateDataset};
 export const DIMENSION_ASSESSMENT_ID='draft.github.sukoyaka-dopeness.dimension-assessment';
-export const DIMENSION_ASSESSMENT_VERSION='0.1.0';
+export const DIMENSION_ASSESSMENT_VERSION='0.2.0';
+export const DIMENSION_ASSESSMENT_VERSIONS=Object.freeze(['0.1.0','0.2.0']);
 const KEY = 'e2r-parameter-plotter-local-workspace-v2';
 export const uid = () => crypto.randomUUID();
 export const clamp = v => Math.max(-1, Math.min(1, v));
@@ -114,8 +115,8 @@ function hasRecoverableDatasetContent(dataset){
   return Object.keys(dataset||{}).some(key=>!['version','entities','events','relations','extensions'].includes(key));
 }
 function hydrate(dataset,ui={}){
-  const payload=candidateOf(dataset),supported=payload?.specVersion===DIMENSION_ASSESSMENT_VERSION&&Array.isArray(payload.dimensions)&&Array.isArray(payload.assessments);
-  const dimensions=supported?payload.dimensions.flatMap(d=>d&&typeof d==='object'&&!Array.isArray(d)?[{id:d.id,name:d.name,low:d.lowLabel??'',high:d.highLabel??'',endpointLabelsPresent:Object.hasOwn(d,'lowLabel'),min:d.min,max:d.max,integerOnlyPresent:Object.hasOwn(d,'integerOnly'),unitPresent:Object.hasOwn(d,'unit'),...('integerOnly'in d?{integerOnly:d.integerOnly}:{}),...('unit'in d?{unit:d.unit}:{})}]:[]):[];
+  const payload=candidateOf(dataset),supported=DIMENSION_ASSESSMENT_VERSIONS.includes(payload?.specVersion)&&Array.isArray(payload.dimensions)&&Array.isArray(payload.assessments);
+  const dimensions=supported?payload.dimensions.flatMap(d=>d&&typeof d==='object'&&!Array.isArray(d)?[{id:d.id,name:d.name,low:d.lowLabel??'',high:d.highLabel??'',endpointLabelsPresent:Object.hasOwn(d,'lowLabel'),min:d.min,max:d.max,integerOnlyPresent:Object.hasOwn(d,'integerOnly'),unitPresent:Object.hasOwn(d,'unit'),...('integerOnly'in d?{integerOnly:d.integerOnly}:{}),...('unit'in d?{unit:d.unit}:{}),...(payload.specVersion==='0.2.0'&&typeof d.description==='string'?{description:d.description}:{})}]:[]):[];
   const values={};
   if(supported)for(const assessment of payload.assessments){if(!assessment||typeof assessment!=='object'||typeof assessment.entityId!=='string'||typeof assessment.dimensionId!=='string')continue;values[assessment.entityId]||={};values[assessment.entityId][assessment.dimensionId]=assessment.value;}
   const list=entities({dataset}),validIds=new Set(list.map(e=>e.id));
@@ -144,14 +145,16 @@ export function datasetForWorkspace(s){
   if(s.readOnly)return dataset;
   const existing=candidateOf(dataset),hasState=s.dimensions.length>0||assessmentRecords(s.values).length>0;
   if(!hasState&&!existing)return dataset;
-  if(existing&&existing.specVersion!==DIMENSION_ASSESSMENT_VERSION)return dataset;
-  const dimensionData=s.dimensions.map(d=>({id:d.id,name:d.name,min:d.min,max:d.max,...(('integerOnlyPresent'in d?d.integerOnlyPresent:('integerOnly'in d))?{integerOnly:Boolean(d.integerOnly)}:{}),...((d.unitPresent||(d.unit!==undefined&&d.unit!==''))?{unit:d.unit??''}:{}),...((d.endpointLabelsPresent||(d.low!==undefined&&d.high!==undefined&&d.low!==''&&d.high!==''))?{lowLabel:d.low??'',highLabel:d.high??''}:{})}));
+  if(existing&&existing.specVersion!=='0.1.0'&&existing.specVersion!=='0.2.0')return dataset;
+  const version=existing?.specVersion||DIMENSION_ASSESSMENT_VERSION;
+  const dimensionData=s.dimensions.map(d=>({id:d.id,name:d.name,min:d.min,max:d.max,...(('integerOnlyPresent'in d?d.integerOnlyPresent:('integerOnly'in d))?{integerOnly:Boolean(d.integerOnly)}:{}),...((d.unitPresent||(d.unit!==undefined&&d.unit!==''))?{unit:d.unit??''}:{}),...((d.endpointLabelsPresent||(d.low!==undefined&&d.high!==undefined&&d.low!==''&&d.high!==''))?{lowLabel:d.low??'',highLabel:d.high??''}:{}),...(version==='0.2.0'&&typeof d.description==='string'&&/\S/u.test(d.description)?{description:d.description}:{})}));
   const extensions=dataset.extensions&&typeof dataset.extensions==='object'&&!Array.isArray(dataset.extensions)?dataset.extensions:{};
-  dataset.extensions={...extensions,[DIMENSION_ASSESSMENT_ID]:{specVersion:DIMENSION_ASSESSMENT_VERSION,dimensions:dimensionData,assessments:assessmentRecords(s.values)}};
+  dataset.extensions={...extensions,[DIMENSION_ASSESSMENT_ID]:{specVersion:version,dimensions:dimensionData,assessments:assessmentRecords(s.values)}};
   const spec=dataset.extensions['draft.github.sukoyaka-dopeness.specification'];
   if(spec&&spec.specVersion==='0.1.0'&&Array.isArray(spec.uses)){
     const declarations=spec.uses.filter(entry=>entry?.extension===DIMENSION_ASSESSMENT_ID);
-    if(!declarations.length)dataset.extensions['draft.github.sukoyaka-dopeness.specification']={...spec,uses:[...spec.uses,{extension:DIMENSION_ASSESSMENT_ID,version:DIMENSION_ASSESSMENT_VERSION}]};
+    if(!declarations.length)dataset.extensions['draft.github.sukoyaka-dopeness.specification']={...spec,uses:[...spec.uses,{extension:DIMENSION_ASSESSMENT_ID,version}]};
+    else if(declarations.length===1&&declarations[0].version!==version)dataset.extensions['draft.github.sukoyaka-dopeness.specification']={...spec,uses:spec.uses.map(entry=>entry?.extension===DIMENSION_ASSESSMENT_ID?{...entry,version}:entry)};
   }
   return dataset;
 }

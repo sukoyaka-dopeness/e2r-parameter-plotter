@@ -2,11 +2,22 @@ import {DIMENSION_ASSESSMENT_ID,transactDatasetMutation,uid,rangePosition,valueA
 
 export function dimensionAssessmentPayload(dataset){
   const value=dataset.extensions?.[DIMENSION_ASSESSMENT_ID];
-  return value?.specVersion==='0.1.0'&&Array.isArray(value.dimensions)&&Array.isArray(value.assessments)?value:null;
+  return (value?.specVersion==='0.1.0'||value?.specVersion==='0.2.0')&&Array.isArray(value.dimensions)&&Array.isArray(value.assessments)?value:null;
 }
 
 export function candidateAuthoringAvailable(state){
   return !state.readOnly&&!state.candidateUnsupported;
+}
+
+export function upgradeDimensionAssessment(state){
+  if(!candidateAuthoringAvailable(state))return {ok:false,reason:'Dimension Assessment authoring is unavailable for this Dataset.'};
+  const payload=state.dataset.extensions?.[DIMENSION_ASSESSMENT_ID];
+  if(payload?.specVersion!=='0.1.0'||!Array.isArray(payload.dimensions)||!Array.isArray(payload.assessments))return {ok:false,reason:'Only a supported Candidate 0.1.0 Dataset can be upgraded.'};
+  return transactDatasetMutation(state,()=>{
+    state.dataset.extensions[DIMENSION_ASSESSMENT_ID]={...structuredClone(payload),specVersion:'0.2.0'};
+    const specification=state.dataset.extensions?.['draft.github.sukoyaka-dopeness.specification'];
+    if(specification&&Array.isArray(specification.uses))specification.uses=specification.uses.map(entry=>entry?.extension===DIMENSION_ASSESSMENT_ID?{...entry,version:'0.2.0'}:entry);
+  });
 }
 
 export function createDatasetEntity(state,{name,description}){

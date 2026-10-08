@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fresh,load,save,readDataset,datasetForWorkspace,exportBaseline,markDatasetModified} from './model.js';
 import {DIMENSION_ASSESSMENT_ID} from './model.js';
-import {applyAssessment,applyDimensionAndRescale,createDatasetEntity,deleteDatasetEntity,editDatasetEntity,entityDeleteEligibility,rescaledAssessmentValue} from './successor-domain.js';
+import {applyAssessment,applyDimensionAndRescale,createDatasetEntity,deleteDatasetEntity,editDatasetEntity,entityDeleteEligibility,rescaledAssessmentValue,upgradeDimensionAssessment} from './successor-domain.js';
 import {validateDataset} from './vendor/e2r-validator/index.js';
 
 const baseDataset=()=>({version:'1.0',entities:[{id:'e1',name:'Alpha',extensions:{'opaque.example/entity':{keep:[1,2]}}},{id:'e2',name:'Beta'}],events:[],relations:[],extensions:{'opaque.example/dataset':{keep:true}}});
@@ -23,6 +23,107 @@ test('Candidate payload authoring is Dataset data and retains unknown sibling Ex
   assert.deepEqual(dataset.extensions[DIMENSION_ASSESSMENT_ID].assessments,[{entityId:'e1',dimensionId:'d1',value:0}]);
   assert.equal(validateDataset(dataset).valid,true);
   assert.equal(state.datasetModified,true);
+});
+
+test('new Dimension authoring starts Candidate 0.2.0 and preserves Description text exactly',()=>{
+  const state=fresh(baseDataset());
+  const description='  Line one <tag> & **plain text**\nLine two  ';
+  assert.equal(applyDimensionAndRescale(state,{id:'d1',name:'Measure',low:'Low',high:'High',min:0,max:10,description}).ok,true);
+  assert.equal(applyAssessment(state,'e1','d1',0).ok,true);
+  const dataset=datasetForWorkspace(state),payload=dataset.extensions[DIMENSION_ASSESSMENT_ID];
+  assert.equal(payload.specVersion,'0.2.0');
+  assert.equal(payload.dimensions[0].description,description);
+  assert.equal(validateDataset(dataset).valid,true);
+});
+
+test('Candidate 0.2.0 Description survives browser-local reload and the Export Dataset baseline',()=>{
+  const original=globalThis.localStorage;globalThis.localStorage=new MemoryStorage();
+  try{
+    const state=fresh(baseDataset());
+    const description='Meaning & range: <low> to high.\nSecond line — Japanese: 評価';
+    assert.equal(applyDimensionAndRescale(state,{id:'d1',name:'Measure',low:'',high:'',min:0,max:10,description}).ok,true);
+    assert.equal(save(state),true);
+    const recovered=load();
+    assert.equal(recovered.dataset.extensions[DIMENSION_ASSESSMENT_ID].specVersion,'0.2.0');
+    assert.equal(recovered.dimensions[0].description,description);
+    exportBaseline(recovered);
+    assert.equal(recovered.dataset.extensions[DIMENSION_ASSESSMENT_ID].dimensions[0].description,description);
+    assert.equal(validateDataset(recovered.dataset).valid,true);
+  }finally{globalThis.localStorage=original;}
+});
+
+test('Candidate 0.2.0 validator accepts omitted, multiline, marked-up, and long plain-text descriptions only',()=>{
+  const dataset=baseDataset();
+  const dimension={id:'d1',name:'Measure',min:0,max:10};
+  const payload={specVersion:'0.2.0',dimensions:[dimension],assessments:[]};
+  dataset.extensions[DIMENSION_ASSESSMENT_ID]=payload;
+  assert.equal(validateDataset(dataset).valid,true);
+  dimension.description='  first line\n**literal Markdown** & <text>\n'+('long '.repeat(500));
+  assert.equal(validateDataset(dataset).valid,true);
+  for(const description of ['', ' \t\n ' , 4]){
+    dimension.description=description;
+    assert.equal(validateDataset(dataset).valid,false);
+  }
+});
+
+test('unsupported Candidate version remains opaque and cannot be implicitly downgraded',()=>{
+  const dataset=baseDataset();dataset.extensions[DIMENSION_ASSESSMENT_ID]={specVersion:'0.3.0',future:[1,2,3]};
+  const state=fresh(dataset);
+  assert.equal(state.candidateUnsupported,true);
+  assert.deepEqual(datasetForWorkspace(state).extensions[DIMENSION_ASSESSMENT_ID],{specVersion:'0.3.0',future:[1,2,3]});
+});
+
+test('Candidate 0.1.0 remains unchanged during ordinary edits and explicit upgrade preserves payload data',()=>{
+  const dataset=baseDataset();
+  delete dataset.extensions['opaque.example/dataset'];
+  delete dataset.entities[0].extensions;
+  dataset.extensions[DIMENSION_ASSESSMENT_ID]={specVersion:'0.1.0',dimensions:[{id:'d1',name:'Measure',min:-2,max:8,integerOnly:true,lowLabel:'Low',highLabel:'High'}],assessments:[{entityId:'e1',dimensionId:'d1',value:0}]};
+  dataset.extensions['draft.github.sukoyaka-dopeness.specification']={specVersion:'0.1.0',uses:[{extension:DIMENSION_ASSESSMENT_ID,version:'0.1.0'}]};
+  const state=fresh(dataset);
+  assert.equal(state.dimensions[0].description,undefined);
+  assert.equal(applyDimensionAndRescale(state,{...state.dimensions[0],name:'Measure revised'}).ok,true);
+  assert.equal(datasetForWorkspace(state).extensions[DIMENSION_ASSESSMENT_ID].specVersion,'0.1.0');
+  assert.equal(Object.hasOwn(datasetForWorkspace(state).extensions[DIMENSION_ASSESSMENT_ID].dimensions[0],'description'),false);
+  const prior=structuredClone(state.dataset);
+  assert.equal(upgradeDimensionAssessment(state).ok,true);
+  const upgraded=datasetForWorkspace(state),payload=upgraded.extensions[DIMENSION_ASSESSMENT_ID];
+  assert.equal(payload.specVersion,'0.2.0');
+  assert.deepEqual(payload.dimensions,[{id:'d1',name:'Measure revised',min:-2,max:8,integerOnly:true,lowLabel:'Low',highLabel:'High'}]);
+  assert.deepEqual(payload.assessments,[{entityId:'e1',dimensionId:'d1',value:0}]);
+  assert.equal(upgraded.extensions['draft.github.sukoyaka-dopeness.specification'].uses[0].version,'0.2.0');
+  assert.deepEqual(upgraded.entities,prior.entities);
+  assert.equal(validateDataset(upgraded).valid,true);
+  assert.equal(applyDimensionAndRescale(state,{...state.dimensions[0],description:'Added after explicit upgrade.'}).ok,true);
+  const edited=datasetForWorkspace(state).extensions[DIMENSION_ASSESSMENT_ID];
+  assert.equal(edited.specVersion,'0.2.0');
+  assert.equal(edited.dimensions[0].description,'Added after explicit upgrade.');
+  assert.deepEqual(edited.assessments,[{entityId:'e1',dimensionId:'d1',value:0}]);
+});
+
+test('explicit Candidate upgrade rolls back when the resulting Dataset fails validation',()=>{
+  const dataset=baseDataset();
+  dataset.extensions[DIMENSION_ASSESSMENT_ID]={specVersion:'0.1.0',dimensions:[{id:'d1',name:'Measure',min:0,max:10}],assessments:[{entityId:'e1',dimensionId:'d1',value:0}]};
+  const state=fresh(dataset),before=structuredClone(state.dataset);
+  // Force the validator boundary to reject the prepared version change.
+  state.values.e1.d1=11;
+  const rejected=upgradeDimensionAssessment(state);
+  assert.equal(rejected.ok,false);
+  assert.equal(state.dataset.extensions[DIMENSION_ASSESSMENT_ID].specVersion,'0.1.0');
+  assert.deepEqual(state.dataset,before);
+  assert.equal(state.values.e1.d1,11);
+  assert.equal(validateDataset(before).valid,true);
+});
+
+test('upgrade preserves opaque sibling Extensions and does not invent a Specification Extension',()=>{
+  const dataset=baseDataset();
+  dataset.extensions[DIMENSION_ASSESSMENT_ID]={specVersion:'0.1.0',dimensions:[{id:'d1',name:'Measure',min:0,max:10}],assessments:[]};
+  const state=fresh(dataset);
+  assert.equal(upgradeDimensionAssessment(state).ok,true);
+  const upgraded=datasetForWorkspace(state);
+  assert.equal(upgraded.extensions[DIMENSION_ASSESSMENT_ID].specVersion,'0.2.0');
+  assert.deepEqual(upgraded.extensions['opaque.example/dataset'],{keep:true});
+  assert.deepEqual(upgraded.entities[0].extensions,{'opaque.example/entity':{keep:[1,2]}});
+  assert.equal(Object.hasOwn(upgraded.extensions,'draft.github.sukoyaka-dopeness.specification'),false);
 });
 
 test('Entity edits only touch allowlisted labels; blank removes, nonblank text is preserved',()=>{
