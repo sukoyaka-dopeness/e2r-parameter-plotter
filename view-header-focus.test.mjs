@@ -38,6 +38,21 @@ test('focus restoration keeps the same enabled direction and does not scroll',()
   assert.equal(previous.focused,false);
 });
 
+test('keyboard Header restoration preserves page position and reveals only an offscreen control',()=>{
+  const scrollElement={scrollLeft:0,scrollTop:0,scrollWidth:900,scrollHeight:1800};
+  const documentObject={scrollingElement:scrollElement,documentElement:{clientWidth:390,clientHeight:600,scrollWidth:900,scrollHeight:1800}};
+  const target=button({'data-primary-step':'1'});
+  target.getBoundingClientRect=()=>({left:100,top:1120-scrollElement.scrollTop,right:140,bottom:1160-scrollElement.scrollTop,width:40,height:40});
+  const group={querySelectorAll:()=>[target]};
+  const root={querySelector:()=>group};
+  const scrollSnapshot={element:scrollElement,left:0,top:500};
+  scrollElement.scrollTop=900; // Simulate scroll anchoring during the full-root render.
+  assert.equal(restoreHeaderNavigationFocus(root,{type:'primary',step:'1'},{scrollSnapshot,documentObject}),true);
+  assert.equal(target.focused,true);
+  assert.deepEqual(target.focusOptions,{preventScroll:true});
+  assert.equal(scrollElement.scrollTop,584); // Minimal 24px visibility margin.
+});
+
 test('when a Matrix arrow becomes disabled at a page boundary, focus stays on the available Header arrow',()=>{
   const previous=button({'data-matrix-page':'-1'},{disabled:false});
   const next=button({'data-matrix-page':'1'},{disabled:true});
@@ -53,6 +68,7 @@ test('header focus restoration is wired only into the three rerendering navigati
   for(const key of ['matrixPage','primaryStep','waitingStep']){
     const branch=source.match(new RegExp(`if\\(b\\.dataset\\.${key}\\)[^\\n]*`))?.[0]||'';
     assert.match(branch,/headerNavigationFocusRequest\(b,e\)/);
-    assert.match(branch,/update\(\);restoreHeaderNavigationFocus\(root,focusRequest\)/);
+    assert.match(branch,/scrollSnapshot=focusRequest\?captureDocumentScroll\(document\):null/);
+    assert.match(branch,/update\(\);restoreHeaderNavigationFocus\(root,focusRequest,\{scrollSnapshot,documentObject:document\}\)/);
   }
 });

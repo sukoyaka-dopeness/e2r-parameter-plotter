@@ -1,3 +1,5 @@
+import {restoreDocumentScroll, revealInDocument} from './viewport-scroll.js';
+
 const navigationTypes = [
   {type: 'primary', attribute: 'data-primary-step', group: '.entity-pager'},
   {type: 'waiting', attribute: 'data-waiting-step', group: '.entity-pager'},
@@ -14,7 +16,7 @@ export function headerNavigationFocusRequest(button, event) {
   return null;
 }
 
-export function restoreHeaderNavigationFocus(root, request) {
+export function restoreHeaderNavigationFocus(root, request, {scrollSnapshot=null, documentObject=globalThis.document}={}) {
   const navigation = navigationTypes.find(item => item.type === request?.type);
   if (!navigation) return false;
   const group = root.querySelector(`.view-control ${navigation.group}`);
@@ -25,6 +27,14 @@ export function restoreHeaderNavigationFocus(root, request) {
     ? sameDirection
     : controls.find(button => !button.disabled);
   if (!target) return false;
+  if (scrollSnapshot) restoreDocumentScroll(scrollSnapshot);
   target.focus({preventScroll: true});
+  if (scrollSnapshot) {
+    // Root replacement can change browser scroll anchoring even when the new
+    // control is focused with preventScroll. Restore the prior page position,
+    // then reveal only if the focused control is no longer visible.
+    restoreDocumentScroll(scrollSnapshot);
+    revealInDocument(target, documentObject);
+  }
   return true;
 }

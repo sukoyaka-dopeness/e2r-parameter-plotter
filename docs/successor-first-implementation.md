@@ -484,3 +484,16 @@ lightweight-information checkpoint](./quadrant-lightweight-info-and-context-focu
 ## Radar / Quadrant keyboard Assessment editing - 2026-10-09
 
 Radar and Quadrant share a keyboard step derived from one tenth of each Dimension's range; integer-only Dimensions use step 1 below range width 20 and the nearest integer tenth at or above 20. Final steps reach but do not exceed valid endpoints, and invalid existing values are not repaired. Quadrant plain-arrow edits preserve document position across rerender and focus restoration, then minimally reveal the edited point only when it approaches or crosses the viewport edge; modified arrow chords pass through. Focus announcements and visible Radar guidance describe the step policy in EN/JA. `npm.cmd run check` passes (31 modules, 121 tests). Computer Use initialization failed before browser interaction, so Human Browser Acceptance for Radar / Quadrant and View Header remains **PENDING**. See the [keyboard Assessment editing checkpoint](./radar-quadrant-keyboard-assessment-editing-2026-10-09.md). The independent Cross-App More-menu follow-up remains OPEN.
+
+
+## Header navigation and Quadrant context menu focus follow-up - 2026-10-09
+
+Keyboard-originated Header paging now preserves document position across the
+full-root rerender and minimally reveals the restored control if it moves
+offscreen. The Quadrant context menu now follows its invoking point or Entity
+label in DOM order; native Tab/Shift+Tab can leave through nearby plot
+controls, focus exit dismisses the menu, and Escape restores the invoker.
+`npm.cmd run check` passes (32 modules, 125 tests). Computer Use initialization
+failed before browser interaction, so View Header, Radar, and Quadrant Human
+Browser Acceptance remain **PENDING**. See the [Header and Quadrant context
+focus follow-up](./header-and-quadrant-context-focus-follow-up-2026-10-09.md).
