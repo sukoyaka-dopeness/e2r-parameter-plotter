@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node serve.mjs",
     "test": "node --test *.test.mjs",
-    "check": "node scripts/check-syntax.mjs && npm test"
+    "check": "node scripts/check-syntax.mjs && npm test",
+    "build": "node scripts/build-pages.mjs"
   }
 }

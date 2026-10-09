@@ -34,7 +34,7 @@ conditional on the configured application URL.
 
 | Area | Current evidence and state |
 | --- | --- |
-| ParameterPlotter application URL | The repository has a read-only GitHub Actions check workflow and no deployment workflow. The Hub's `VITE_PARAMETER_PLOTTER_URL` is absent from its Pages deployment workflow, so the production app link remains unconfigured. No deployment or public write was attempted. |
+| ParameterPlotter application URL | A GitHub Pages deployment workflow and static artifact builder are prepared locally. The expected project URL is `https://sukoyaka-dopeness.github.io/e2r-parameter-plotter/`; Pages settings and live availability are unverified. The Hub deployment workflow now uses that URL and reads Ashen Crown EN/JA owner sources from explicit Actions variables. No deployment or public write was attempted. |
 | ParameterPlotter EN/JA guides | Local Markdown sources exist at `docs/user-guide-en.md` and `docs/user-guide-ja.md`; Hub links now target the matching GitHub `blob/main` paths. The files are not pushed, so public availability and post-push link reachability remain pending. |
 | Hub startup handoff | Startup Handoff v0 is implemented locally. The Hub selects the source matching its UI locale and passes `datasetUrl` and the requested `locale` in the startup fragment. The existing Recipient-Preference rule and Dataset Replacement Safety remain in force. |
 | Ashen Crown EN/JA | The local canonical and bundled files are Candidate 0.2.0 with 7 Dimensions and 70 Assessments. Hub local integration uses an explicit loopback fixture because the public E2R-SPEC raw URLs have not been shown to contain this local revision. This checkpoint does not treat public sources as current. |
@@ -92,9 +92,13 @@ Dataset revisions.
    replacement protection using a disposable Dataset and a recovery copy.
 3. Human decision on the existing Validator-invalid but structurally readable
    Handoff diagnostic case before changing that behavior.
-4. A separately approved deployment and configuration decision for the
-   ParameterPlotter public URL, Hub `VITE_PARAMETER_PLOTTER_URL`, and the
-   Ashen Crown EN/JA owner-published source revisions.
+4. Human authorization to publish the prepared ParameterPlotter workflow and
+   Hub configuration. Before a Hub deployment, enable GitHub Pages with the
+   Actions source, deploy ParameterPlotter first, verify its HTTPS URL, and
+   configure the Hub Actions variables `E2R_ASHEN_CROWN_DATASET_EN_URL` and
+   `E2R_ASHEN_CROWN_DATASET_JA_URL` only after the owner-published sources are
+   verified to contain the adopted revision. Missing or invalid Ashen Crown
+   variables keep the ParameterPlotter action hidden.
 5. After the relevant source commits are pushed, verify the EN/JA GitHub
    Markdown guide links and exact public Dataset revisions at the unchanged
    owner URLs. After deployment is authorized, verify production HTTPS/CORS
