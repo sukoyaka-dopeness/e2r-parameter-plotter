@@ -1,11 +1,13 @@
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-export function homeMarkup({canContinue=false,notice='',sampleError=''}={}) {
+export function homeMarkup({canContinue=false,notice='',sampleError='',handoffStatus='',handoffError=''}={}) {
   return `<header class="app-header home-header"><a class="app-brand" href="#home">ParameterPlotter</a></header>
   <main class="home-main" aria-labelledby="home-title">
     <h1 id="home-title">Get Started</h1>
     <p class="home-intro">Compare E2R Entities across Dimensions.</p>
     ${notice?`<p class="home-notice" role="alert">${escapeHtml(notice)}</p>`:''}
     ${sampleError?`<p class="home-notice" role="alert">${escapeHtml(sampleError)}</p>`:''}
+    ${handoffStatus?`<p class="home-notice" role="status">${escapeHtml(handoffStatus)}</p>`:''}
+    ${handoffError?`<p class="home-notice" role="alert">${escapeHtml(handoffError)}</p>`:''}
     <div class="home-actions">
       ${canContinue?'<button data-home-action="continue">Continue Editing</button>':''}
       <button data-home-action="new">New Dataset</button>

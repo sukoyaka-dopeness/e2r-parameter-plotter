@@ -31,6 +31,7 @@ import {matrixPageAfter} from './matrix-navigation.js';
 import {adjustAssessmentByKeyboard, assessmentKeyboardStep, keyboardEditUnavailable, quadrantArrowAdjustment, quadrantKeyboardHelp, quadrantKeyboardValues, quadrantPointSelectionFromClick, radarKeyboardStepStatus, rejectedKeyboardAdjustment} from './assessment-keyboard.js';
 import {captureDocumentScroll, restoreDocumentScroll, revealInDocument} from './viewport-scroll.js';
 import {placePlotContextMenuAfterTrigger, closePlotContextMenu} from './plot-context-menu-focus.js';
+import {parseDatasetHandoffFragment, fetchDatasetHandoff, parseHandoffJson, removeDatasetUrlFromHash} from './dataset-handoff.js';
 const localeRequest=requestedLocale(window.location.hash);
 const savedLocale=readSavedLocale(window.localStorage);
 const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
@@ -39,6 +40,11 @@ let localeConflict=initialLocale.conflict;
 let s = load();
 let surface = 'home';
 let homeError = '';
+let handoffStatus = '';
+let handoffError = '';
+let startupHandoffStarted = false;
+let startupHandoffCancelled = false;
+let startupHandoffController = null;
 let datasetTitleDraft = null;
 let creditsOpen = false;
 let pagerDirection = 0;
@@ -61,6 +67,7 @@ let editEntityId = null;
 let drawerOpener = null;
 let drawerOpenerLocation = 'header';
 let replacement = null;
+const startupHandoff=parseDatasetHandoffFragment(window.location.hash,{allowLocalhost:['localhost','127.0.0.1','[::1]'].includes(window.location.hostname.toLowerCase())&&window.location.protocol==='http:'});
 let radarScroll = 0;
 let matrixDragId = null;
 let matrixRowDragId = null;
@@ -472,7 +479,7 @@ function rescaleMarkup(){
 function currentReplacementMarkup(){return replacement?replacementMarkup(replacement):'';}
 function renderHome(){
  const notice=s.persistence.status==='degraded'?s.persistence.message:'';
- root.innerHTML=homeMarkup({canContinue:s.workspaceCreated&&s.persistence.status==='saved',notice,sampleError:homeError})+footerMarkup()+(creditsOpen?creditsMarkup():'')+currentReplacementMarkup();
+ root.innerHTML=homeMarkup({canContinue:s.workspaceCreated&&s.persistence.status==='saved',notice,sampleError:homeError,handoffStatus,handoffError})+footerMarkup()+(creditsOpen?creditsMarkup():'')+currentReplacementMarkup();
  document.title='ParameterPlotter';
  root.className='app-frame home-page';
  root.querySelectorAll('header,main,footer').forEach(element=>element.inert=Boolean(replacement));
@@ -525,7 +532,7 @@ function showFileError(message){if(surface==='home'){homeError=message;fileError
 function downloadJson(filename,value){
  try{const blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=filename;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return true;}catch(error){lifecycleNotice=`Download could not be handed off: ${error?.message||'browser download unavailable'}`;render();return false;}
 }
-function startReplacement(kind,incoming){const homeFocus={ 'new-dataset':'new','sample-dataset':'sample','dataset':'open' };replacement={kind,state:incoming,returnSurface:surface,returnFocus:surface==='home'?homeFocus[kind]:null};render();root.querySelector('[data-cancel-replacement]')?.focus();}
+function startReplacement(kind,incoming){const homeFocus={ 'new-dataset':'new','sample-dataset':'sample','dataset':'open','handoff-dataset':s.workspaceCreated&&s.persistence.status==='saved'?'continue':'open' };replacement={kind,state:incoming,returnSurface:surface,returnFocus:surface==='home'?homeFocus[kind]:null,datasetTitle:incoming.dataset?.extensions?.metadata?.title};render();root.querySelector('[data-cancel-replacement]')?.focus();}
 function cancelReplacement(){const request=replacement;replacement=null;surface=request?.returnSurface||'workspace';render();if(surface==='home'&&request?.returnFocus)root.querySelector(`[data-home-action="${request.returnFocus}"]`)?.focus();else if(surface==='workspace')root.querySelector('.workspace-more-trigger')?.focus();}
 function receiveDataset(kind,dataset){
  const incoming=fresh(readDataset(dataset),{ui:{workspaceCreated:true}});
@@ -534,11 +541,30 @@ function receiveDataset(kind,dataset){
 }
 function activateIncoming(){
  if(!replacement)return;
- const request=replacement;replacement=null;surface='workspace';s=request.state;s.workspaceCreated=true;fileError='';homeError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;datasetTitleDraft=null;s.pendingDraft=false;
+ const request=replacement;replacement=null;startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';handoffError='';if(request.kind!=='handoff-dataset')clearDatasetHandoffFragment();surface='workspace';s=request.state;s.workspaceCreated=true;fileError='';homeError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;datasetTitleDraft=null;s.pendingDraft=false;
  save(s);
  lifecycleNotice=s.persistence.status==='degraded'?'The Dataset was opened in memory, but the browser-local copy was not replaced. It remains unsaved and may be lost on reload or browser close.':'';
  render();
  const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}
+}
+function clearDatasetHandoffFragment(){const next=removeDatasetUrlFromHash(window.location.hash);if(next!==window.location.hash)window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+next);}
+function cancelStartupHandoff(){startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';}
+function showHandoffFailure(message){handoffStatus='';handoffError=message;render();}
+async function startStartupHandoff(){
+ if(startupHandoffStarted||startupHandoffCancelled||localeConflict)return;
+ startupHandoffStarted=true;
+ if(startupHandoff.kind==='none')return;
+ if(startupHandoff.kind==='invalid'){showHandoffFailure('The Dataset handoff link is invalid. Check its datasetUrl and try again.');return;}
+ handoffError='';handoffStatus='Retrieving the linked Dataset…';render();
+ const controller=new AbortController();startupHandoffController=controller;
+ const fetched=await fetchDatasetHandoff(startupHandoff.datasetUrl,{signal:controller.signal,allowLocalhost:['localhost','127.0.0.1','[::1]'].includes(window.location.hostname.toLowerCase())&&window.location.protocol==='http:'});
+ if(controller.signal.aborted||startupHandoffCancelled)return;
+ startupHandoffController=null;
+ if(!fetched.ok){showHandoffFailure('Could not retrieve the Dataset from this handoff link. The current workspace was not replaced.');return;}
+ const parsed=parseHandoffJson(fetched.source);
+ if(!parsed.ok){showHandoffFailure('The Dataset from this handoff link is not valid JSON. The current workspace was not replaced.');return;}
+ try{receiveDataset('handoff-dataset',parsed.dataset);handoffStatus='';handoffError='';}
+ catch{showHandoffFailure('The Dataset from this handoff link could not be opened. The current workspace was not replaced.');}
 }
 function importSelectedFile(file){
  closeWorkspaceMore();
@@ -567,12 +593,12 @@ function clearLifecycleNotice(){
   root.querySelector('.lifecycle-notice')?.remove();
 }
 function closeWorkspaceMore({restoreFocus=false}={}){const menu=root.querySelector('.workspace-more');if(!menu?.open)return;menu.open=false;if(restoreFocus)menu.querySelector('summary')?.focus();}
-function openDatasetFilePicker(){closeWorkspaceMore({restoreFocus:true});root.querySelector('#dataset-file')?.click();}
+function openDatasetFilePicker(){cancelStartupHandoff();closeWorkspaceMore({restoreFocus:true});root.querySelector('#dataset-file')?.click();}
 function captureSuccessorClick(event){
- if(localeConflict&&event.target.matches('[data-locale-backdrop]')){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();return;}
+ if(localeConflict&&event.target.matches('[data-locale-backdrop]')){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}
  const localeTarget=event.target.closest('[data-select-locale],[data-resolve-locale]');
- if(localeTarget?.dataset.selectLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.selectLocale;localeConflict=false;chooseSavedLocale(window.localStorage,locale,window.sessionStorage);window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+localeFragment(window.location.hash,locale));render();return;}
- if(localeTarget?.dataset.resolveLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.resolveLocale==='requested'?localeRequest.locale:savedLocale;localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();return;}
+ if(localeTarget?.dataset.selectLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.selectLocale;localeConflict=false;chooseSavedLocale(window.localStorage,locale,window.sessionStorage);window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+localeFragment(window.location.hash,locale));render();void startStartupHandoff();return;}
+ if(localeTarget?.dataset.resolveLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.resolveLocale==='requested'?localeRequest.locale:savedLocale;localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}
  if(localeConflict){event.preventDefault();event.stopImmediatePropagation();return;}
  if(creditsOpen){
   if(event.target.closest('[data-close-credits]')||event.target.matches('[data-credits-backdrop]')){event.preventDefault();event.stopImmediatePropagation();creditsOpen=false;render();root.querySelector('.credits-button')?.focus();}
@@ -586,7 +612,7 @@ function captureSuccessorClick(event){
   if(replacement){if(target?.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();cancelReplacement();return;}if(target?.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}return;}
  if(surface==='home'){
   const action=target?.dataset.homeAction;
-  if(action){event.preventDefault();event.stopImmediatePropagation();if(action==='continue'){surface='workspace';render();const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}}else if(action==='new')receiveDataset('new-dataset',{version:'1.0',entities:[],events:[],relations:[]});else if(action==='open')openDatasetFilePicker();else if(action==='sample')openAshenCrownSample();}
+  if(action){event.preventDefault();event.stopImmediatePropagation();if(action==='continue'){cancelStartupHandoff();clearDatasetHandoffFragment();surface='workspace';render();const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}}else if(action==='new'){cancelStartupHandoff();receiveDataset('new-dataset',{version:'1.0',entities:[],events:[],relations:[]});}else if(action==='open')openDatasetFilePicker();else if(action==='sample'){cancelStartupHandoff();openAshenCrownSample();}}
   return;
  }
   if(target.closest('[data-go-home]')){event.preventDefault();event.stopImmediatePropagation();surface='home';homeError='';render();root.querySelector('[data-home-action="continue"]')?.focus();return;}
@@ -627,7 +653,7 @@ document.addEventListener('keydown',event=>{
  event.stopImmediatePropagation();
 },true);
 document.addEventListener('keydown',event=>{
- if(localeConflict){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();return;}if(event.key==='Tab'){event.stopImmediatePropagation();trapDialogTab(event,'.locale-conflict-scrim .confirm-dialog');return;}event.stopImmediatePropagation();return;}
+ if(localeConflict){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}if(event.key==='Tab'){event.stopImmediatePropagation();trapDialogTab(event,'.locale-conflict-scrim .confirm-dialog');return;}event.stopImmediatePropagation();return;}
  if(!creditsOpen)return;
  event.stopImmediatePropagation();
  if(event.key==='Escape'){
@@ -710,3 +736,4 @@ render=function(){
  localizeUi(root,locale);
 };
 render();
+if(!localeConflict)void startStartupHandoff();

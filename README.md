@@ -37,6 +37,12 @@ The local successor supports exact Dimension Assessment Candidate `0.1.0` and
 Dimension Descriptions. See the [implementation checkpoint](docs/candidate-0.2.0-parameterplotter-implementation-2026-10-08.md)
 for scope, verification evidence, and Human Browser Acceptance boundaries.
 
+ParameterPlotter also supports the startup-only Dataset Handoff v0
+`datasetUrl` fragment alongside local **More → Open E2R Dataset**. See the
+[Handoff implementation checkpoint](docs/dataset-handoff-v0-implementation-2026-10-09.md)
+for URL safety, locale conflict behavior, replacement protection, and local
+review boundaries.
+
 ## Source relationship
 
 Prototype 2 remains accepted and closed as a behavioral reference and evidence baseline in e2r-spec. The successor source here now consumes the adopted Dimension Assessment Candidate and the local browser distribution of the E2R Validator. The canonical Validator repository remains the Validator source authority; the vendored snapshot is synchronized from the adjacent checkout by `node scripts/sync-validator-vendor.mjs`. The Prototype directory is not production source authority. See the [Prototype 2 closure evidence](https://github.com/sukoyaka-dopeness/e2r-spec/blob/main/research/prototypes/parameterplotter-1/prototype-2-bounded-implementation-result-2026-10-02.md) for its unchanged historical status.
