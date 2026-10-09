@@ -533,3 +533,13 @@ pass. Computer Use failed to initialize with the Windows sandbox helper error,
 so no same-browser geometry measurement or Human visual acceptance is claimed;
 this change remains **HUMAN BROWSER ACCEPTANCE PENDING**. See the [More-menu
 typography correction checkpoint](./cross-app-more-menu-typography-correction-2026-10-09.md).
+
+## Cross-App More-menu Acceptance Closure - 2026-10-09
+
+Human Browser Review subsequently confirmed the three-app More-menu visual
+alignment and reported that the ParameterPlotter ArrowUp/Down navigation
+correction appeared to resolve the remaining issue. The bounded Cross-App
+More-menu presentation and keyboard-parity scope is now
+**HUMAN BROWSER ACCEPTED / PASS / CLOSED**. Earlier Pending checkpoints remain
+historical evidence. See the [acceptance closure](./cross-app-more-menu-acceptance-closure-2026-10-09.md)
+for accepted revisions, evidence boundaries, and unverified coverage.
