@@ -28,7 +28,7 @@ import {revealWithinScrollport} from './drawer-visibility.js';
 import {headerNavigationFocusRequest, restoreHeaderNavigationFocus} from './view-header-focus.js';
 import {matrixPageAfter} from './matrix-navigation.js';
 import {adjustAssessmentByKeyboard, assessmentKeyboardStep, keyboardEditUnavailable, quadrantArrowAdjustment, quadrantKeyboardHelp, quadrantKeyboardValues, radarKeyboardStepStatus, rejectedKeyboardAdjustment} from './assessment-keyboard.js';
-import {captureDocumentScroll, restoreDocumentScroll} from './viewport-scroll.js';
+import {captureDocumentScroll, restoreDocumentScroll, revealInDocument} from './viewport-scroll.js';
 const localeRequest=requestedLocale(window.location.hash);
 const savedLocale=readSavedLocale(window.localStorage);
 const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
@@ -407,7 +407,7 @@ document.addEventListener('keydown',e=>{
  if(next===null){const status=root.querySelector('[data-quadrant-keyboard-status]');if(status)status.textContent=rejectedKeyboardAdjustment(locale,name(id),adjustment.axis,dimension,current);return;}
  if(!setValue(s,id,adjustment.dimensionId,next)){const status=root.querySelector('[data-quadrant-keyboard-status]');if(status)status.textContent=keyboardEditUnavailable(locale,name(id),adjustment.axis);return;}
  const pageScroll=captureDocumentScroll();quadrantKeyboardEntity=id;
- update();root.querySelector(`[data-point="${CSS.escape(id)}"]`)?.focus({preventScroll:true});restoreDocumentScroll(pageScroll);
+ update();const restoredPoint=root.querySelector(`[data-point="${CSS.escape(id)}"]`);restoredPoint?.focus({preventScroll:true});restoreDocumentScroll(pageScroll);if(restoredPoint)revealInDocument(restoredPoint);
 },true);
 
 document.addEventListener('pointerdown',e=>{

@@ -75,7 +75,8 @@ test('Radar and Quadrant key routing ignores modified browser shortcuts and rest
  assert.match(source,/const id=point\.dataset\.point,\[xDimensionId,yDimensionId\]=s\.quadrant,adjustment=quadrantArrowAdjustment\(e\.key,xDimensionId,yDimensionId\)/);
  assert.match(source,/setValue\(s,id,adjustment\.dimensionId,next\)/);
  assert.match(source,/const pageScroll=captureDocumentScroll\(\);quadrantKeyboardEntity=id;/);
- assert.match(source,/root\.querySelector\(`\[data-point="\$\{CSS\.escape\(id\)\}"\]`\)\?\.focus\(\{preventScroll:true\}\);restoreDocumentScroll\(pageScroll\)/);
+ assert.match(source,/restoredPoint\?\.focus\(\{preventScroll:true\}\);restoreDocumentScroll\(pageScroll\);if\(restoredPoint\)revealInDocument\(restoredPoint\)/);
+ assert.ok(source.indexOf('if(next===null){const status=root.querySelector(\'[data-quadrant-keyboard-status]\')')<source.indexOf('if(restoredPoint)revealInDocument(restoredPoint)'));
  assert.match(source,/if\(e\.altKey\|\|e\.ctrlKey\|\|e\.metaKey\|\|e\.shiftKey\)return;/);
  assert.match(source,/e\.preventDefault\(\);e\.stopImmediatePropagation\(\);/);
  assert.doesNotMatch(source,/0\.05/);

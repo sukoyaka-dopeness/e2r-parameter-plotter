@@ -116,3 +116,31 @@ Radar / Quadrant and View Header remains pending. Human review should verify
 repeated Up/Down edits and boundary keys do not move the page, value/Focus
 updates remain visible, the changed range-step guidance is clear in EN/JA,
 and drag/context-menu behavior remains intact.
+
+### Human Browser Review follow-up: reveal an edited point only when needed
+
+Human confirmed that the previous document-scroll preservation removed the
+rapid scrolling during Quadrant keyboard edits, and that the shared range
+steps feel appropriate. Human also found that a point could move beyond the
+visible area while editing and should remain followable.
+
+The Quadrant Plot has `overflow: visible` and is not itself a scroll
+container; the relevant scrollport in the current layout is the document.
+Keyboard edits still save the Dataset, rerender, restore focus with
+`preventScroll`, and restore the prior document offset first. After that, the
+application checks the focused point's rendered bounds. It leaves the page
+unchanged when the point has a 24px viewport margin, and otherwise scrolls the
+document only by the clipped distance needed to provide that margin. It does
+not scroll the whole Plot into view. The browser clamps movement at document
+scroll limits. A value unchanged at a MIN/MAX boundary returns before the
+visibility check, and modified arrow chords remain outside this path.
+
+Regression tests cover an already-visible point, minimal vertical and
+horizontal reveal, repeated reveal without oscillation, and document-edge
+limits. `npm.cmd run check` passed: 31 modules and 121/121 tests. Computer Use
+initialization exited before browser selection (`trusted Node process exited
+unexpectedly; kernel reset`), so this change has no Codex real-browser PASS.
+Radar / Quadrant and View Header Human Browser Acceptance remain pending.
+Human review should check stable in-view editing, point following at the Plot
+edges, repeated movement in both directions, narrow EN/JA layouts, and
+unchanged endpoints.
