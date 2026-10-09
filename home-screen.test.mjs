@@ -6,6 +6,7 @@ import {homeMarkup} from './home-screen.js';
 import {creditsMarkup, footerMarkup} from './application-shell.js';
 import {DIMENSION_ASSESSMENT_ID,entities,fresh,getValue,label,plottedEntities,quadrantOutOfRangeEntities,validateDataset,waitingCandidates} from './model.js';
 import {renderMatrix,renderProfile,renderQuadrant,renderRadar} from './views.js';
+import {ashenCrownSampleUrl} from './sample-datasets.js';
 
 test('Home uses the Human-selected start copy and presents primary Dataset acquisition',()=>{
   const html=homeMarkup();
@@ -64,10 +65,19 @@ test('Home uses the white application surface while the workspace remains distin
   assert.match(css,/@media \(max-width: 1024px\) \{ :root \{ font-size: 16px; \} \}/);
 });
 
-test('bundled Ashen Crown sample includes the canonical Candidate 0.2.0 assessments',async()=>{
+test('Home chooses the bundled Ashen Crown language matching the current UI locale',()=>{
+  assert.equal(ashenCrownSampleUrl('en'),'./samples/ashen-crown.en.e2r.json');
+  assert.equal(ashenCrownSampleUrl('ja'),'./samples/ashen-crown.ja.e2r.json');
+  assert.equal(ashenCrownSampleUrl('unexpected'),'./samples/ashen-crown.en.e2r.json');
+});
+
+test('bundled Ashen Crown EN and JA samples match the canonical Candidate 0.2.0 payload',async()=>{
   const bytes=await readFile(new URL('./samples/ashen-crown.en.e2r.json',import.meta.url));
   const dataset=JSON.parse(bytes.toString('utf8'));
+  const jaBytes=await readFile(new URL('./samples/ashen-crown.ja.e2r.json',import.meta.url));
+  const japanese=JSON.parse(jaBytes.toString('utf8'));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),'044187116106ce27178eb2457df8f0dad3ee68d6bb656800bede68900e306552');
+  assert.equal(createHash('sha256').update(jaBytes).digest('hex'),'745d3d293cc07cd84e076090d8f152deea69c5818f535f2cf9e9cbc51c65ec2f');
   assert.equal(dataset.extensions.metadata.title,'The Ashen Crown');
   assert.equal(dataset.entities.length,10);
   assert.equal(dataset.events.length,12);
@@ -82,6 +92,26 @@ test('bundled Ashen Crown sample includes the canonical Candidate 0.2.0 assessme
   const declarations=dataset.extensions['draft.github.sukoyaka-dopeness.specification'].uses.filter(x=>x.extension===DIMENSION_ASSESSMENT_ID);
   assert.deepEqual(declarations,[{extension:DIMENSION_ASSESSMENT_ID,version:'0.2.0'}]);
   assert.equal(validateDataset(dataset).valid,true);
+  assert.equal(validateDataset(japanese).valid,true);
+  const payloadFor=sample=>sample.extensions[DIMENSION_ASSESSMENT_ID];
+  const enPayload=payloadFor(dataset),jaPayload=payloadFor(japanese);
+  assert.equal(enPayload.specVersion,'0.2.0');
+  assert.equal(jaPayload.specVersion,'0.2.0');
+  assert.equal(enPayload.dimensions.length,7);
+  assert.equal(jaPayload.dimensions.length,7);
+  assert.equal(enPayload.assessments.length,70);
+  assert.equal(jaPayload.assessments.length,70);
+  assert.deepEqual(jaPayload.dimensions.map(({id,min,max,integerOnly})=>({id,min,max,integerOnly})),enPayload.dimensions.map(({id,min,max,integerOnly})=>({id,min,max,integerOnly})));
+  assert.deepEqual(jaPayload.assessments,enPayload.assessments);
+  for(const sample of [dataset,japanese]){
+    const declarations=sample.extensions['draft.github.sukoyaka-dopeness.specification'].uses.filter(x=>x.extension===DIMENSION_ASSESSMENT_ID);
+    assert.deepEqual(declarations,[{extension:DIMENSION_ASSESSMENT_ID,version:'0.2.0'}]);
+  }
+  assert.deepEqual(japanese.entities.map(entity=>entity.id),dataset.entities.map(entity=>entity.id));
+  assert.deepEqual(japanese.events.map(event=>event.id),dataset.events.map(event=>event.id));
+  assert.deepEqual(japanese.relations.map(({id,sourceId,targetId})=>({id,sourceId,targetId})),dataset.relations.map(({id,sourceId,targetId})=>({id,sourceId,targetId})));
+  assert.equal(japanese.extensions.metadata.datasetId,'ashen-crown-ja-v1');
+  assert.equal(dataset.extensions.metadata.datasetId,'ashen-crown-en-v1');
 });
 
 test('bundled Ashen Crown Dimensions and Assessments render in all four views',async()=>{
@@ -133,7 +163,7 @@ test('bundled Ashen Crown Dimensions and Assessments render in all four views',a
 test('Home entry uses native Dataset file acquisition and a bundled sample path',async()=>{
   const source=await readFile(new URL('./main.js',import.meta.url),'utf8');
   assert.match(source,/let surface = 'home'/);
-  assert.match(source,/fetch\('\.\/samples\/ashen-crown\.en\.e2r\.json'\)/);
+  assert.match(source,/fetch\(ashenCrownSampleUrl\(locale\)\)/);
   assert.match(source,/data-home-action="\$\{request\.returnFocus\}"/);
   assert.match(source,/data-go-home/);
   assert.match(source,/else if\(action==='open'\)openDatasetFilePicker\(\)/);

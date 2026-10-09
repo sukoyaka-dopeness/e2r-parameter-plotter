@@ -1,0 +1,1027 @@
+{
+  "version": "1.0",
+  "entities": [
+    {
+      "id": "elara",
+      "name": "エララ・ヴェイン",
+      "description": "王女であり、望まぬ摂政。"
+    },
+    {
+      "id": "garrick",
+      "name": "ガリック・ソーン",
+      "description": "王国衛兵隊長。"
+    },
+    {
+      "id": "selene",
+      "name": "セレネ・アークライト",
+      "description": "封印された地下庫を研究する宮廷魔術師。"
+    },
+    {
+      "id": "rowan",
+      "name": "ローワン・ヴェイル",
+      "description": "密輸人で情報仲介者。"
+    },
+    {
+      "id": "mira",
+      "name": "ミラ・フェン",
+      "description": "誰であっても治療する治癒師。"
+    },
+    {
+      "id": "darius",
+      "name": "ダリウス・ハルデン",
+      "description": "隠された目的を持つ北方領主。"
+    },
+    {
+      "id": "ilyan",
+      "name": "イリヤン・メロウ",
+      "description": "古い聖域を守る高位聖職者。"
+    },
+    {
+      "id": "nyra",
+      "name": "ナイラ・ソル",
+      "description": "脆い和平を求める外国使節。"
+    },
+    {
+      "id": "kael",
+      "name": "カエル・ルーク",
+      "description": "自由旗団の指導者。"
+    },
+    {
+      "id": "vhalgrim",
+      "name": "ヴァルグリム",
+      "description": "シンダー峰の地下に眠る古代竜。"
+    }
+  ],
+  "events": [
+    {
+      "id": "king-death",
+      "name": "国王の死",
+      "description": "先王が突然亡くなる。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 742
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "regency",
+      "name": "エララが摂政となる",
+      "description": "エララが摂政を引き受ける。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 743
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tax-revolt",
+      "name": "北方税反乱",
+      "description": "北方諸侯が王税を拒む。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 744
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "vault-opened",
+      "name": "封印地下庫の開放",
+      "description": "セレネが封印された地下庫を開く。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 745
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "envoy-arrival",
+      "name": "外国使節の到着",
+      "description": "ナイラが和平交渉のため到着する。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 746
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "regent-attack",
+      "name": "摂政暗殺未遂",
+      "description": "エララの命が狙われる。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 747
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "banner-uprising",
+      "name": "自由旗団の蜂起",
+      "description": "カエルの反乱が首都に届く。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 748
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sanctuary-burning",
+      "name": "聖オラ聖域の炎上",
+      "description": "騒乱の中で聖域が焼け落ちる。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 749
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dragon-awakening",
+      "name": "ヴァルグリムの目覚め",
+      "description": "古代竜がシンダー峰の地下で目覚める。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 750
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cinder-pact",
+      "name": "シンダー峰の秘密の盟約",
+      "description": "エララとヴァルグリムが危険な盟約を結ぶ。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 751
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asterfall-siege",
+      "name": "アスターフォール包囲戦",
+      "description": "対立する勢力がアスターフォールで衝突する。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 752
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ashen-concord",
+      "name": "灰冠協定",
+      "description": "諸勢力が新たな秩序に合意する。",
+      "extensions": {
+        "history": {
+          "assertions": [
+            {
+              "id": "time-1",
+              "type": "position",
+              "position": {
+                "year": 755
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "name": "命令する",
+      "sourceId": "elara",
+      "targetId": "garrick"
+    },
+    {
+      "id": "r2",
+      "name": "信頼する",
+      "sourceId": "elara",
+      "targetId": "selene"
+    },
+    {
+      "id": "r3",
+      "name": "助言する",
+      "sourceId": "nyra",
+      "targetId": "elara"
+    },
+    {
+      "id": "r4",
+      "name": "命を救われた",
+      "sourceId": "garrick",
+      "targetId": "mira"
+    },
+    {
+      "id": "r5",
+      "name": "敵対する",
+      "sourceId": "garrick",
+      "targetId": "kael"
+    },
+    {
+      "id": "r6",
+      "name": "対立する",
+      "sourceId": "selene",
+      "targetId": "ilyan"
+    },
+    {
+      "id": "r7",
+      "name": "秘密を渡す",
+      "sourceId": "rowan",
+      "targetId": "nyra"
+    },
+    {
+      "id": "r8",
+      "name": "物資を供給する",
+      "sourceId": "rowan",
+      "targetId": "kael"
+    },
+    {
+      "id": "r9",
+      "name": "治療する",
+      "sourceId": "mira",
+      "targetId": "kael"
+    },
+    {
+      "id": "r10",
+      "name": "密かに資金援助する",
+      "sourceId": "darius",
+      "targetId": "kael"
+    },
+    {
+      "id": "r11",
+      "name": "叔父である",
+      "sourceId": "darius",
+      "targetId": "elara"
+    },
+    {
+      "id": "r12",
+      "name": "守る",
+      "sourceId": "ilyan",
+      "targetId": "mira"
+    },
+    {
+      "id": "r13",
+      "name": "誓約で結ばれる",
+      "sourceId": "vhalgrim",
+      "targetId": "selene"
+    },
+    {
+      "id": "r14",
+      "name": "盟約を結ぶ",
+      "sourceId": "elara",
+      "targetId": "vhalgrim"
+    },
+    {
+      "id": "r15",
+      "name": "反対する",
+      "sourceId": "kael",
+      "targetId": "elara"
+    },
+    {
+      "id": "r16",
+      "name": "疑う",
+      "sourceId": "nyra",
+      "targetId": "darius"
+    },
+    {
+      "id": "r17",
+      "name": "脅迫する",
+      "sourceId": "darius",
+      "targetId": "rowan"
+    },
+    {
+      "id": "e1",
+      "sourceId": "king-death",
+      "targetId": "elara"
+    },
+    {
+      "id": "e2",
+      "sourceId": "regency",
+      "targetId": "elara"
+    },
+    {
+      "id": "e3",
+      "sourceId": "tax-revolt",
+      "targetId": "darius"
+    },
+    {
+      "id": "e4",
+      "sourceId": "vault-opened",
+      "targetId": "selene"
+    },
+    {
+      "id": "e5",
+      "sourceId": "envoy-arrival",
+      "targetId": "nyra"
+    },
+    {
+      "id": "e6",
+      "sourceId": "regent-attack",
+      "targetId": "elara"
+    },
+    {
+      "id": "e7",
+      "sourceId": "banner-uprising",
+      "targetId": "kael"
+    },
+    {
+      "id": "e8",
+      "sourceId": "sanctuary-burning",
+      "targetId": "ilyan"
+    },
+    {
+      "id": "e9",
+      "sourceId": "dragon-awakening",
+      "targetId": "vhalgrim"
+    },
+    {
+      "id": "e10",
+      "sourceId": "cinder-pact",
+      "targetId": "elara"
+    },
+    {
+      "id": "e11",
+      "sourceId": "cinder-pact",
+      "targetId": "vhalgrim"
+    },
+    {
+      "id": "e12",
+      "sourceId": "asterfall-siege",
+      "targetId": "kael"
+    },
+    {
+      "id": "e13",
+      "sourceId": "asterfall-siege",
+      "targetId": "elara"
+    },
+    {
+      "id": "e14",
+      "sourceId": "ashen-concord",
+      "targetId": "elara"
+    },
+    {
+      "id": "e15",
+      "sourceId": "ashen-concord",
+      "targetId": "kael"
+    },
+    {
+      "id": "p1",
+      "sourceId": "king-death",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p2",
+      "sourceId": "regency",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p3",
+      "sourceId": "regency",
+      "targetId": "darius"
+    },
+    {
+      "id": "p4",
+      "sourceId": "tax-revolt",
+      "targetId": "kael"
+    },
+    {
+      "id": "p5",
+      "sourceId": "tax-revolt",
+      "targetId": "rowan"
+    },
+    {
+      "id": "p6",
+      "sourceId": "vault-opened",
+      "targetId": "ilyan"
+    },
+    {
+      "id": "p7",
+      "sourceId": "vault-opened",
+      "targetId": "elara"
+    },
+    {
+      "id": "p8",
+      "sourceId": "envoy-arrival",
+      "targetId": "elara"
+    },
+    {
+      "id": "p9",
+      "sourceId": "envoy-arrival",
+      "targetId": "rowan"
+    },
+    {
+      "id": "p10",
+      "sourceId": "regent-attack",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p11",
+      "sourceId": "regent-attack",
+      "targetId": "mira"
+    },
+    {
+      "id": "p12",
+      "sourceId": "regent-attack",
+      "targetId": "rowan"
+    },
+    {
+      "id": "p13",
+      "sourceId": "banner-uprising",
+      "targetId": "rowan"
+    },
+    {
+      "id": "p14",
+      "sourceId": "banner-uprising",
+      "targetId": "darius"
+    },
+    {
+      "id": "p15",
+      "sourceId": "banner-uprising",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p16",
+      "sourceId": "sanctuary-burning",
+      "targetId": "mira"
+    },
+    {
+      "id": "p17",
+      "sourceId": "sanctuary-burning",
+      "targetId": "kael"
+    },
+    {
+      "id": "p18",
+      "sourceId": "dragon-awakening",
+      "targetId": "selene"
+    },
+    {
+      "id": "p19",
+      "sourceId": "dragon-awakening",
+      "targetId": "ilyan"
+    },
+    {
+      "id": "p20",
+      "sourceId": "cinder-pact",
+      "targetId": "selene"
+    },
+    {
+      "id": "p21",
+      "sourceId": "asterfall-siege",
+      "targetId": "garrick"
+    },
+    {
+      "id": "p22",
+      "sourceId": "asterfall-siege",
+      "targetId": "mira"
+    },
+    {
+      "id": "p23",
+      "sourceId": "asterfall-siege",
+      "targetId": "nyra"
+    },
+    {
+      "id": "p24",
+      "sourceId": "ashen-concord",
+      "targetId": "nyra"
+    },
+    {
+      "id": "p25",
+      "sourceId": "ashen-concord",
+      "targetId": "ilyan"
+    }
+  ],
+  "extensions": {
+    "metadata": {
+      "datasetId": "ashen-crown-ja-v1",
+      "title": "灰冠の王国"
+    },
+    "draft.github.sukoyaka-dopeness.dimension-assessment": {
+      "specVersion": "0.2.0",
+      "dimensions": [
+        {
+          "id": "ashen.command",
+          "name": "指揮権限",
+          "min": 0,
+          "max": 6,
+          "integerOnly": true,
+          "lowLabel": "指揮権限なし",
+          "highLabel": "王国規模の指揮権限",
+          "description": "このDatasetに描かれた物語全体を通じて、人々や組織を指揮する権限を評価します。0は尺度上の最低値で、指揮権限がない状態、6は王国の行方を左右する規模の指揮権限を表します。"
+        },
+        {
+          "id": "ashen.combat",
+          "name": "戦闘能力",
+          "min": 0,
+          "max": 10,
+          "integerOnly": true,
+          "lowLabel": "戦闘能力なし",
+          "highLabel": "卓越した戦闘能力",
+          "description": "このDatasetに描かれた物語全体を通じて、直接戦闘を行う能力を評価します。0は尺度上の最低値で、戦闘能力がない状態、10は直接対決で卓越した力を発揮する状態を表します。"
+        },
+        {
+          "id": "ashen.information",
+          "name": "情報活用力",
+          "min": 0,
+          "max": 8,
+          "integerOnly": true,
+          "lowLabel": "情報活用力なし",
+          "highLabel": "王国規模の事態を動かす情報活用力",
+          "description": "このDatasetに描かれた物語全体を通じて、重要な情報を活用し、事態に影響を与える力を評価します。0は尺度上の最低値で、情報による影響力がない状態、8は王国規模の事態を動かせる状態を表します。"
+        },
+        {
+          "id": "ashen.arcane",
+          "name": "魔術的な力",
+          "min": 0,
+          "max": 12,
+          "integerOnly": true,
+          "lowLabel": "魔術的な力なし",
+          "highLabel": "王国の運命を変える魔術的な力",
+          "description": "このDatasetに描かれた物語全体を通じて、超常的・魔術的な力を評価します。0は尺度上の最低値で、その力を持たない状態、12は王国の運命を変え得る力を表します。"
+        },
+        {
+          "id": "ashen.healing",
+          "name": "治療能力",
+          "min": 0,
+          "max": 6,
+          "integerOnly": true,
+          "lowLabel": "治療の技術なし",
+          "highLabel": "卓越した治療能力",
+          "description": "このDatasetに描かれた物語全体を通じて、負傷や病を治療する技術を評価します。0は尺度上の最低値で、治療の技術がない状態、6は卓越した治療能力を表します。"
+        },
+        {
+          "id": "ashen.diplomacy",
+          "name": "交渉力",
+          "min": 0,
+          "max": 5,
+          "integerOnly": true,
+          "lowLabel": "交渉が不得手",
+          "highLabel": "卓越した交渉力",
+          "description": "このDatasetに描かれた物語全体を通じて、交渉や駆け引きの能力を評価します。和平に用いるか、政治的策略や分裂に用いるかは評価しません。0は尺度上の最低値、5は卓越した交渉能力を表します。"
+        },
+        {
+          "id": "ashen.concord",
+          "name": "和議への貢献",
+          "min": -4,
+          "max": 6,
+          "integerOnly": true,
+          "lowLabel": "分裂を深める",
+          "highLabel": "長く続く和議を築く",
+          "description": "このDatasetに描かれた物語全体を通じて、和解や共同体のまとまりに与える総合的な影響を評価します。負の値は分裂を深め、0は中立的な総合影響、正の値は長く続く和議への貢献を表します。"
+        }
+      ],
+      "assessments": [
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.command",
+          "value": 6
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.combat",
+          "value": 3
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.information",
+          "value": 6
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.diplomacy",
+          "value": 4
+        },
+        {
+          "entityId": "elara",
+          "dimensionId": "ashen.concord",
+          "value": 6
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.command",
+          "value": 5
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.combat",
+          "value": 9
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.information",
+          "value": 3
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.healing",
+          "value": 1
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.diplomacy",
+          "value": 2
+        },
+        {
+          "entityId": "garrick",
+          "dimensionId": "ashen.concord",
+          "value": 2
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.command",
+          "value": 2
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.combat",
+          "value": 3
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.information",
+          "value": 7
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.arcane",
+          "value": 8
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.healing",
+          "value": 2
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.diplomacy",
+          "value": 3
+        },
+        {
+          "entityId": "selene",
+          "dimensionId": "ashen.concord",
+          "value": 2
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.command",
+          "value": 1
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.combat",
+          "value": 5
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.information",
+          "value": 8
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.diplomacy",
+          "value": 4
+        },
+        {
+          "entityId": "rowan",
+          "dimensionId": "ashen.concord",
+          "value": 0
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.command",
+          "value": 0
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.combat",
+          "value": 1
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.information",
+          "value": 2
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.healing",
+          "value": 6
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.diplomacy",
+          "value": 3
+        },
+        {
+          "entityId": "mira",
+          "dimensionId": "ashen.concord",
+          "value": 3
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.command",
+          "value": 5
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.combat",
+          "value": 4
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.information",
+          "value": 7
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.diplomacy",
+          "value": 5
+        },
+        {
+          "entityId": "darius",
+          "dimensionId": "ashen.concord",
+          "value": -4
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.command",
+          "value": 4
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.combat",
+          "value": 3
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.information",
+          "value": 5
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.healing",
+          "value": 4
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.diplomacy",
+          "value": 4
+        },
+        {
+          "entityId": "ilyan",
+          "dimensionId": "ashen.concord",
+          "value": 5
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.command",
+          "value": 3
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.combat",
+          "value": 3
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.information",
+          "value": 7
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.diplomacy",
+          "value": 5
+        },
+        {
+          "entityId": "nyra",
+          "dimensionId": "ashen.concord",
+          "value": 6
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.command",
+          "value": 6
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.combat",
+          "value": 8
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.information",
+          "value": 5
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.arcane",
+          "value": 0
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.diplomacy",
+          "value": 3
+        },
+        {
+          "entityId": "kael",
+          "dimensionId": "ashen.concord",
+          "value": 1
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.command",
+          "value": 1
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.combat",
+          "value": 10
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.information",
+          "value": 4
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.arcane",
+          "value": 12
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.healing",
+          "value": 0
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.diplomacy",
+          "value": 2
+        },
+        {
+          "entityId": "vhalgrim",
+          "dimensionId": "ashen.concord",
+          "value": 2
+        }
+      ]
+    },
+    "draft.github.sukoyaka-dopeness.specification": {
+      "specVersion": "0.1.0",
+      "uses": [
+        {
+          "extension": "metadata",
+          "version": "1.0.0"
+        },
+        {
+          "extension": "history",
+          "version": "2.0.0"
+        },
+        {
+          "extension": "draft.github.sukoyaka-dopeness.dimension-assessment",
+          "version": "0.2.0"
+        }
+      ]
+    }
+  }
+}

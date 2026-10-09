@@ -20,6 +20,7 @@ import {formAttributeId, rescaleActionFor} from './successor-event-wiring.js';
 import {workspaceActionsMarkup} from './workspace-actions-menu.js';
 import {focusWorkspaceMoreOnOpen, handleWorkspaceMoreKeydown} from './workspace-more-keyboard.js';
 import {homeMarkup} from './home-screen.js';
+import {ashenCrownSampleUrl} from './sample-datasets.js';
 import {footerMarkup, creditsMarkup} from './application-shell.js';
 import {requestedLocale, readSavedLocale, readTemporaryLocale, resolveLocale, chooseTemporaryLocale, chooseSavedLocale, localeFragment} from './locale-preference.js';
 import {localeControlMarkup, localeConflictMarkup} from './locale-shell.js';
@@ -573,7 +574,7 @@ function importSelectedFile(file){
 }
 async function openAshenCrownSample(){
  homeError='';
- try{const response=await fetch('./samples/ashen-crown.en.e2r.json');if(!response.ok)throw Error(`The sample Dataset could not be loaded (${response.status}).`);receiveDataset('sample-dataset',await response.json());}
+ try{const response=await fetch(ashenCrownSampleUrl(locale));if(!response.ok)throw Error(`The sample Dataset could not be loaded (${response.status}).`);receiveDataset('sample-dataset',await response.json());}
  catch(error){homeError=error?.message||'The sample Dataset could not be opened.';render();}
 }
 function exportCurrentDataset(){
