@@ -152,7 +152,7 @@ phrases.push(
   ['This integer-only range has no valid integer candidate.','整数のみの範囲内に有効な整数がありません。']
 );
 
-const protectedContent = '.dataset-title,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-description,.dimension-card .card-head strong,.point-label,.plot-item,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.credits-metadata a';
+const protectedContent = '.dataset-title,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-description,.dimension-card .card-head strong,.point-label,.plot-item,.quadrant-keyboard-help,.quadrant-keyboard-status,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.credits-metadata a';
 ja.set('Dataset title','Datasetタイトル');
 ja.set('Apply','適用');
 ja.set('Workspace actions','作業操作');

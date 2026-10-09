@@ -479,3 +479,8 @@ context-menu focus outline is now inset to avoid overlap with neighboring
 items while remaining visible. Automated checks pass; Computer Use could not
 initialize and Human Browser Acceptance remains pending. See the [Quadrant
 lightweight-information checkpoint](./quadrant-lightweight-info-and-context-focus-2026-10-09.md).
+
+
+## Radar / Quadrant keyboard Assessment editing - 2026-10-09
+
+Radar and Quadrant now share Dimension-local keyboard adjustment rules: integer-only values step by 1, other values by the existing 0.05 Radar step, and invalid next values are left unchanged. Quadrant maps horizontal arrows to X and vertical arrows to Y, announces current values, and restores focus to the edited point. Modified arrow chords are not intercepted. Automated checks pass; Computer Use initialization failed before browser interaction. Radar / Quadrant and View Header Human Browser Acceptance remain **PENDING**. See the [keyboard Assessment editing checkpoint](./radar-quadrant-keyboard-assessment-editing-2026-10-09.md). The independent Cross-App More-menu follow-up remains OPEN.

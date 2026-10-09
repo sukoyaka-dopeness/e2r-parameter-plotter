@@ -1,4 +1,3 @@
-import {authoredDecimalPlaces, decimalAdd} from './decimal-presentation.js';
 import {load, save, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates, validateDataset, datasetForWorkspace, exportBaseline, transactDatasetMutation} from './model.js';
 import {renderProfile, renderQuadrant, renderRadar, renderMatrix} from './views.js';
 import {dimensionRange, rangePosition, valueAtRangePosition, quadrantOutOfRangeEntities} from './model.js';
@@ -28,6 +27,7 @@ import {applyDatasetTitle} from './dataset-title.js';
 import {revealWithinScrollport} from './drawer-visibility.js';
 import {headerNavigationFocusRequest, restoreHeaderNavigationFocus} from './view-header-focus.js';
 import {matrixPageAfter} from './matrix-navigation.js';
+import {adjustAssessmentByKeyboard, keyboardEditUnavailable, quadrantArrowAdjustment, quadrantKeyboardHelp, quadrantKeyboardValues, rejectedKeyboardAdjustment} from './assessment-keyboard.js';
 const localeRequest=requestedLocale(window.location.hash);
 const savedLocale=readSavedLocale(window.localStorage);
 const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
@@ -40,6 +40,7 @@ let datasetTitleDraft = null;
 let creditsOpen = false;
 let pagerDirection = 0;
 let radarSelectedDimension = null;
+let quadrantKeyboardEntity = null;
 let closingDrawer = null;
 let closeTimer = null;
 let dimensionQuery = '';
@@ -71,7 +72,7 @@ const name = id => { const list=entities(s),i=list.findIndex(e=>e.id===id); retu
 function options(items, current, first='Choose…') { return `<option value="">${first}</option>`+items.map(x=>`<option value="${esc(x.id)}" ${x.id===current?'selected':''}>${esc(x.name)}</option>`).join(''); }
 function dimensionOptions(current, exclude=[]) { return options(s.dimensions.filter(x=>!exclude.includes(x.id)).map(d=>({...d,name:dimensionDisplayName(s,d)})),current); }
 function entityOptions(current, exclude=[]) { return options(entities(s).filter(x=>!exclude.includes(x.id)).map((x,i)=>({id:x.id,name:x.name||`Entity ${i+1}`})),current); }
-const api={esc,name,options,dimensionOptions,entityOptions,get:(e,d)=>getValue(s,e,d),fmt, state:()=>s,entities:()=>entities(s),plotted:()=>plottedEntities(s),waitingCandidates:()=>waitingCandidates(s),matrixError:()=>matrixError,randomNotice:()=>profileRandomNotice,entityId:(id,surface)=>entityNeedsId(s,entities(s).find(e=>e.id===id),surface)?shortId(id):'',dimensionId:(id,surface)=>dimensionNeedsId(s,s.dimensions.find(d=>d.id===id),surface)?shortId(id):'',dimensionName:id=>dimensionDisplayName(s,s.dimensions.find(d=>d.id===id)),axisName:id=>radarAxisName(s,s.dimensions.find(d=>d.id===id))};
+const api={esc,name,options,dimensionOptions,entityOptions,get:(e,d)=>getValue(s,e,d),fmt, state:()=>s,entities:()=>entities(s),plotted:()=>plottedEntities(s),waitingCandidates:()=>waitingCandidates(s),matrixError:()=>matrixError,randomNotice:()=>profileRandomNotice,quadrantKeyboardHelp:()=>quadrantKeyboardHelp(locale),quadrantKeyboardStatus:()=>{const id=quadrantKeyboardEntity,[x,y]=s.quadrant,xd=s.dimensions.find(d=>d.id===x),yd=s.dimensions.find(d=>d.id===y);return id&&xd&&yd&&plottedEntities(s).some(entity=>entity.id===id)?quadrantKeyboardValues(locale,name(id),xd.name,fmt(getValue(s,id,x),xd),yd.name,fmt(getValue(s,id,y),yd)):'';},entityId:(id,surface)=>entityNeedsId(s,entities(s).find(e=>e.id===id),surface)?shortId(id):'',dimensionId:(id,surface)=>dimensionNeedsId(s,s.dimensions.find(d=>d.id===id),surface)?shortId(id):'',dimensionName:id=>dimensionDisplayName(s,s.dimensions.find(d=>d.id===id)),axisName:id=>radarAxisName(s,s.dimensions.find(d=>d.id===id))};
 function render() {
   Object.assign(api,{quadrantOutOfRange:()=>quadrantOutOfRangeEntities(s),dimension:id=>s.dimensions.find(d=>d.id===id),rangeMidpoint:id=>valueAtRangePosition(s.dimensions.find(d=>d.id===id),0.5)});
   const oldRadarList=root.querySelector('.radar-spoke-list');if(oldRadarList)radarScroll=oldRadarList.scrollTop;
@@ -178,14 +179,9 @@ document.addEventListener('keydown',e=>{
   if(e.target.closest?.('[data-import-trigger]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.stopImmediatePropagation();openDatasetFilePicker();return;}
   if(e.altKey&&['ArrowLeft','ArrowRight'].includes(e.key)&&e.target.matches('[data-matrix-move]')){e.preventDefault();const i=Number(e.target.dataset.matrixMove),j=i+(e.key==='ArrowLeft'?-1:1);if(j>=0&&j<s.matrix.length){[s.matrix[i],s.matrix[j]]=[s.matrix[j],s.matrix[i]];update();root.querySelector(`[data-matrix-move="${j}"]`)?.focus();}return;}
   if(e.key==='Enter'&&e.target.matches('input[type=number][data-value]')){e.preventDefault();commitNumeric(e.target);return;}
-  const vertex=e.target.closest?.('[data-vertex]');
-  if(vertex&&['ArrowUp','ArrowRight','ArrowDown','ArrowLeft'].includes(e.key)){
-    e.preventDefault();const dim=vertex.dataset.vertex,delta=['ArrowUp','ArrowRight'].includes(e.key)?0.05:-0.05;radarSelectedDimension=dim;
-    setValue(s,s.selected,dim,clamp(getValue(s,s.selected,dim)+delta));update();
-    document.querySelector(`[data-vertex="${CSS.escape(dim)}"]`)?.focus();
-  }
 });
 document.addEventListener('focusin',e=>{
+  const point=e.target.closest?.('[data-point]');if(point&&point.dataset.point!==quadrantKeyboardEntity){quadrantKeyboardEntity=null;const status=root.querySelector('[data-quadrant-keyboard-status]');if(status)status.textContent='';}
   const vertex=e.target.closest?.('[data-vertex]');if(vertex){radarSelectedDimension=vertex.dataset.vertex;root.querySelectorAll('.vertex-hit.is-selected').forEach(x=>x.classList.remove('is-selected'));vertex.classList.add('is-selected');const guide=root.querySelector('.radar-chart>.small');if(guide){const name=s.dimensions.find(d=>d.id===radarSelectedDimension)?.name||'vertex';guide.textContent=`${name} selected · Arrow keys adjust Primary by ${s.dimensions.find(d=>d.id===radarSelectedDimension)?.integerOnly===true?1:0.05}. Secondary stays comparison-only.`;localizeUi(guide,locale);}}
   if(confirmation||replacement||!(s.poolOpen||s.dimensionOpen))return;
   const drawer=root.querySelector('.drawer.is-open');
@@ -393,10 +389,24 @@ document.addEventListener('click',e=>{
 },true);
 
 document.addEventListener('keydown',e=>{
- const vertex=e.target.closest?.('[data-vertex]');if(!vertex||!['ArrowUp','ArrowRight','ArrowDown','ArrowLeft'].includes(e.key))return;
- e.preventDefault();e.stopImmediatePropagation();const dim=vertex.dataset.vertex,dimension=s.dimensions.find(d=>d.id===dim),increment=dimension.integerOnly===true?1:0.05,delta=['ArrowUp','ArrowRight'].includes(e.key)?increment:-increment,current=getValue(s,s.selected,dim),range=dimensionBounds(dim);
- if(!setValue(s,s.selected,dim,decimalAdd(current,delta))){const guide=root.querySelector('.radar-chart>.small');if(guide){guide.textContent=`Value unchanged · this Dimension accepts ${dimension.integerOnly===true?'integers from ':''}${fmt(range.min)} to ${fmt(range.max)}. The recorded value remains in session data.`;localizeUi(guide,locale);}return;}
- radarSelectedDimension=dim;update();root.querySelector(`[data-vertex="${CSS.escape(dim)}"]`)?.focus();
+ if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+ const vertex=e.target.closest?.('[data-vertex]');
+ const point=s.view==='Quadrant'?e.target.closest?.('[data-point]'):null;
+ if(!['ArrowUp','ArrowRight','ArrowDown','ArrowLeft'].includes(e.key)||(!vertex&&!point))return;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(vertex){
+  const dim=vertex.dataset.vertex,dimension=s.dimensions.find(d=>d.id===dim),direction=['ArrowUp','ArrowRight'].includes(e.key)?1:-1,current=getValue(s,s.selected,dim),range=dimensionBounds(dim),next=adjustAssessmentByKeyboard(dimension,current,direction);
+  if(next===null){const guide=root.querySelector('.radar-chart>.small');if(guide){guide.textContent=`Value unchanged · this Dimension accepts ${dimension.integerOnly===true?'integers from ':''}${fmt(range.min)} to ${fmt(range.max)}. The recorded value remains in session data.`;localizeUi(guide,locale);}return;}
+  if(!setValue(s,s.selected,dim,next)){const guide=root.querySelector('.radar-chart>.small');if(guide)guide.textContent=keyboardEditUnavailable(locale,name(s.selected),dimension.name);return;}
+  radarSelectedDimension=dim;update();root.querySelector(`[data-vertex="${CSS.escape(dim)}"]`)?.focus();return;
+ }
+ const id=point.dataset.point,[xDimensionId,yDimensionId]=s.quadrant,adjustment=quadrantArrowAdjustment(e.key,xDimensionId,yDimensionId),dimension=s.dimensions.find(d=>d.id===adjustment?.dimensionId);
+ if(!adjustment||!dimension)return;
+ const current=getValue(s,id,adjustment.dimensionId),next=adjustAssessmentByKeyboard(dimension,current,adjustment.direction);
+ if(next===null){const status=root.querySelector('[data-quadrant-keyboard-status]');if(status)status.textContent=rejectedKeyboardAdjustment(locale,name(id),adjustment.axis,dimension,current);return;}
+ if(!setValue(s,id,adjustment.dimensionId,next)){const status=root.querySelector('[data-quadrant-keyboard-status]');if(status)status.textContent=keyboardEditUnavailable(locale,name(id),adjustment.axis);return;}
+ quadrantKeyboardEntity=id;
+ update();root.querySelector(`[data-point="${CSS.escape(id)}"]`)?.focus({preventScroll:true});
 },true);
 
 document.addEventListener('pointerdown',e=>{

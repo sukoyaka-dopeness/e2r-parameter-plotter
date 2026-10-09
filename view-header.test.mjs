@@ -25,6 +25,7 @@ function viewApi(){
   get:(entityId,dimensionId)=>state.values[entityId]?.[dimensionId]??null,
   fmt:value=>String(value),randomNotice:()=>'',plotted:()=>state.plotEntities||[],waitingCandidates:()=>[],
   quadrantOutOfRange:()=>[],matrixError:()=>null,
+  quadrantKeyboardHelp:()=> 'Use arrow keys to edit X and Y values.',quadrantKeyboardStatus:()=>'',
  };
 }
 
@@ -75,7 +76,9 @@ test('Quadrant plotted-point accessible name and title expose selected X/Y value
  api.state().values.e1={d1:0,d2:-4,d3:8};
  api.state().plotEntities=[api.state().dataset.entities[0]];
  const output=renderQuadrant(api);
- assert.match(output,/class="plot-dot" data-point="e1" aria-label="Neil Armstrong: 0, -4" title="Neil Armstrong: 0, -4"/);
+ assert.match(output,/class="plot-dot" data-point="e1" aria-describedby="quadrant-keyboard-help" aria-label="Neil Armstrong: 0, -4" title="Neil Armstrong: 0, -4"/);
+ assert.match(output,/id="quadrant-keyboard-help" class="small quadrant-keyboard-help"/);
+ assert.match(output,/class="small quadrant-keyboard-status" data-quadrant-keyboard-status role="status" aria-live="polite"/);
  assert.doesNotMatch(output,/assessment-popover|data-close-quadrant-assessments/);
 });
 
