@@ -18,6 +18,7 @@ import {candidateAuthoringAvailable, createDatasetEntity, editDatasetEntity, ent
 import {acceptsDimensionValue, authoredValueAtPosition, matrixEntities, reorderMatrixRow} from './model.js';
 import {formAttributeId, rescaleActionFor} from './successor-event-wiring.js';
 import {workspaceActionsMarkup} from './workspace-actions-menu.js';
+import {focusWorkspaceMoreOnOpen, handleWorkspaceMoreKeydown} from './workspace-more-keyboard.js';
 import {homeMarkup} from './home-screen.js';
 import {footerMarkup, creditsMarkup} from './application-shell.js';
 import {requestedLocale, readSavedLocale, readTemporaryLocale, resolveLocale, chooseTemporaryLocale, chooseSavedLocale, localeFragment} from './locale-preference.js';
@@ -591,7 +592,7 @@ function captureSuccessorClick(event){
   if(target.closest('[data-go-home]')){event.preventDefault();event.stopImmediatePropagation();surface='home';homeError='';render();root.querySelector('[data-home-action="continue"]')?.focus();return;}
  if(entityDeleteNotice&&target.closest('[data-close-entity-delete-notice]')){event.preventDefault();event.stopImmediatePropagation();entityDeleteNotice=null;render();return;}
  if(rescaleProposal){const action=rescaleActionFor(target,event.target);if(action==='approve'){event.preventDefault();event.stopImmediatePropagation();const proposal=rescaleProposal;rescaleProposal=null;const result=applyDimensionAndRescale(s,proposal.dimension,proposal.values);if(!result.ok)dimensionError=result.reason;else{s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;s.pendingDraft=false;}update();return;}if(action==='cancel'){event.preventDefault();event.stopImmediatePropagation();rescaleProposal=null;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}return;}
-  if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMore();exportCurrentDataset();return;}
+  if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMore({restoreFocus:true});exportCurrentDataset();return;}
   if(target.closest('[data-import-trigger]')){event.preventDefault();event.stopImmediatePropagation();openDatasetFilePicker();return;}
  if(target.closest('[data-edit-entity]')){event.preventDefault();event.stopImmediatePropagation();const id=target.closest('[data-edit-entity]').dataset.editEntity;entityFormError=null;editEntityId=id;entityMenu=null;s.entityFormOpen=true;pendingEntityDraft={editId:id,name:s.dataset.entities.find(item=>item?.id===id)?.name??'',description:s.dataset.entities.find(item=>item?.id===id)?.description??''};render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
  if(target.closest('[data-delete-entity]')){event.preventDefault();event.stopImmediatePropagation();relationDeletionFeedback(target.closest('[data-delete-entity]').dataset.deleteEntity);return;}
@@ -641,7 +642,8 @@ document.addEventListener('keydown',event=>{
  else if(!event.shiftKey&&(document.activeElement===last||!dialog?.contains(document.activeElement))){event.preventDefault();first.focus();}
 },true);
 document.addEventListener('click',event=>{const menu=root.querySelector('.workspace-more');if(menu?.open&&!menu.contains(event.target))menu.open=false;});
-document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const menu=root.querySelector('.workspace-more');if(menu?.open){event.preventDefault();menu.open=false;menu.querySelector('summary')?.focus();}});
+document.addEventListener('toggle',focusWorkspaceMoreOnOpen,true);
+document.addEventListener('keydown',handleWorkspaceMoreKeydown);
 document.addEventListener('submit',event=>{
  const form=event.target,formId=formAttributeId(form);if(form.classList.contains('dataset-title-editor')){event.preventDefault();event.stopImmediatePropagation();const draft=form.elements.namedItem('dataset-title').value,title=draft.trim();const result=transactDatasetMutation(s,()=>applyDatasetTitle(s.dataset,title));if(result.ok){datasetTitleDraft=null;s.pendingDraft=false;lifecycleNotice='Dataset title applied. E2R JSON Export is a separate step.';update();}else{datasetTitleDraft=draft;lifecycleNotice=result.reason;render();root.querySelector('#dataset-title-input')?.focus();}return;}if(formId==='entity-form'){
    event.preventDefault();event.stopImmediatePropagation();const name=form.elements.namedItem('dataset-entity-name').value,description=form.elements.namedItem('dataset-entity-description').value;
