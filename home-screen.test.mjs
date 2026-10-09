@@ -7,6 +7,7 @@ import {creditsMarkup, footerMarkup} from './application-shell.js';
 import {DIMENSION_ASSESSMENT_ID,entities,fresh,getValue,label,plottedEntities,quadrantOutOfRangeEntities,validateDataset,waitingCandidates} from './model.js';
 import {renderMatrix,renderProfile,renderQuadrant,renderRadar} from './views.js';
 import {ashenCrownSampleUrl} from './sample-datasets.js';
+import {translateUiText} from './ui-localize.js';
 
 test('Home uses the Human-selected start copy and presents primary Dataset acquisition',()=>{
   const html=homeMarkup();
@@ -69,6 +70,28 @@ test('Home chooses the bundled Ashen Crown language matching the current UI loca
   assert.equal(ashenCrownSampleUrl('en'),'./samples/ashen-crown.en.e2r.json');
   assert.equal(ashenCrownSampleUrl('ja'),'./samples/ashen-crown.ja.e2r.json');
   assert.equal(ashenCrownSampleUrl('unexpected'),'./samples/ashen-crown.en.e2r.json');
+});
+
+test('Ashen Crown Home sample label follows the approved JA product name without changing Dataset content',async()=>{
+  assert.match(homeMarkup(),/Open Sample Dataset · The Ashen Crown/);
+  assert.equal(translateUiText('Open Sample Dataset · The Ashen Crown'),'サンプルデータセットを開く · 灰冠の王国');
+  const japanese=JSON.parse(await readFile(new URL('./samples/ashen-crown.ja.e2r.json',import.meta.url),'utf8'));
+  assert.equal(japanese.extensions.metadata.title,'灰冠の王国');
+});
+
+test('English and Japanese task guides exist and distinguish recorded zero from unassessed data',async()=>{
+  const [english,japanese]=await Promise.all([
+    readFile(new URL('./docs/user-guide-en.html',import.meta.url),'utf8'),
+    readFile(new URL('./docs/user-guide-ja.html',import.meta.url),'utf8'),
+  ]);
+  assert.match(english,/<html lang="en">/);
+  assert.match(japanese,/<html lang="ja">/);
+  assert.match(english,/A recorded <strong>0<\/strong> is different from no Assessment/);
+  assert.match(japanese,/明示的な<strong>0<\/strong>と、評価が未記録であることは別/);
+  assert.match(english,/user-guide-ja\.html/);
+  assert.match(japanese,/user-guide-en\.html/);
+  assert.match(english,/<a href="\.\.\/">ParameterPlotter<\/a>/);
+  assert.match(japanese,/<a href="\.\.\/">ParameterPlotter<\/a>/);
 });
 
 test('bundled Ashen Crown EN and JA samples match the canonical Candidate 0.2.0 payload',async()=>{

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ParameterPlotterでE2Rデータセットのエンティティを評価軸と値で比較する方法を説明します。">
+  <title>ParameterPlotter ユーザーガイド（日本語）</title>
+  <style>
+    :root{color-scheme:light;--ink:#24222b;--muted:#625f6c;--line:#dedbe4;--link:#4e3c8f;--paper:#fff;--wash:#f7f6fa;font:17px/1.75 system-ui,-apple-system,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink)}main{max-width:900px;margin:0 auto;padding:clamp(1.25rem,4vw,3rem);background:var(--paper);min-height:100vh}a{color:var(--link);text-underline-offset:.16em}h1,h2,h3{line-height:1.35}h1{font-size:clamp(2rem,5vw,3rem);margin:.2em 0}h2{margin-top:2em;padding-bottom:.35em;border-bottom:1px solid var(--line)}h3{margin-top:1.4em}p,li{max-width:75ch}.eyebrow{color:var(--muted);font-size:.9rem}.callout{padding:1rem 1.2rem;border-left:4px solid var(--link);background:var(--wash)}nav{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2rem}.key{font-weight:650}footer{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
+  </style>
+</head>
+<body>
+<main>
+  <nav aria-label="ガイドの言語"><a href="user-guide-en.html">English</a><a href="user-guide-ja.html" aria-current="page">日本語</a><a href="../">ParameterPlotter</a></nav>
+  <p class="eyebrow">E2Rアプリケーションガイド</p>
+  <h1>評価軸でエンティティを比較する</h1>
+  <p>ParameterPlotterでは、E2Rデータセットに含まれるエンティティの数値評価を記録し、比較できます。同じデータセットをほかのE2Rアプリケーションで利用すると、異なる視点から内容を扱えます。</p>
+  <p class="callout">Assessment（評価値）はデータセットに記録する値です。ParameterPlotterがエンティティ名やつながりから評価を推測することはありません。明示的な<strong>0</strong>と、評価が未記録であることは別の状態です。</p>
+
+  <h2>データセットを開く</h2>
+  <p>ホームで「サンプルデータセットを開く · 灰冠の王国」を選ぶと、内蔵サンプルを試せます。サンプルの言語はParameterPlotterのUI言語に対応します。「E2Rデータセットを開く」ではJSONファイルを選択でき、「新しいデータセット」では空の状態から始められます。</p>
+  <p>ブラウザーに作業中のデータがある場合、置き換え前に確認が表示されることがあります。「キャンセル」を選ぶと現在の作業を保持します。Hubに設定された起動リンクからデータセットを取得できますが、取得や応答の検証に失敗した場合、現在のデータセットは置き換わりません。</p>
+
+  <h2>評価軸を用意する</h2>
+  <p>Dimension（評価軸）は、何を比較するか、数値のMIN/MAX、任意の端点ラベルを定義します。Workspaceの評価軸操作から作成・編集できます。任意で単位や、整数のみを許可する設定も指定できます。評価したい問いに合う尺度を選んでください。</p>
+  <p>新しいデータセットでは、最初の評価軸を保存するとDimension Assessment payloadが作成されます。評価軸のDescription（説明）は任意のプレーンテキストで、改行も保持されます。Candidate 0.1.0のデータセットで説明を使うには、表示されるUpgradeを明示的に選びます。IDや既存値は維持され、説明文が自動生成されることはありません。</p>
+  <p>変更後に記録済みの値が無効になる場合、適用前に再計算結果を確認します。既存値が暗黙に丸められたり削除されたりすることはありません。</p>
+
+  <h2>評価値を記録して比較する</h2>
+  <p>エンティティを選び、評価軸ごとに値を入力します。ProfileとMatrixでは数値入力欄を使えます。安全に設定できる場合はProfileの範囲コントロールも利用できます。値を消去すると未評価に戻ります。適切な値がない、または分からない場合は、0で埋めず未評価のままにします。</p>
+  <ul>
+    <li><strong>Profile</strong>では、1つのエンティティについて複数の評価軸の値を確認・編集します。</li>
+    <li><strong>Radar</strong>では、主エンティティの複数評価軸を比較します。比較エンティティは表示上の参照です。主エンティティの値にフォーカスし、矢印キーで調整できます。刻みと範囲は評価軸の設定に従います。</li>
+    <li><strong>Quadrant</strong>では、選択したX/Y評価軸でエンティティを比較します。点をドラッグするか、点にフォーカスして矢印キーを使います。左右キーはX、上下キーはYを調整します。EnterまたはSpaceでエンティティを選択します。選択だけでは値は変わりません。</li>
+    <li><strong>Matrix</strong>では、エンティティと評価軸の値を表形式で確認できます。セルを直接編集し、表示された操作で行・列を並べ替えたり、評価軸のページを移動したりできます。</li>
+  </ul>
+  <p>画面移動や編集操作はキーボードでも利用できます。UIの言語を切り替えても、データセットに書かれた名前、端点ラベル、説明は翻訳・変更されません。</p>
+
+  <h2>作業を保存・共有する</h2>
+  <p>利用できる場合、ParameterPlotterは作業状態を現在のブラウザー内に保存します。これは同じブラウザーで作業を続けるための保存で、持ち運べるデータセットファイルとは別です。「その他」→「E2R JSONを書き出す」を選び、ダウンロードしたファイルを保管してください。</p>
+  <p>画面には、前回の書き出しから変更があるか、ブラウザー内に保存できているかが表示されます。ブラウザー内の保存に失敗した場合、再読み込みやブラウザーを閉じた後に、メモリー上の作業を失う可能性があります。持ち運べるコピーにはE2R JSONを書き出してください。</p>
+  <p>「その他」→「E2Rデータセットを開く」ではローカルファイルを開けます。Hubに設定された起動リンクからもデータセットを取得できます。ParameterPlotterが取得元をホスト・公開するわけではありません。置き換えで作業を失う可能性がある場合は、明示的な確認が表示されます。「キャンセル」で現在の作業を維持できます。</p>
+
+  <h2>サンプルと互換性</h2>
+  <p>内蔵の灰冠の王国サンプルには7つの評価軸と70件の評価値があります。Hubでは取得元とParameterPlotterへの導線が設定されている場合、Lighthouse Restoration ProjectとCedar Observatoryのサンプルも利用できます。未評価のセルは0として扱われません。</p>
+  <p>Dimension Assessmentは現在non-StableのCandidate拡張です。ほかのアプリケーションが拡張データを保持しても、表示・編集に対応していない場合があります。重要な作業を別のツールへ移すときは、E2R JSONを書き出して保管してください。</p>
+  <footer>ParameterPlotter ユーザー向けドキュメント · 日本語</footer>
+</main>
+</body>
+</html>

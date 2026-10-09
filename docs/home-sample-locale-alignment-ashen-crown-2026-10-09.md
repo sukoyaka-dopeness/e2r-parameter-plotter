@@ -9,6 +9,10 @@ already resolved ParameterPlotter UI locale. It does not add locale behavior
 to Dataset Handoff, override a saved language preference, or translate
 Dataset-authored text.
 
+The Japanese action label is localized as
+「サンプルデータセットを開く · 灰冠の王国」 to match the Japanese Dataset
+title. This changes only the UI label; EN/JA sample selection is unchanged.
+
 Both files are byte-for-byte copies of the E2R-SPEC canonical samples from
 commit `25de41d2bd3b502d6e53b7ff775776d4a6e21ddf`:
 
@@ -33,3 +37,5 @@ the exact source digests, compares localized files' Dimension IDs, ranges,
 integer constraints, Assessment tuples, Core IDs, and version declarations,
 and checks the locale-to-file mapping. Human Browser Acceptance remains
 pending for EN/JA Home selection, display, and ordinary acquisition safety.
+The Japanese label correction is covered by an automated assertion; the
+Human Browser Acceptance boundary remains unchanged.

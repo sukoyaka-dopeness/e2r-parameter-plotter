@@ -4,7 +4,7 @@
 const ja = new Map(Object.entries({
   'Get Started':'はじめる','Compare E2R Entities across Dimensions.':'E2Rのエンティティを評価軸で比較します。',
   'Continue Editing':'編集を続ける','New Dataset':'新しいデータセット','Open E2R Dataset':'E2Rデータセットを開く',
-  'Open Sample Dataset · The Ashen Crown':'サンプルデータセットを開く · The Ashen Crown',
+  'Open Sample Dataset · The Ashen Crown':'サンプルデータセットを開く · 灰冠の王国',
   'E2R comparison editor':'E2R比較エディター','Credits':'クレジット','Close':'閉じる',
   'Application: ParameterPlotter':'アプリケーション: ParameterPlotter','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
   'With gratitude to all the AI systems that contributed to this project.':'このプロジェクトに貢献したすべてのAIシステムに感謝します。',
