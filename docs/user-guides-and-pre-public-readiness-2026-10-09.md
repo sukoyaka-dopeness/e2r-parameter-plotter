@@ -5,8 +5,13 @@ Date: 2026-10-09
 ## Local guide implementation
 
 The ParameterPlotter repository now contains task-focused English and Japanese
-guides at [`user-guide-en.html`](./user-guide-en.html) and
-[`user-guide-ja.html`](./user-guide-ja.html). They cover opening a Dataset,
+Markdown guides at [`user-guide-en.md`](./user-guide-en.md) and
+[`user-guide-ja.md`](./user-guide-ja.md). These replace the earlier local HTML
+guide pages so Hub and sibling applications can use the same GitHub Markdown
+presentation. Their planned Hub destinations are the corresponding
+`github.com/.../blob/main/docs/user-guide-{en,ja}.md` pages. The local guide
+commit is not pushed, so those public destinations have not yet been verified.
+The guides cover opening a Dataset,
 authoring Dimensions and Assessments, using Profile/Radar/Quadrant/Matrix,
 distinguishing zero from unassessed values, and keeping a portable JSON export
 separate from browser-local continuity. The Japanese copy follows the accepted
@@ -19,16 +24,18 @@ English remains “Open Sample Dataset · The Ashen Crown.” This is a UI label
 alignment only. It does not alter Dataset content, ownership, saved locale
 priority, or Startup Handoff v0.
 
-The Hub documentation card links to the two guide paths under the configured
-ParameterPlotter application URL. With no app URL configured, it shows a
-localized explanation instead of presenting a fabricated public link. The
-guide files are locally implemented; their public URLs are not yet verified.
+The Hub documentation card now links directly to the EN/JA Markdown files in
+the ParameterPlotter GitHub repository, matching its NarrativeLine and
+LiaisonScape guide links. These documentation links do not depend on the
+ParameterPlotter application URL. The app-launch link remains separately
+conditional on the configured application URL.
 
 ## Readiness audit
 
 | Area | Current evidence and state |
 | --- | --- |
-| ParameterPlotter application URL | The repository has a read-only GitHub Actions check workflow and no deployment workflow. The Hub's `VITE_PARAMETER_PLOTTER_URL` is absent from its Pages deployment workflow, so production app and guide links remain unconfigured. No deployment or public write was attempted. |
+| ParameterPlotter application URL | The repository has a read-only GitHub Actions check workflow and no deployment workflow. The Hub's `VITE_PARAMETER_PLOTTER_URL` is absent from its Pages deployment workflow, so the production app link remains unconfigured. No deployment or public write was attempted. |
+| ParameterPlotter EN/JA guides | Local Markdown sources exist at `docs/user-guide-en.md` and `docs/user-guide-ja.md`; Hub links now target the matching GitHub `blob/main` paths. The files are not pushed, so public availability and post-push link reachability remain pending. |
 | Hub startup handoff | Startup Handoff v0 is implemented locally. The Hub selects the source matching its UI locale and passes `datasetUrl` and the requested `locale` in the startup fragment. The existing Recipient-Preference rule and Dataset Replacement Safety remain in force. |
 | Ashen Crown EN/JA | The local canonical and bundled files are Candidate 0.2.0 with 7 Dimensions and 70 Assessments. Hub local integration uses an explicit loopback fixture because the public E2R-SPEC raw URLs have not been shown to contain this local revision. This checkpoint does not treat public sources as current. |
 | Lighthouse and Cedar | The Hub retains owner-linked EN/JA source URLs and existing acquisition routes. Their bounded ParameterPlotter sample integration has Human acceptance for the recorded review scope. That does not verify every edit/export workflow or every browser. |
@@ -55,10 +62,10 @@ workspace.
   local fixture handoff loaded both language files. Lighthouse and Cedar link
   destinations were inspected in the page; their public source fetches were
   not repeated in this local run.
-- At 390px, Hub and both guide pages had no horizontal document overflow. At
-  desktop width, the three lower sample cards shared a top alignment. The Hub
-  documentation card exposed both guide links when the local ParameterPlotter
-  URL was configured; the links resolved to the local EN/JA pages.
+- At 390px, Hub and both earlier HTML guide pages had no horizontal document
+  overflow. At desktop width, the three lower sample cards shared a top
+  alignment. That browser evidence applies to the prior HTML pages, not the
+  current GitHub Markdown rendering.
 - A missing-URL handoff showed its failure message while a saved sample
   workspace remained byte-for-byte unchanged in browser storage.
 - In a disposable profile, an unexported numeric edit was present in the
@@ -88,8 +95,10 @@ Dataset revisions.
 4. A separately approved deployment and configuration decision for the
    ParameterPlotter public URL, Hub `VITE_PARAMETER_PLOTTER_URL`, and the
    Ashen Crown EN/JA owner-published source revisions.
-5. Verify production HTTPS/CORS, guide paths, and exact public Dataset
-   revisions only after deployment is authorized and available.
+5. After the relevant source commits are pushed, verify the EN/JA GitHub
+   Markdown guide links and exact public Dataset revisions at the unchanged
+   owner URLs. After deployment is authorized, verify production HTTPS/CORS
+   and public Handoff behavior.
 
 Human acceptance for earlier bounded UI and sample checkpoints remains scoped
 to those original source revisions and observed behaviors. Automated checks,

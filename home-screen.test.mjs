@@ -79,19 +79,15 @@ test('Ashen Crown Home sample label follows the approved JA product name without
   assert.equal(japanese.extensions.metadata.title,'灰冠の王国');
 });
 
-test('English and Japanese task guides exist and distinguish recorded zero from unassessed data',async()=>{
+test('English and Japanese Markdown guides distinguish recorded zero from unassessed data',async()=>{
   const [english,japanese]=await Promise.all([
-    readFile(new URL('./docs/user-guide-en.html',import.meta.url),'utf8'),
-    readFile(new URL('./docs/user-guide-ja.html',import.meta.url),'utf8'),
+    readFile(new URL('./docs/user-guide-en.md',import.meta.url),'utf8'),
+    readFile(new URL('./docs/user-guide-ja.md',import.meta.url),'utf8'),
   ]);
-  assert.match(english,/<html lang="en">/);
-  assert.match(japanese,/<html lang="ja">/);
-  assert.match(english,/A recorded <strong>0<\/strong> is different from no Assessment/);
-  assert.match(japanese,/明示的な<strong>0<\/strong>と、評価が未記録であることは別/);
-  assert.match(english,/user-guide-ja\.html/);
-  assert.match(japanese,/user-guide-en\.html/);
-  assert.match(english,/<a href="\.\.\/">ParameterPlotter<\/a>/);
-  assert.match(japanese,/<a href="\.\.\/">ParameterPlotter<\/a>/);
+  assert.match(english,/A recorded \*\*0\*\* is different from no Assessment/);
+  assert.match(japanese,/明示的な \*\*0\*\* と、評価が未記録であることは別/);
+  assert.match(english,/\[ユーザーガイド\]\(user-guide-ja\.md\)/);
+  assert.match(japanese,/\[User guide\]\(user-guide-en\.md\)/);
 });
 
 test('bundled Ashen Crown EN and JA samples match the canonical Candidate 0.2.0 payload',async()=>{
