@@ -27,7 +27,8 @@ import {applyDatasetTitle} from './dataset-title.js';
 import {revealWithinScrollport} from './drawer-visibility.js';
 import {headerNavigationFocusRequest, restoreHeaderNavigationFocus} from './view-header-focus.js';
 import {matrixPageAfter} from './matrix-navigation.js';
-import {adjustAssessmentByKeyboard, keyboardEditUnavailable, quadrantArrowAdjustment, quadrantKeyboardHelp, quadrantKeyboardValues, rejectedKeyboardAdjustment} from './assessment-keyboard.js';
+import {adjustAssessmentByKeyboard, assessmentKeyboardStep, keyboardEditUnavailable, quadrantArrowAdjustment, quadrantKeyboardHelp, quadrantKeyboardValues, radarKeyboardStepStatus, rejectedKeyboardAdjustment} from './assessment-keyboard.js';
+import {captureDocumentScroll, restoreDocumentScroll} from './viewport-scroll.js';
 const localeRequest=requestedLocale(window.location.hash);
 const savedLocale=readSavedLocale(window.localStorage);
 const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
@@ -182,7 +183,7 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('focusin',e=>{
   const point=e.target.closest?.('[data-point]');if(point&&point.dataset.point!==quadrantKeyboardEntity){quadrantKeyboardEntity=null;const status=root.querySelector('[data-quadrant-keyboard-status]');if(status)status.textContent='';}
-  const vertex=e.target.closest?.('[data-vertex]');if(vertex){radarSelectedDimension=vertex.dataset.vertex;root.querySelectorAll('.vertex-hit.is-selected').forEach(x=>x.classList.remove('is-selected'));vertex.classList.add('is-selected');const guide=root.querySelector('.radar-chart>.small');if(guide){const name=s.dimensions.find(d=>d.id===radarSelectedDimension)?.name||'vertex';guide.textContent=`${name} selected · Arrow keys adjust Primary by ${s.dimensions.find(d=>d.id===radarSelectedDimension)?.integerOnly===true?1:0.05}. Secondary stays comparison-only.`;localizeUi(guide,locale);}}
+  const vertex=e.target.closest?.('[data-vertex]');if(vertex){radarSelectedDimension=vertex.dataset.vertex;root.querySelectorAll('.vertex-hit.is-selected').forEach(x=>x.classList.remove('is-selected'));vertex.classList.add('is-selected');const guide=root.querySelector('.radar-chart>.small');if(guide){const dimension=s.dimensions.find(d=>d.id===radarSelectedDimension);guide.textContent=radarKeyboardStepStatus(locale,dimension?.name||'vertex',fmt(assessmentKeyboardStep(dimension),dimension));}}
   if(confirmation||replacement||!(s.poolOpen||s.dimensionOpen))return;
   const drawer=root.querySelector('.drawer.is-open');
   if(drawer&&!drawer.contains(e.target))focusDrawer(root);
@@ -405,8 +406,8 @@ document.addEventListener('keydown',e=>{
  const current=getValue(s,id,adjustment.dimensionId),next=adjustAssessmentByKeyboard(dimension,current,adjustment.direction);
  if(next===null){const status=root.querySelector('[data-quadrant-keyboard-status]');if(status)status.textContent=rejectedKeyboardAdjustment(locale,name(id),adjustment.axis,dimension,current);return;}
  if(!setValue(s,id,adjustment.dimensionId,next)){const status=root.querySelector('[data-quadrant-keyboard-status]');if(status)status.textContent=keyboardEditUnavailable(locale,name(id),adjustment.axis);return;}
- quadrantKeyboardEntity=id;
- update();root.querySelector(`[data-point="${CSS.escape(id)}"]`)?.focus({preventScroll:true});
+ const pageScroll=captureDocumentScroll();quadrantKeyboardEntity=id;
+ update();root.querySelector(`[data-point="${CSS.escape(id)}"]`)?.focus({preventScroll:true});restoreDocumentScroll(pageScroll);
 },true);
 
 document.addEventListener('pointerdown',e=>{

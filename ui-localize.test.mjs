@@ -56,4 +56,5 @@ test('Candidate 0.2.0 description and upgrade chrome localize while authored des
   assert.equal(translateUiText('Upgrade to 0.2.0'),'0.2.0にアップグレード');
   assert.equal(translateUiText('Upgrade Dimension Assessment?'),'Dimension Assessmentをアップグレードしますか？');
   assert.equal(translateUiText('The Ashen Crown measures arcane power.'),'The Ashen Crown measures arcane power.');
+  assert.equal(translateUiText('Select a Primary vertex on the chart, then use Arrow keys to edit the recorded value. Each press moves about 10% of that Dimension range (integer steps for integer-only Dimensions). Positions use each Dimension’s MIN/MAX. Missing values remain unassessed; existing values violating range or integer-only constraints are retained without a chart position.'),'図の主Entityの評価軸を選び、矢印キーで記録値を編集できます。1回の操作で範囲の約10%を移動します（整数のみの評価軸では整数刻み）。位置は各評価軸のMIN/MAXから算出します。未設定値は未評価のままです。範囲または整数制約に反する既存値は保持され、図には配置されません。');
 });

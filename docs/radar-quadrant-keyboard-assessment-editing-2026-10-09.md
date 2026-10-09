@@ -23,6 +23,13 @@ hint. A step that would cross the Dimension's MIN/MAX or violate its
 integer-only constraint is rejected without changing the stored Assessment.
 No existing out-of-range record is repaired or normalized.
 
+This describes the original `e726fba` implementation. Human Browser Review
+later found that 0.05 gave too little movement for wide ranges, and that
+Quadrant edits could move the page while the full view rerendered. The
+follow-up at the end of this document supersedes the original keyboard-step
+policy and records the bounded scroll correction; this historical section is
+retained as evidence of the original implementation.
+
 ## Quadrant keyboard editing
 
 When a plotted point has focus, plain Left/Right adjust its selected X
@@ -62,3 +69,50 @@ layout, read-only behavior, and continued drag/context-menu behavior. No
 screen-reader output was tested. View Header UX acceptance also remains
 pending. Drawer UX remains Accepted / Closed, and the independent Cross-App
 More-menu presentation follow-up remains OPEN.
+
+## Human Browser Review follow-up: scroll and range-derived steps - 2026-10-09
+
+**Status: IMPLEMENTED / AUTOMATED CHECKS PASS / HUMAN BROWSER ACCEPTANCE PENDING**
+
+Human Browser Review confirmed that Quadrant arrow-key editing changed the
+focused point's X/Y Assessment, but the page scrolled vertically during Up/Down
+edits. Source inspection found that the capture-phase handler prevented the
+plain arrow key's browser default, then changed one value, replaced the app
+root through `update()`/`render()`, and restored focus to a newly rendered
+point with `preventScroll`. It did not preserve the document scroll position
+around the full-root replacement. The browser-level contribution of rerender
+layout versus focus restoration could not be isolated in this environment;
+the implementation now preserves the document scrollport around that
+Quadrant update and focus restoration. A handled plain arrow remains
+prevented even when the value is already at a boundary. Modified arrow chords
+continue to pass through to browser behavior.
+
+Radar and Quadrant now share a range-derived keyboard step. Decimal
+Dimensions use one tenth of `(MAX - MIN)`, calculated through the existing
+decimal arithmetic helpers; this does not create a stored precision rule and
+does not use `decimalPlaces` to round values. Integer-only Dimensions narrower
+than 20 use a step of 1. At widths of 20 or more, the tenth-range step is
+rounded to the nearest integer using JavaScript `Math.round` (positive half
+values round upward), with a minimum step of 1. A final step is limited to the
+nearest valid endpoint, using `ceil(MIN)` and `floor(MAX)` for integer-only
+Dimensions. An existing value that is invalid for its Dimension is left
+untouched. The test-policy threshold and rounding choice follow the Human's
+instruction for this trial; no E2R precision or schema contract was added.
+
+The Radar chart's visible instruction now describes the range-proportional
+step rather than the superseded fixed 0.05 step. Its focus status announces
+the actual formatted step for the selected Dimension in EN/JA. Dimension
+names remain Dataset-authored text.
+
+Focused tests cover decimal and integer step examples, the width-20 threshold,
+nearest-integer rounding, fractional integer bounds, endpoint arrival and
+repeated boundary keys, invalid existing values, independent Quadrant axes,
+scroll capture/restoration, and modified-key routing. `npm.cmd run check`
+passed: 31 application modules syntax-checked and 118/118 tests passed.
+Computer Use initialization failed before a browser window could be selected
+(`orchestrator_helper_report_read_failed`, while reading `setup_error.json`),
+so no Codex real-browser result is claimed. Human Browser Acceptance for
+Radar / Quadrant and View Header remains pending. Human review should verify
+repeated Up/Down edits and boundary keys do not move the page, value/Focus
+updates remain visible, the changed range-step guidance is clear in EN/JA,
+and drag/context-menu behavior remains intact.
