@@ -5,6 +5,7 @@ export const DIMENSION_ASSESSMENT_ID='draft.github.sukoyaka-dopeness.dimension-a
 export const DIMENSION_ASSESSMENT_VERSION='0.2.0';
 export const DIMENSION_ASSESSMENT_VERSIONS=Object.freeze(['0.1.0','0.2.0']);
 const KEY = 'e2r-parameter-plotter-local-workspace-v2';
+export const WORKSPACE_STORAGE_KEY = KEY;
 export const uid = () => crypto.randomUUID();
 export const clamp = v => Math.max(-1, Math.min(1, v));
 
@@ -172,6 +173,25 @@ export function save(s){
     s.dataset=dataset;s.validation=validation;s.preserveStoredCopy=false;s.persistence={status:'saved',message:''};
     return true;
   }catch(error){s.dataset=dataset;s.validation=validation;s.persistence={status:'degraded',message:`Browser-local persistence failed. This active workspace is unsaved and may be lost on reload or when the browser closes. ${error?.message||''}`.trim()};return false;}
+}
+export function saveIfCurrent(s, expectedRaw){
+  let current;
+  try { current = localStorage.getItem(KEY); }
+  catch(error){
+    s.persistence={status:'degraded',message:`Browser-local persistence could not be checked safely. This tab did not replace the saved workspace. ${error?.message||''}`.trim()};
+    return {ok:false,reason:s.persistence.message};
+  }
+  if(current!==expectedRaw){
+    s.persistence={status:'degraded',message:'Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep, then reload before continuing.'};
+    return {ok:false,conflict:true,reason:s.persistence.message};
+  }
+  const ok=save(s);
+  if(!ok)return {ok:false,reason:s.persistence.message};
+  try { return {ok:true,raw:localStorage.getItem(KEY)}; }
+  catch(error){
+    s.persistence={status:'degraded',message:`The workspace was written, but its saved revision could not be verified. This tab will stop further writes until it is reloaded. ${error?.message||''}`.trim()};
+    return {ok:false,reason:s.persistence.message};
+  }
 }
 export function load(){
   try{
