@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {adjustAssessmentByKeyboard, assessmentKeyboardStep, quadrantArrowAdjustment, quadrantKeyboardHelp, quadrantKeyboardValues, radarKeyboardStepStatus, rejectedKeyboardAdjustment} from './assessment-keyboard.js';
+import {adjustAssessmentByKeyboard, assessmentKeyboardStep, quadrantArrowAdjustment, quadrantKeyboardHelp, quadrantKeyboardValues, quadrantPointSelectionFromClick, radarKeyboardStepStatus, rejectedKeyboardAdjustment} from './assessment-keyboard.js';
 import {fresh, getValue, setValue} from './model.js';
 
 test('Radar and Quadrant share a tenth-of-range step for decimal Dimensions',()=>{
@@ -44,6 +44,14 @@ test('Quadrant arrow directions target one selected axis and leave the other axi
  assert.deepEqual(quadrantArrowAdjustment('ArrowUp','x','y'),{dimensionId:'y',direction:1,axis:'Y'});
  assert.deepEqual(quadrantArrowAdjustment('ArrowDown','x','y'),{dimensionId:'y',direction:-1,axis:'Y'});
  assert.equal(quadrantArrowAdjustment('Enter','x','y'),null);
+});
+
+test('Quadrant native keyboard activation selects its point while pointer clicks stay on the drag selection path',()=>{
+ const point={dataset:{point:'entity-a'}};
+ const target={closest:selector=>selector==='[data-point]'?point:null};
+ assert.equal(quadrantPointSelectionFromClick({detail:0,target}),'entity-a');
+ assert.equal(quadrantPointSelectionFromClick({detail:1,target}),null);
+ assert.equal(quadrantPointSelectionFromClick({detail:0,target:{closest:()=>null}}),null);
 });
 
 test('a Quadrant axis edit changes only the targeted recorded value and preserves zero and negative peers',()=>{

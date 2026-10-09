@@ -110,34 +110,35 @@
 .workspace-more-panel {
   position: absolute;
   z-index: 30;
-  top: calc(100% + 0.35rem);
+  top: calc(100% + 8px);
   right: 0;
   display: grid;
-  gap: 0.25rem;
+  gap: 2px;
   width: max-content;
-  min-width: 15rem;
+  min-width: 12rem;
   max-width: min(22rem, calc(100vw - 2rem));
-  padding: 0.45rem;
-  border: 1px solid #cbd3df;
-  border-radius: 9px;
+  padding: 4px;
+  border: 1px solid #e5e4e7;
+  border-radius: 6px;
   background: #fff;
-  box-shadow: 0 8px 24px #20233126;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
 }
 .workspace-more-item {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 2.5rem;
-  padding: 0.55rem 0.7rem;
+  min-height: 40px;
+  padding: 8px 12px;
   border: 0;
-  border-radius: 6px;
-  background: #fff;
-  color: #202331;
-  text-align: left;
+  border-radius: 4px;
+  background: transparent;
+  color: #08060d;
+  font: inherit;
+  text-align: start;
   text-decoration: none;
   cursor: pointer;
 }
-.workspace-more-item:hover { background: #eef1fa; }
+.workspace-more-item:hover { background: #f5e9ff; }
 .workspace-more-item:focus-visible,
 .workspace-more-trigger:focus-visible { outline: 3px solid #4b60b1; outline-offset: 2px; }
 @media (max-width: 550px) {

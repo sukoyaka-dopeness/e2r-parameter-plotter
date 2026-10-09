@@ -28,6 +28,12 @@ export function quadrantArrowAdjustment(key, xDimensionId, yDimensionId) {
   return null;
 }
 
+export function quadrantPointSelectionFromClick(event) {
+  if (event?.detail !== 0) return null;
+  const point = event.target?.closest?.('[data-point]');
+  return point?.dataset?.point || null;
+}
+
 export function quadrantKeyboardHelp(locale) {
   return locale === 'ja'
     ? '\u77e2\u5370\u30ad\u30fc\u3067\u70b9\u3092\u79fb\u52d5\u3057\u3001\u5bfe\u5fdc\u3059\u308b\u5024\u3092\u76f4\u63a5\u7de8\u96c6\u3067\u304d\u307e\u3059\u3002\u5de6\u53f3\u306fX\u8ef8\u3001\u4e0a\u4e0b\u306fY\u8ef8\u3067\u3059\u3002\u5024\u306f\u30ad\u30fc\u5165\u529b\u3054\u3068\u306b\u53cd\u6620\u3057\u307e\u3059\u3002'

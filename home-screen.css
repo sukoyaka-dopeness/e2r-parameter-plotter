@@ -122,7 +122,7 @@ body { min-height: 100svh; }
 .workspace-action-bar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin-bottom:16px}
 .workspace-action-bar > .workspace-more{flex:0 0 auto}
 .workspace-action-bar > .workspace-more > .workspace-more-trigger::after{content:none}
-.workspace-action-bar .workspace-more-panel{right:0;left:auto;width:max-content;min-width:15rem;max-width:calc(100vw - 2rem)}
+.workspace-action-bar .workspace-more-panel{right:0;left:auto;width:max-content;min-width:12rem;max-width:calc(100vw - 2rem)}
 .dataset-title-editor{display:block;width:100%;margin-bottom:16px}
 .dataset-title-editor > label{display:block;margin-bottom:6px;color:#202331;font-size:.86rem;font-weight:650}
 .dataset-title-editor-controls{display:flex;align-items:center;gap:8px;width:100%}

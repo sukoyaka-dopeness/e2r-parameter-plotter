@@ -507,3 +507,13 @@ independent Quadrant point Enter/Space operation contract remains **OPEN / HUMAN
 DECISION PENDING**. A read-only comparison of ParameterPlotter, NarrativeLine,
 and LiaisonScape More menus and the bounded visual recommendation are recorded
 in the [Phase 1 acceptance and More-menu audit](./phase-1-human-browser-acceptance-and-more-menu-audit-2026-10-09.md).
+
+## Cross-App More presentation and Quadrant point keyboard activation - 2026-10-09
+
+The ParameterPlotter Workspace More popup now follows NarrativeLine's simple
+text-row presentation while retaining its native disclosure and Open/Export
+actions. Quadrant point Enter/Space now selects the focused Entity and restores
+the same point focus without changing Assessment values or view. Automated
+checks and Human Browser review are recorded in the [implementation result](./cross-app-more-menu-and-quadrant-point-keyboard-implementation-2026-10-09.md);
+Human Browser Acceptance for these changes remains **PENDING**. No View
+switching shortcut was added.
