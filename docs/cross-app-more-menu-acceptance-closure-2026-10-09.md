@@ -73,12 +73,17 @@ closure.
 
 ## Explicit limits and separate statuses
 
-This is not acceptance of screen-reader output, every browser/viewport,
-exhaustive disabled-item permutations, or all possible menu/Tab focus
-destinations. Those remain **not verified / not claimed**; they do not reopen
-the bounded Human-reviewed corrections. No new application-wide acceptance,
-cross-app component contract, release readiness, or publication approval is
-implied.
+The following broader evidence remains **PENDING / NOT VERIFIED** and is
+outside this closure:
+
+- screen-reader output and assistive-technology interaction;
+- every browser and viewport combination;
+- exhaustive disabled-item permutations; and
+- the exact Tab/Shift+Tab destination in every browser and app state.
+
+These limits do not reopen the bounded Human-reviewed corrections. No new
+application-wide acceptance, cross-app component contract, release readiness,
+or publication approval is implied.
 
 Earlier per-repository implementation checkpoints that recorded
 `HUMAN BROWSER ACCEPTANCE PENDING` remain as historical evidence. This later
