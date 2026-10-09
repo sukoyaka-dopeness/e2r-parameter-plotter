@@ -11,7 +11,7 @@ test('Workspace More keeps native disclosure and actions while using text-row pr
   assert.match(menu,/<details class="workspace-more">[\s\S]*<summary[^>]*>More<\/summary>/);
   assert.match(menu,/data-import-trigger[\s\S]*data-successor-export-dataset/);
   assert.match(baseCss,/\.workspace-more-panel\s*\{[^}]*gap:\s*2px;[^}]*padding:\s*4px;/);
-  assert.match(baseCss,/\.workspace-more-item\s*\{[^}]*min-height:\s*40px;[^}]*padding:\s*8px 12px;[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*text-align:\s*start;/);
+  assert.match(baseCss,/\.workspace-more-item\s*\{[^}]*min-height:\s*36px;[^}]*padding:\s*5px 9px;[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*font:\s*inherit;[^}]*font-size:\s*15px;[^}]*line-height:\s*120%;[^}]*text-align:\s*start;/);
   assert.match(shellCss,/\.workspace-action-bar \.workspace-more-panel\{[^}]*min-width:12rem;[^}]*max-width:calc\(100vw - 2rem\)/);
 });
 

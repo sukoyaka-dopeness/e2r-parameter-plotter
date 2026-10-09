@@ -127,13 +127,15 @@
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 40px;
-  padding: 8px 12px;
+  min-height: 36px;
+  padding: 5px 9px;
   border: 0;
   border-radius: 4px;
   background: transparent;
   color: #08060d;
   font: inherit;
+  font-size: 15px;
+  line-height: 120%;
   text-align: start;
   text-decoration: none;
   cursor: pointer;

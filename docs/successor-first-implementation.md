@@ -517,3 +517,19 @@ the same point focus without changing Assessment values or view. Automated
 checks and Human Browser review are recorded in the [implementation result](./cross-app-more-menu-and-quadrant-point-keyboard-implementation-2026-10-09.md);
 Human Browser Acceptance for these changes remains **PENDING**. No View
 switching shortcut was added.
+
+## Cross-App More-menu typography correction - 2026-10-09
+
+Human Browser Review found that the ParameterPlotter and LiaisonScape popup
+rows still looked larger than the NarrativeLine reference. Source comparison
+found that both targets reset row typography with `font: inherit`, leaving
+their 18px desktop root size (or 16px responsive root size) active, while
+NarrativeLine's later ordinary-control rule explicitly resolves More rows to
+15px / 120%. The target rows now use the reference's 15px type, 120% line
+height, 36px minimum row height, and 5px-by-9px padding; the LiaisonScape
+trigger also retains a 15px label at narrow widths. Focus, disclosure,
+keyboard handling, and app-specific actions remain unchanged. Automated checks
+pass. Computer Use failed to initialize with the Windows sandbox helper error,
+so no same-browser geometry measurement or Human visual acceptance is claimed;
+this change remains **HUMAN BROWSER ACCEPTANCE PENDING**. See the [More-menu
+typography correction checkpoint](./cross-app-more-menu-typography-correction-2026-10-09.md).
