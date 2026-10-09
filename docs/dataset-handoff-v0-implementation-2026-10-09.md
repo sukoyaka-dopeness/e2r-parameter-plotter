@@ -4,8 +4,8 @@ Date: 2026-10-09
 
 Status: **IMPLEMENTED / AUTOMATED CHECKS PASS / HUMAN BROWSER ACCEPTANCE PENDING**
 
-Source checkpoint: `7283f2a8c2d17fe20b4975dd6dedb75fb33c12b7` plus this
-uncommitted implementation slice.
+Source status: local implementation committed; Human Browser Acceptance is
+pending and the public application revision is not deployed.
 
 ## Behavior
 
@@ -31,6 +31,8 @@ the Hub's requested `locale`: the existing locale conflict choice is shown
 before any Dataset request begins. Once resolved, startup acquisition proceeds
 once. Dataset-authored language is never translated by this UI preference.
 The existing More → Open E2R Dataset file flow remains available.
+Dataset-authored title text shown in the replacement confirmation is escaped
+and excluded from UI locale translation.
 
 ## Local review
 
@@ -42,3 +44,5 @@ Local HTTP handoffs are deliberately restricted to loopback hosts.
 The feature is not a public deployment. Human Browser Acceptance remains
 pending until the four Hub EN/JA → ParameterPlotter sample paths, replacement
 confirmation/cancel, failure safety, and existing local Open flow are reviewed.
+Codex's Computer Use helper failed during initialization in this checkpoint;
+no Codex-operated browser PASS is claimed.

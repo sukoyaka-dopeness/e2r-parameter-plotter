@@ -548,7 +548,7 @@ function activateIncoming(){
  const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}
 }
 function clearDatasetHandoffFragment(){const next=removeDatasetUrlFromHash(window.location.hash);if(next!==window.location.hash)window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+next);}
-function cancelStartupHandoff(){startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';}
+function cancelStartupHandoff(){startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';handoffError='';}
 function showHandoffFailure(message){handoffStatus='';handoffError=message;render();}
 async function startStartupHandoff(){
  if(startupHandoffStarted||startupHandoffCancelled||localeConflict)return;

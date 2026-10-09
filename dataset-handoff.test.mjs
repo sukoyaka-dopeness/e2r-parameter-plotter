@@ -80,6 +80,7 @@ test('Handoff loading and replacement reuse the existing Home and loss-confirmat
   const replacement=replacementMarkup({kind:'handoff-dataset',datasetTitle:'Cedar Observatory: An Open Night'});
   assert.match(replacement,/Open linked Dataset\?/);
   assert.match(replacement,/Cedar Observatory: An Open Night/);
+  assert.match(replacement,/class="replacement-incoming-dataset"/);
   assert.match(replacement,/data-cancel-replacement/);
   assert.match(replacement,/data-confirm-replacement/);
   const source=await readFile(new URL('./main.js',import.meta.url),'utf8');
