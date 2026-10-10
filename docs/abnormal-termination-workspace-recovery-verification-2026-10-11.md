@@ -1,7 +1,7 @@
 # ParameterPlotter Abnormal-Termination Workspace Recovery Verification
 
 Date: 2026-10-11
-Status: Safe source review, automated verification, and isolated normal-restart browser baseline completed. Abnormal termination is NOT tested; exact isolated Edge process-tree termination is pending explicit Human approval. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
+Status: Source review, automated verification, and one Human-approved isolated Edge browser-process-tree termination test completed. The saved workspace survived restart and coordination recovered; the unsaved Dimension form draft did not survive. Human Browser Acceptance is PENDING. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
 
 ## Authority and existing behavior reviewed
 
@@ -25,25 +25,44 @@ Codex used Microsoft Edge 154.0.4258.62 with a new, isolated headless profile at
 
 With the built-in disposable Ashen Crown Dataset, Codex observed a saved workspace containing 10 Entities, 7 Dimensions, and 70 Assessments. A normal `Page.reload` retained that saved workspace. Codex then sent DevTools `Browser.close` (graceful browser shutdown), relaunched Edge with the same isolated profile, chose Continue Editing, and observed the same counts and one held ParameterPlotter tab lock. Old inactive status markers remained in localStorage, but were not active peers or held locks. This verifies normal reload and graceful shutdown / restart only; it is explicitly NOT abnormal-termination evidence.
 
-After that baseline, Codex opened a new Dimension form and entered `Abnormal Termination Draft - disposable` without saving. The visible pending-edit warning was present. The saved local workspace remained the Ashen Crown sample with 10 / 7 / 70 counts and did not contain the draft Dimension. One ParameterPlotter page was open, with one active tab marker and its Web Lock held. No destructive action has been performed.
+After that baseline, Codex opened a new Dimension form and entered `Abnormal Termination Draft - disposable` without saving. The visible pending-edit warning was present. The saved local workspace remained the Ashen Crown sample with 10 / 7 / 70 counts and did not contain the draft Dimension. One ParameterPlotter page was open, with one active tab marker and its Web Lock held. At this point no destructive action had been performed; the exact proposed test and risk were then presented to the Human for approval.
 
-## Abnormal-termination test authorization gate
+## Approved abnormal-termination test and evidence
 
-No renderer crash, browser crash, forced process termination, abnormal tab exit, or profile deletion has been performed. These actions require the Human's explicit approval for the exact target and operation.
+The Human explicitly approved one force termination of the exact isolated Edge process tree described below. Approval was limited to this one test. It did not authorize terminating any other process, deleting the profile, or testing other crash modes.
 
-Proposed next test, only if approved: force-terminate the isolated Edge browser process tree to model a browser-process abnormal exit, then relaunch the same isolated profile and inspect recovery. This is not authorization to terminate any other Edge process or to test renderer-only crash behavior.
+Immediately before termination, Codex revalidated the root `msedge.exe` PID `16056`, its `--headless=new`, `--remote-debugging-port=9335`, and isolated `--user-data-dir` command-line arguments. CDP port 9335 belonged to PID 16056. The sole page target was `FBD5435C3BFB4A19A630A532F2BEBF46` at `http://127.0.0.1:5312/`. The root's exact descendants, all `msedge.exe` processes whose command lines referenced the isolated profile, were `30616` (Crashpad), `24052` (GPU), `28348` (Network Service), `30716` (Storage Service), `26344` and `4864` (Renderer), and `28616` (Search Indexer). The shell parent PID `34892` was excluded. The target still contained the disposable Ashen Crown workspace (10 Entities / 7 Dimensions / 70 Assessments) and the unsaved draft `Abnormal Termination Draft - disposable`. No other target was open. The fixture server on port 5312 was separately owned by PID 31316 and was not in the termination tree.
 
-At the time this checkpoint was prepared, the launched root process was `msedge.exe` PID `16056`, started by Codex with `--headless=new`, `--remote-debugging-port=9335`, and the isolated `--user-data-dir` shown above. Its current descendant process IDs were `30616` (Crashpad), `24052` (GPU), `28348` (Network Service), `30716` (Storage Service), `26344` and `4864` (renderer processes), and `28616` (Edge Search Indexer). The CDP page target was `FBD5435C3BFB4A19A630A532F2BEBF46`, URL `http://127.0.0.1:5312/`; `/json/list` showed only that page. These PIDs are a point-in-time inventory and must be rechecked immediately before any approved action. If the root PID, profile path, target, process ancestry, or command lines no longer match, stop and obtain renewed approval. Do not terminate the shell parent or any process based only on its `msedge.exe` name.
+Codex ran `taskkill.exe /PID 16056 /T /F`. The command reported termination of the enumerated descendants and root. Follow-up inspection found none of those processes remaining and CDP port 9335 stopped; the fixture server on port 5312 remained listening. This is evidence of an abrupt termination of the isolated browser process tree, followed by a same-profile restart. It does not establish renderer-only crash behavior or native Edge session-restore behavior.
 
-Potential loss is limited to the isolated profile: the unapplied Dimension draft may be lost, and its browser tab/runtime state will end. The last confirmed saved workspace is the disposable Ashen Crown Dataset. No Human browser profile, other E2R app, production setting, or repository data is in this process tree. After approval, stop if another target/tab appears, if any process in the candidate list lacks the isolated profile/ownership relationship, if the saved workspace no longer matches 10 / 7 / 70, or if the test would touch any process outside the enumerated isolated tree. If safe restart or storage inspection cannot be established, do not retry destructive actions; retain the profile and report the failure state.
+After restart, a new isolated Edge root PID `29776` used the same profile and CDP port; one ParameterPlotter page target was open. Home offered Continue Editing. The persisted local workspace still contained the Ashen Crown sample with 10 Entities / 7 Dimensions / 70 Assessments. The unsaved Dimension form and its `Abnormal Termination Draft - disposable` input were gone, and the new session did not show that draft as saved work. Thus the last saved Dataset survived, but arbitrary pending form input was not crash-recovered. This matches the current persistence boundary found in source; it is a recovery limitation, not evidence that the saved Dataset was lost.
+
+On Continue Editing, the workspace opened successfully and a fresh ParameterPlotter tab Web Lock was held. An old localStorage status marker from the crashed tab remained marked active but had no corresponding held lock, so it was not treated as a live peer and did not block recovery. Codex then applied the disposable title `After Abnormal Restart - disposable`; the save succeeded with the Dataset counts intact, a fresh lock remained held, and the stale crashed-tab marker was cleaned during the write. This demonstrates recovery and a subsequent write after this tested browser-process termination. It did not exercise an old live tab attempting a stale write concurrently.
+
+The disposable profile was retained after the test. No Human browser profile, other application process, server process, production setting, or repository data was terminated or modified by the abnormal-exit action.
 
 ## Evidence classification and acceptance boundary
 
 - Automated Test PASS: modeled tests and application checks listed above; not proof of process-crash lifecycle.
-- Codex Browser Verified: disposable Dataset survived normal reload and graceful browser close/restart; pending form was visible and absent from saved Dataset before any crash test.
-- Abnormal termination: NOT TESTED pending explicit Human approval.
+- Codex Browser Verified (normal lifecycle): disposable Dataset survived reload and graceful browser close/restart; the tab lock was reacquired.
+- Codex Browser Verified (one approved abnormal process-tree termination): saved Ashen Crown workspace survived; restart registered a fresh lock; the crashed tab's stale marker did not block; a later save succeeded and cleaned that marker.
+- Codex Browser Verified limitation: the unsaved Dimension draft did not survive abnormal termination. It was not present in the saved Dataset and was not represented as saved after restart. This checkpoint does not establish crash recovery for pending forms.
 - Human Browser Acceptance for this abnormal-termination checkpoint: PENDING.
 
 Previously accepted Quadrant Tests 23-27 and Human BFCache Tests 28-A-K / 29-A-M remain unchanged. Test 29's direct `pagehide.persisted=true` / `pageshow.persisted=true` evidence proves one BFCache cycle only, not crash recovery.
 
-Still pending after any bounded abnormal-termination test: Human acceptance; crash/recovery behavior not directly exercised by Human; BFCache Export / Reload recovery actions; all-form cross-tab coverage; ParameterPlotter × NarrativeLine BFCache operation; production GitHub Pages same-origin and HTTPS/CORS Handoff; and full Cross-Context Workspace Safety acceptance. PUBLIC RELEASE NO-GO remains in force.
+Still pending: Human Browser Acceptance of the abnormal-termination findings; all-form cross-tab coverage; BFCache operation between ParameterPlotter and NarrativeLine; production GitHub Pages same-origin and HTTPS/CORS Handoff; and full Cross-Context Workspace Safety acceptance. Stale-writer Export / Reload was tested separately; see `docs/stale-writer-export-reload-recovery-verification-2026-10-11.md`. This single crash test does not cover renderer-only crash, another live tab during termination, or native browser session restore. PUBLIC RELEASE NO-GO remains in force.
+
+## Human decision: ParameterPlotter crash recovery scope
+
+The Human adopted the following ParameterPlotter-specific policy on 2026-10-11:
+
+- The recovery target after abnormal termination is the last Apply-saved browser-local Workspace.
+- Restoration of unapplied form input after a crash is not guaranteed at this time.
+- Autosaving and crash recovery for unapplied forms remain a separate future design question.
+- The existing protection for unapplied work during normal page departure remains in force.
+- This decision does not automatically apply to NarrativeLine or LiaisonScape.
+
+This policy does not waive existing safety for Dataset replacement, normal page departure, BFCache restoration, or saved-revision conflicts. No runtime behavior was changed to record this decision. Human Browser Acceptance of the Codex crash test remains PENDING, and Cross-Context Workspace Safety remains open.
+
+The unresolved future question is how, if at all, ParameterPlotter should preserve unapplied form drafts across abnormal termination. That work requires a separate design decision before implementation; the current adopted recovery baseline is the last Apply-saved browser-local Workspace.
