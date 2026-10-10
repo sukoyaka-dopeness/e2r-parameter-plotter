@@ -1,7 +1,7 @@
 # BFCache Workspace Safety Verification
 
 Date: 2026-10-11
-Status: Codex Browser Verified for a BFCache-restored saved-but-modified Workspace and stale-writer refusal in isolated Edge. Human Browser Acceptance is PASS for the limited Test 28-A-K observations recorded below; direct Human confirmation of BFCache entry, pending-draft restoration, and broader safety coverage remain pending. Cross-Context Workspace Safety is not closed. PUBLIC RELEASE NO-GO remains in force.
+Status: Codex Browser Verified for a BFCache-restored saved-but-modified Workspace and stale-writer refusal in isolated Edge. Human Browser Acceptance is PASS for the limited Test 28-A-K and Test 29-A-M observations recorded below, including one directly instrumented BFCache restoration of an unapplied Dimension draft; broader safety coverage remains pending. Cross-Context Workspace Safety is not closed. PUBLIC RELEASE NO-GO remains in force.
 
 ## Authority and implementation reviewed
 
@@ -29,7 +29,7 @@ This verifies BFCache restoration, stale-revision refusal, preserved old in-memo
 
 ## Pending-draft and recovery limits
 
-A separate BFCache restoration of a live, unapplied form draft was not completed in this browser run. ParameterPlotter's beforeunload guard prompts when pending drafts or degraded work are present; continuing navigation requires explicitly accepting the browser's leave-page confirmation, which was not performed. Existing automated checks verify beforeunload protection for pending drafts, and the new coordinator lifecycle regression test verifies pagehide release and persisted-pageshow reacquisition, but these do not prove form DOM/state restoration in a real BFCache cycle. Human Browser Acceptance for this operation remains pending.
+A separate BFCache restoration of a live, unapplied form draft was not completed in the original Codex browser run. ParameterPlotter's beforeunload guard prompts when pending drafts or degraded work are present; continuing navigation requires explicitly accepting the browser's leave-page confirmation. Human later performed this bounded disposable-draft test with that action explicitly approved; see Test 29 below. The earlier automated checks and coordinator lifecycle test remain automation evidence, not proof of form restoration.
 
 This checkpoint did not test abnormal process termination, all form types, production GitHub Pages headers, production HTTPS/CORS Handoff, other browsers, screen readers, or ParameterPlotter ? NarrativeLine during BFCache traversal. Current NarrativeLine source uses narrativeline.lastDataset and e2r:narrativeline:workspace-tab:; the existing 2026-10-10 same-origin checkpoint records PP/NarrativeLine storage and lock separation. No BFCache-specific cross-app scenario is claimed here.
 
@@ -45,7 +45,7 @@ The added test models pagehide releasing the tab record/lock and a persisted pag
 
 Codex Browser Verified: a real Edge BFCache cycle for a saved-but-modified workspace, successful safe replacement in another tab while the first was suspended, preserved newer storage, restored old page, and stale-write refusal. The non-BFCache no-store run is recorded separately as an environment limitation.
 
-At the time of this original Codex checkpoint, Human Browser Acceptance for BFCache traversal and workspace actions was pending. Human later reported the bounded Test 28-A-K observations in the follow-up below. Cross-Context Workspace Safety as a whole remains pending, including BFCache form-draft restoration, abnormal termination recovery, exhaustive cross-tab form coverage, and production same-origin/HTTPS/CORS behavior. The prior Quadrant Tests 23-27 Human closure remains unchanged. PUBLIC RELEASE NO-GO remains in force.
+At the time of this original Codex checkpoint, Human Browser Acceptance for BFCache traversal and workspace actions was pending. Human later reported the bounded Test 28-A-K observations in the follow-up below. Cross-Context Workspace Safety as a whole remains pending, including abnormal termination recovery, exhaustive cross-tab form coverage, production same-origin/HTTPS/CORS behavior, and BFCache scenarios beyond the bounded Dimension-form test below. The prior Quadrant Tests 23-27 Human closure remains unchanged. PUBLIC RELEASE NO-GO remains in force.
 
 ## Human Browser follow-up: Test 28-A-K (limited acceptance)
 
@@ -66,6 +66,25 @@ Human confirmed the conflict and recovery guidance was displayed, but did not ex
 
 ### Current pending scope and protected follow-up
 
-The following remain unverified: real BFCache restoration of an unapplied Dimension form; Human inspection of `pageshow.persisted`; actual Export / Reload recovery from A; BFCache traversal while ParameterPlotter and NarrativeLine are both in use; abnormal-termination recovery; exhaustive cross-tab coverage of every form; production GitHub Pages same-origin behavior; production HTTPS/CORS Handoff; and full Cross-Context Workspace Safety acceptance.
+Test 29 resolves the previously pending, bounded Human check of one unapplied Dimension form restored through a directly observed BFCache cycle, followed by Cancel. The following remain unverified: actual Export / Reload recovery from A; BFCache traversal while ParameterPlotter and NarrativeLine are both in use; abnormal-termination recovery; exhaustive cross-tab coverage of every form; production GitHub Pages same-origin behavior; production HTTPS/CORS Handoff; and full Cross-Context Workspace Safety acceptance. The Test 29 observation does not guarantee restoration when BFCache is not used (including ordinary reload or browser termination).
 
-Do not start the unapplied-Dimension BFCache navigation test in this checkpoint. It may require accepting the browser leave-page prompt and can discard the disposable draft. Human approval of that specific destructive test action is required before running it. The previously documented pending-draft automated and Codex evidence remains distinct from this Human report. PUBLIC RELEASE NO-GO remains in force.
+At the time of this Test 28 checkpoint, the unapplied-Dimension BFCache navigation test was deferred because accepting the browser leave-page prompt could discard the disposable draft. Human subsequently approved and performed the specific Test 29 action recorded below. That approval does not authorize additional destructive tests. The previously documented pending-draft automated and Codex evidence remains distinct from this Human report. PUBLIC RELEASE NO-GO remains in force.
+
+## Human Browser closure: Test 29-A-M (pending Dimension draft)
+
+Human used Microsoft Edge InPrivate at `http://127.0.0.1:5312/`, with same-origin destination `http://127.0.0.1:5312/away.html` and the disposable The Ashen Crown sample. Human reported the following bounded results:
+
+| Tests | Human result | Confirmed scope |
+|---|---|---|
+| 29-A-D | PASS | The Ashen Crown showed 10 Entities, 7 Dimensions, and 70 Assessments. Human opened the new Dimension form and entered `BFCache Draft Test` without saving it. |
+| 29-E-G, first traversal | PASS for the observed state; BFCache status uninstrumented | The browser displayed its leave-page confirmation; Human chose Cancel, then saved the title change and retried navigation without a prompt. After navigating to `away.html` and using Back, the Dimension Pool and unsaved new-Dimension form were open, the text and pending-edit warning remained, and Dataset counts were unchanged. Human did not measure `pageshow.persisted` on this traversal, so this observation alone does not prove BFCache entry. |
+| 29-H-L, second traversal | PASS; actual BFCache directly observed | Human installed temporary `pagehide` / `pageshow` persisted-state listeners in DevTools, saw `BFCache probe ready`, accepted the leave-page prompt for the disposable draft, navigated to `away.html`, and returned with Back. The form and `BFCache Draft Test` input remained. Console reported `{ pagehide: true, pageshow: true }`, direct evidence that this traversal entered and returned from BFCache. |
+| 29-M | PASS | Human clicked Cancel after restoration. The new-Dimension form closed, the pending-edit warning cleared, the Dimension Pool remained open, and counts remained 10 Entities, 7 Dimensions, and 70 Assessments. |
+
+### Acceptance boundary and superseded pending status
+
+HUMAN BROWSER ACCEPTED / PASS applies to the exact Edge InPrivate operations above: preserving one unapplied Dimension form through the instrumented BFCache cycle and canceling it after return. The first traversal is recorded separately because its BFCache status was not instrumented. The prior pending statement in this checkpoint was accurate when written and is superseded only for this bounded form and Cancel path.
+
+Human did not inspect Web Lock internals, localStorage bytes, or other form types. This does not promise restoration after a normal reload or browser/process termination when BFCache is not used. It also does not claim the instrumented traversal verified export/reload recovery or cross-app BFCache behavior. The Codex Browser Verification earlier in this file remains a separate evidence source and is not being recast as Human evidence.
+
+The BFCache pending-draft Dimension-form acceptance item is closed for this observed case. Cross-Context Workspace Safety remains open. Remaining work includes abnormal-termination recovery; Export / Reload recovery after a stale-writer refusal; exhaustive cross-tab coverage of all forms; BFCache use with ParameterPlotter and NarrativeLine together; production GitHub Pages same-origin and HTTPS/CORS Handoff verification; and broader browser coverage. Do not start abnormal-termination or other destructive recovery tests without the Human review and safety approval required for that specific operation. PUBLIC RELEASE NO-GO remains in force.
