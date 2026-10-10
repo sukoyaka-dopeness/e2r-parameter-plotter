@@ -46,6 +46,7 @@ test('omitted endpoint labels render numeric MIN/MAX only across comparison view
   }
   assert.match(outputs[0],/<div class="low-high"><span>0<\/span><span>10<\/span><\/div>/);
   assert.match(outputs[1],/<div class="quadrant-axis-endpoint"><span>10<\/span><\/div>/);
+  assert.match(outputs[1],/<div class="quadrant-count-row"><span class="small quadrant-plotted-count">0 plotted<\/span><\/div>/);
   assert.match(outputs[2],/<small>0 → 10<\/small>/);
   assert.match(outputs[3],/0 to 10/);
  }finally{

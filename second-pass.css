@@ -24,6 +24,8 @@
 .point-connector{position:absolute;left:0;top:0;width:var(--line-length);border-top:1px solid #8998b9;transform-origin:left center;transform:rotate(var(--line-angle));pointer-events:none}
 .plot-foot{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-top:10px}.plot-foot .small{flex:1}
 .plot-foot .quadrant-keyboard-help,.plot-foot .quadrant-keyboard-status{flex-basis:100%;min-width:0}
+.plot-foot .quadrant-count-row{flex:0 0 100%;display:flex;justify-content:flex-end}
+.plot-foot .quadrant-plotted-count{flex:none;padding:3px 9px;border:1px solid #d6ddea;border-radius:999px;background:#f8faff;color:#526078;line-height:1.4;white-space:nowrap}
 .drawer-backdrop{position:fixed;z-index:9;inset:0;width:100%;height:100%;border:0;border-radius:0;background:rgba(8, 6, 13, 0.28)}
 .drawer{z-index:10;width:min(420px,100vw);animation:drawer-enter .18s ease-out both}
 .dimension-drawer{width:min(470px,100vw)}
@@ -240,8 +242,9 @@
  .quadrant-y-annotation::after,.quadrant-x-annotation::after{font-weight:600;line-height:1.5}
  .quadrant-plot-layout+.plot-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:12px 10px;line-height:1.5}
  .quadrant-plot-layout+.plot-foot>button{grid-column:1;grid-row:1;justify-self:start;max-width:100%;white-space:normal;font-size:.82rem;line-height:1.5}
- .quadrant-plot-layout+.plot-foot>span{grid-column:2;grid-row:1;white-space:nowrap;font-size:.82rem;line-height:1.5}
- .quadrant-plot-layout+.plot-foot>p{grid-column:1/-1;grid-row:2;margin:0;min-width:0;line-height:1.5}
+ .quadrant-plot-layout+.plot-foot>.quadrant-count-row{grid-column:2;grid-row:1;justify-self:end;align-self:center}
+ .quadrant-plot-layout+.plot-foot .quadrant-plotted-count{font-size:.82rem}
+ .quadrant-plot-layout+.plot-foot>p{grid-column:1/-1;grid-row:auto;margin:0;min-width:0;line-height:1.5}
 }
 @media(min-width:721px){.radar-layout{grid-template-columns:minmax(260px,295px) minmax(0,1fr)}}
 

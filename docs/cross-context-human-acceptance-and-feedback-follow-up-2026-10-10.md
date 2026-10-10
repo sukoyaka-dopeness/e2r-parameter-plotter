@@ -77,4 +77,7 @@ Still pending beyond this checkpoint:
 - ParameterPlotter early-warning acceptance on all real authoring paths;
 - complete Cross-Context Workspace Safety acceptance.
 
+The later Tests 16–22 review and the bounded Quadrant narrow-viewport fix are
+recorded in [Quadrant Narrow-Viewport Fix and Human Acceptance Checkpoint](quadrant-narrow-viewport-acceptance-checkpoint-2026-10-11.md).
+
 No Handoff, persistence, locale, Dataset, schema, Validator, Candidate status, or Application Version contract changed. No public action was taken. Publication remains NO-GO.

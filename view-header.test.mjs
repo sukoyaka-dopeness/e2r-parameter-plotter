@@ -93,3 +93,16 @@ test('View Header CSS uses natural-height top alignment and permits Entity-name 
  assert.match(css,/\.plot-dot:focus-visible\{outline:2px solid #28499a;outline-offset:2px\}/);
  assert.match(css,/\.plot-context-menu button:focus-visible\{outline:2px solid #28499a;outline-offset:-2px;position:relative;z-index:1\}/);
 });
+
+test('narrow Quadrant footer stacks each explanation instead of overlaying paragraphs',async()=>{
+ const css=await readFile(new URL('./second-pass.css',import.meta.url),'utf8');
+ assert.match(css,/@media\(max-width:720px\)\{[\s\S]*?\.quadrant-plot-layout\+\.plot-foot>p\{grid-column:1\/-1;grid-row:auto;[^}]+\}/);
+});
+
+test('Quadrant plotted count has a distinct compact status treatment',async()=>{
+ const css=await readFile(new URL('./second-pass.css',import.meta.url),'utf8');
+ const views=await readFile(new URL('./views.js',import.meta.url),'utf8');
+ assert.match(css,/\.plot-foot \.quadrant-count-row\{flex:0 0 100%;display:flex;justify-content:flex-end\}/);
+ assert.match(css,/\.quadrant-plot-layout\+\.plot-foot>\.quadrant-count-row\{grid-column:2;grid-row:1;justify-self:end/);
+ assert.match(views,/<div class="quadrant-count-row"><span class="small quadrant-plotted-count">\$\{points\.length\} plotted<\/span><\/div>/);
+});
