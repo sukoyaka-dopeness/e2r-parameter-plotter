@@ -286,7 +286,7 @@ document.addEventListener('pointerdown',e=>{
   const point=e.target.closest('[data-point]'),vertex=e.target.closest('[data-vertex]');
   if(point){
     const id=point.dataset.point,plot=point.closest('[data-plot]');
-    startQuadrantPointDrag(e,{point,plot,waiting:root.querySelector('[data-waiting]'),onPlace:x=>placeOnPlot(id,x,plot),onReturn:()=>{openConfirmation('axisClear',id);},onSelect:()=>{s.selected=id;update();}});
+    startQuadrantPointDrag(e,{point,plot,waiting:root.querySelector('[data-waiting]'),onPlace:x=>placeOnPlot(id,x,plot),onReturn:()=>{openConfirmation('axisClear',id);},onSelect:()=>{const pageScroll=captureDocumentScroll(document);quadrantKeyboardEntity=null;s.selected=id;update();root.querySelector(`[data-point="${CSS.escape(id)}"]`)?.focus({preventScroll:true});restoreDocumentScroll(pageScroll);}});
   }
   if(vertex){
     if(e.button!==0||!e.isPrimary)return;

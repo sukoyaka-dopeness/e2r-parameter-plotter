@@ -15,14 +15,14 @@ test('Workspace More keeps native disclosure and actions while using text-row pr
   assert.match(shellCss,/\.workspace-action-bar \.workspace-more-panel\{[^}]*min-width:12rem;[^}]*max-width:calc\(100vw - 2rem\)/);
 });
 
-test('keyboard-only Quadrant point activation selects and restores the same point without changing pointer drag handling',async()=>{
+test('Quadrant point activation and pointer selection restore point focus without changing drag handling',async()=>{
   const [main,drag]=await Promise.all([
     readFile(new URL('./main.js',import.meta.url),'utf8'),
     readFile(new URL('./quadrant-drag.js',import.meta.url),'utf8'),
   ]);
   assert.match(main,/quadrantPointSelectionFromClick\(e\)/);
   assert.match(main,/s\.selected=keyboardPointId;update\(\);root\.querySelector\(`\[data-point="\$\{CSS\.escape\(keyboardPointId\)\}"\]`\)\?\.focus\(\{preventScroll:true\}\);restoreDocumentScroll\(scrollSnapshot\)/);
-  assert.match(main,/onSelect:\(\)=>\{s\.selected=id;update\(\);\}/);
+  assert.match(main,/onSelect:\(\)=>\{const pageScroll=captureDocumentScroll\(document\);quadrantKeyboardEntity=null;s\.selected=id;update\(\);root\.querySelector\(`\[data-point="\$\{CSS\.escape\(id\)\}"\]`\)\?\.focus\(\{preventScroll:true\}\);restoreDocumentScroll\(pageScroll\);\}/);
   assert.match(drag,/else if\(moved\)onPlace\(e\);\s*else onSelect\(\)/);
   assert.doesNotMatch(main,/data-point[^\n]*data-view|data-point[^\n]*data-context-action/);
 });

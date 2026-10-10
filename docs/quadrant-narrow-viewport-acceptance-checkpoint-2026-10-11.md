@@ -2,7 +2,7 @@
 
 Date: 2026-10-11
 
-Status: Human PASS recorded for Tests 16-24 within the listed boundaries, including Tests 23-24 for the explanatory paragraphs only. The separate plotted-count polish in this follow-up is Codex-verified; Human review remains pending. Cross-Context Workspace Safety full acceptance and production verification remain pending. Publication remains NO-GO.
+Status: Human PASS recorded for Tests 16-25 within the listed boundaries. Test 26 has a Human PASS for Tab-origin Arrow editing and a FAIL for mouse-to-keyboard transition; the bounded focus correction is Codex-verified and awaits Human retest. Cross-Context Workspace Safety full acceptance and production verification remain pending. Publication remains NO-GO.
 
 ## Human Browser Acceptance evidence
 
@@ -73,3 +73,31 @@ Before this follow-up, the shared `.plot-foot .small { flex: 1 }` rule also appl
 The isolated Edge browser fixture at `http://127.0.0.1:5308/e2r-parameter-plotter/` was used with a disposable Ashen Crown sample. At 390px and 1280px, the two explanation paragraphs remained separate and the count badge was visually distinct. Both zero-count and populated-count states were checked; populated axes showed ten points. Document width matched the viewport at 390px and the available 1265px layout width at the 1280px emulation. ArrowUp changed the focused point Y value from 3 to 4, retained focus, and updated the accessible name and live value status. This is Codex Browser Verification, not Human Browser Acceptance.
 
 Human review remains pending for the plotted-count placement at 390px and 1280px. Tests 23-24 remain accepted only for the paragraph-overlap correction. Home, Matrix, workspace safety, and the previous acceptance boundaries are unchanged. Publication remains NO-GO.
+
+
+## Follow-up: pointer-to-keyboard focus and Human Tests 25-26
+
+### Human Browser evidence
+
+| Test | Human-reported result | Acceptance boundary |
+|---|---|---|
+| 25 | PASS | With The Ashen Crown and Command Authority / Combat Capability selected, ten Entities were plotted and the `10 plotted` count displayed normally. This records the reported sample/axis result only. |
+| 26 - Tab-origin editing | PASS | ArrowUp edited the point reached by keyboard focus. |
+| 26 - Mouse-to-keyboard | FAIL | Clicking Rowan Vale selected it, but ArrowUp did not edit it; subsequent Tab appeared to skip that point. This is the observed interaction that motivated the correction. |
+| 26 - corrected interaction | PENDING | Human retest is needed. Codex verification does not change the Human FAIL. |
+
+### Cause and correction
+
+Quadrant points are native buttons in ordinary document Tab order. Arrow editing is routed only when the event target is the focused `[data-point]` button. The pointer drag handler calls `preventDefault()` on pointerdown, which suppresses the browser default focus transfer. A click then updated `s.selected` and rerendered, but did not restore DOM focus. The mouse-selected Entity and keyboard editing target therefore diverged; Tab continued from the prior focus location, making the clicked point appear skipped.
+
+After a completed point click, the app now clears the previous keyboard announcement, updates the selected Entity, rerenders, restores focus to that same point with `preventScroll`, and restores the prior document scroll position. Drag-to-place/return callbacks are unchanged. Native button semantics, Tab order, point role, arrow mapping, Assessment validation and immediate save path are unchanged.
+
+### Codex verification
+
+On the isolated Edge fixture at `http://127.0.0.1:5308/e2r-parameter-plotter/`, a disposable English Ashen Crown Dataset was loaded and the requested axes selected. Before the correction, clicking Rowan Vale left `document.activeElement` at `BODY`; Rowan became selected but ArrowUp did not change its label/value. After the correction, the same pointer click left Rowan Vale selected and focused (`focusIndex` 3 in the plotted-point list). ArrowUp changed Combat Capability from 5 to 6, retained focus on Rowan, and updated its accessible name and polite status. Tab then followed native document order to Rowan's adjacent label button; the clicked dot was not skipped from the current focus position. This is Codex Browser Verification, not Human Browser Acceptance.
+
+At 390px and 1280px emulation, document width matched the available viewport width (390px and 1265px respectively), with no horizontal overflow. The operation used the existing selected/Focus visual emphasis and did not alter the plotted-count or footer layout. Screen-reader output was not tested. The separate plotted-count responsive placement remains pending Human review at both widths; Test 25 confirms only its reported 10-Entity scenario.
+
+Automated verification after this correction: `npm.cmd run check` passed syntax checks for 37 application modules and all 166/166 tests. `scripts/build-pages.mjs` built 59 static files into the isolated same-origin fixture; the fixture CSS hash matched source. The existing pointer drag path is preserved by code inspection and the interaction regression test; a new drag gesture was not performed in this browser run.
+
+Human Browser retest should: (1) click Rowan Vale's plotted dot, (2) confirm its selected/focused indication, (3) press ArrowUp and verify only Rowan's Y Assessment changes and its current X/Y values are announced, and (4) press Tab and confirm focus advances naturally from the clicked point. Repeat at 390px and normal width as needed. Existing Tests 16-25 boundaries and Matrix horizontal-scroll acceptance remain unchanged. Cross-Context Workspace Safety full acceptance and publication remain pending / NO-GO.
