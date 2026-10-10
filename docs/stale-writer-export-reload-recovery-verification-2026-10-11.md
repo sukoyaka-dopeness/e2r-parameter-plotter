@@ -1,7 +1,7 @@
 # ParameterPlotter Stale-Writer Export and Reload Recovery Verification
 
 Date: 2026-10-11
-Status: Codex Browser Verified for the isolated stale-writer, Export, Reload, and subsequent-save sequence below. Human Browser Test 30-A-N is ACCEPTED / PASS for the bounded operations recorded below. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
+Status: Codex Browser Verified for the isolated stale-writer, Export, Reload, and subsequent-save sequence below. Human Browser Test 30-A-N is ACCEPTED / PASS for the bounded operations recorded below. Test 31 reproduced and traced the warning transition; no unsafe overwrite was observed, while warning wording remains a UX clarity concern for Human review. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
 
 ## Scope and authority
 
@@ -52,3 +52,42 @@ No runtime, test, Dataset, schema, Candidate status, or Application Version chan
 ## Remaining safety work
 
 Still pending are Human Browser Acceptance of the abnormal-termination findings; exhaustive form-specific cross-tab coverage; BFCache recovery operations not exercised; ParameterPlotter × NarrativeLine BFCache interaction; production GitHub Pages same-origin and HTTPS/CORS Handoff checks; and full Cross-Context Workspace Safety acceptance. Test 30 does not establish byte-level storage equality, Web Lock internals, all conflict causes, or every Export failure path. PUBLIC RELEASE NO-GO remains in force.
+
+## Test 31 — cross-tab warning transition audit
+
+Date: 2026-10-11. This is a Codex audit and reproduction, not a new Human Acceptance result. The test used a new isolated Edge profile and the disposable Ashen Crown Dataset on the cacheable local fixture at `http://127.0.0.1:5312/`. Browser profile and download state were isolated from the Human's browser and workspaces. No process termination was performed.
+
+### Source behavior
+
+- `workspace-recovery.js` defines loss-sensitive work as Dataset changes since the Export baseline, a pending draft, or degraded persistence. `main.js` publishes that aggregate state to the ParameterPlotter tab marker.
+- A replacement or workspace save enters `createWorkspaceCoordinator().withWriteLock()`. If another live ParameterPlotter tab's status is active, the operation returns `blockedByPeer` before `saveIfCurrent()` compares serialized revisions or writes the shared Workspace.
+- The peer message comes from `workspaceSaveFailureMessage()` and currently calls the peer's state “unapplied work.” That label covers more than an unsubmitted form: an Apply-ed Dataset can be saved locally while still marked modified relative to its last E2R Export.
+- `exportCurrentDataset()` downloads the current Dataset, calls `exportBaseline()` (which changes the serialized workspace baseline and clears Dataset-modified state), then schedules a browser-local workspace save. If this tab's `expectedWorkspaceRaw` is older than the current saved value, `saveIfCurrent()` rejects that scheduled write with the stale-revision message. The rejection preserves the stored newer revision and marks the local tab degraded.
+
+### Isolated Edge reproduction
+
+1. Tab A opened the disposable sample, applied and exported `Stale Recovery Baseline A`.
+2. Tab B reloaded, used Continue Editing, and opened the same saved baseline.
+3. Tab A applied `Newer Saved Workspace A2`. It showed `Saved locally` and “changes not exported”; this loss-sensitive state kept Tab A's peer marker active.
+4. Tab B applied `Stale Writer Unsaved Candidate B`. The write was refused as peer work, and the visible message said another tab had unapplied work. Storage still named `Newer Saved Workspace A2`.
+5. Tab A exported A2, which established the current Export baseline and cleared its active-work marker.
+6. Without another Apply in Tab B, Tab B used More → Export E2R JSON. The application displayed its Export handoff notice, then Export's scheduled workspace save compared Tab B's old expected serialized revision with the newer saved revision. The UI changed to “Another ParameterPlotter tab changed the saved workspace…”; storage still named A2. Thus the message changed after a distinct write attempt initiated by Export, not because a second user Apply was made. The Test 31 browser run did not independently confirm a downloaded file on disk; Test 30's Human evidence above did confirm the successful download and file contents for its run.
+
+This reproduces the reported order and provides a source-consistent cause for the transition. It demonstrates that the first refusal and later stale-revision warning were two different guards at two different moments. The initial peer guard prevented the write while A had loss-sensitive work; the later compare-before-write guard prevented the old B snapshot from replacing A2.
+
+### Safety and UX assessment
+
+- **Safety:** no unsafe write was observed. In this reproduction, the browser-local saved Dataset remained `Newer Saved Workspace A2` after both the peer-work refusal and B's later stale-revision rejection. B's Export remained a separate rescue path for its in-memory Dataset. Reload remains the route back to the current saved Workspace.
+- **Reason accuracy:** the later stale-revision copy matches the compare-before-write result. The first peer result accurately identifies the guard category, but “unapplied work” is ambiguous/inexact when the peer has already applied and locally saved a Dataset that has not yet been exported. The app's broad peer flag also includes pending drafts and degraded state, so the text should describe potentially loss-sensitive work rather than imply only an unsubmitted form.
+- **Transition:** after B exports, Export also schedules a local Workspace save. Because B retains the earlier expected revision, that save detects the intervening stored revision and replaces the peer refusal's degraded message with the more specific revision conflict. Human Test 30's report that no second Apply occurred is consistent with this path. The exact event timing in the Human run was not instrumented; this causal path is confirmed in Codex reproduction and source, not directly measured in the Human session.
+- **Recovery UX:** after the stale message appears, its instruction to Export any work needed can sound redundant because B just initiated Export. Human Test 30 confirms that the Human's Export completed and contained B's work. The Test 31 Codex run confirms the app's Export action and resulting save refusal, but did not independently verify the file on disk. The warning still instructs reload only after work has been exported; it does not erase the in-memory Dataset or authorize overwriting the newer revision.
+
+No Cross-Context Workspace Safety violation or data-loss defect was confirmed in this audit. The evidence does identify a terminology and sequencing clarity issue. A copy-only follow-up could describe peer state as “work that could be lost if this shared workspace changes” and distinguish downloaded Export completion from a later browser-local save conflict. Whether to make this UX wording change is left for Human direction; no runtime or acceptance status was changed here.
+
+### Evidence boundary
+
+- **Human Browser evidence:** Test 30-A-N, recorded above, observed the peer-work refusal, successful Export, later stale-revision warning, Reload to A2, and subsequent save. The Human did not measure exact transition timing or internal state.
+- **Codex Browser Verified:** the Test 31 isolated Edge reproduction reached the same two messages in sequence without a second Apply in B; saved storage remained on A2. The browser UI reported the Export handoff, but the downloaded file was not independently inspected in Test 31. This is browser implementation evidence, not Human Acceptance.
+- **Source review:** explains the active peer marker, separate peer and revision guards, and Export's scheduled persistence save.
+- **Automated Test:** existing tests cover peer status, stale revision refusal, and feedback wording as separate branches; they do not model this end-to-end UI timing sequence. No test suite was changed or rerun for this documentation-only audit.
+- **Not established:** byte-for-byte preservation in the Human run; all browser timing paths; all conflict causes; every blocked or failed download path; whether a Human would find revised copy clearer. Test 30-A-N remains accepted only for its recorded interactions. Cross-Context Workspace Safety remains open and PUBLIC RELEASE NO-GO remains in force.
