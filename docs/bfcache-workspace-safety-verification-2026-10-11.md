@@ -1,7 +1,7 @@
 # BFCache Workspace Safety Verification
 
 Date: 2026-10-11
-Status: Codex Browser Verified for a BFCache-restored saved-but-modified Workspace and stale-writer refusal in isolated Edge. Pending-draft BFCache restoration and Human Browser Acceptance remain pending. Cross-Context Workspace Safety is not closed. PUBLIC RELEASE NO-GO remains in force.
+Status: Codex Browser Verified for a BFCache-restored saved-but-modified Workspace and stale-writer refusal in isolated Edge. Human Browser Acceptance is PASS for the limited Test 28-A-K observations recorded below; direct Human confirmation of BFCache entry, pending-draft restoration, and broader safety coverage remain pending. Cross-Context Workspace Safety is not closed. PUBLIC RELEASE NO-GO remains in force.
 
 ## Authority and implementation reviewed
 
@@ -45,4 +45,27 @@ The added test models pagehide releasing the tab record/lock and a persisted pag
 
 Codex Browser Verified: a real Edge BFCache cycle for a saved-but-modified workspace, successful safe replacement in another tab while the first was suspended, preserved newer storage, restored old page, and stale-write refusal. The non-BFCache no-store run is recorded separately as an environment limitation.
 
-Human Browser Acceptance remains pending for BFCache traversal and workspace actions. Cross-Context Workspace Safety as a whole remains pending, including BFCache form-draft restoration, abnormal termination recovery, exhaustive cross-tab form coverage, and production same-origin/HTTPS/CORS behavior. The prior Quadrant Tests 23-27 Human closure remains unchanged. PUBLIC RELEASE NO-GO remains in force.
+At the time of this original Codex checkpoint, Human Browser Acceptance for BFCache traversal and workspace actions was pending. Human later reported the bounded Test 28-A-K observations in the follow-up below. Cross-Context Workspace Safety as a whole remains pending, including BFCache form-draft restoration, abnormal termination recovery, exhaustive cross-tab form coverage, and production same-origin/HTTPS/CORS behavior. The prior Quadrant Tests 23-27 Human closure remains unchanged. PUBLIC RELEASE NO-GO remains in force.
+
+## Human Browser follow-up: Test 28-A-K (limited acceptance)
+
+Human used Microsoft Edge InPrivate with the cacheable local environment at `http://127.0.0.1:5312/`, the same-origin history destination `http://127.0.0.1:5312/away.html`, and The Ashen Crown. The following is Human-reported browser evidence, distinct from the Codex Browser Verification above.
+
+| Tests | Human result | Confirmed scope |
+|---|---|---|
+| 28-A-C | PASS | Home loaded; The Ashen Crown loaded; the title was changed to `Ashen Crown BFCache Test A` and applied; the applied notice appeared, the pending-edit warning cleared, and the browser reported the workspace saved locally. On the first attempted navigation, the browser's leave-page prompt appeared while the title was unapplied; Human chose Cancel, applied the title, and then navigated without the prompt. This is expected pending-edit protection, not a failure. |
+| 28-D-G | PASS | Tab A navigated to the same-origin `away.html`. With A left there, Tab B opened ParameterPlotter and explicitly confirmed `Discard and Create Dataset`. Tab B showed 0 Entities, 0 Dimensions, and 0 Assessments and reported the workspace saved locally. |
+| 28-H-J | PASS | Browser Back returned to A, whose old view still showed title `Ashen Crown BFCache Test A` and 10 Entities / 7 Dimensions / 70 Assessments. Applying title `Ashen Crown BFCache Test A2` was refused as a saved-revision conflict; the UI reported that the newer workspace was not overwritten and showed Export / Reload recovery guidance. The browser-local workspace was marked Degraded / unsaved. |
+| 28-K | PASS | Reloading B and choosing Continue Editing restored the empty Dataset: blank title, 0 Entities, 0 Dimensions, and 0 Assessments; the workspace was saved locally. This confirms the newer Dataset remained available after A's stale save attempt, within the visible UI and reload steps performed. |
+
+### Human evidence boundary
+
+This is HUMAN BROWSER ACCEPTED / PASS only for the listed Edge InPrivate actions and visible results. Human observed Back restoring A's old screen, but did not inspect `pageshow.persisted`; therefore these tests do not establish that Human's Back navigation was a BFCache restoration. The earlier isolated Codex Edge run separately established actual BFCache entry and restoration using `pagehide.persisted=true` and `pageshow.persisted=true`, along with lock/status re-registration and stale-writer refusal. Do not merge those evidence sources.
+
+Human confirmed the conflict and recovery guidance was displayed, but did not execute Export or Reload recovery in A. Human did not inspect localStorage byte equality or Web Lock internals. No Human PASS is claimed for those internal states or actions.
+
+### Current pending scope and protected follow-up
+
+The following remain unverified: real BFCache restoration of an unapplied Dimension form; Human inspection of `pageshow.persisted`; actual Export / Reload recovery from A; BFCache traversal while ParameterPlotter and NarrativeLine are both in use; abnormal-termination recovery; exhaustive cross-tab coverage of every form; production GitHub Pages same-origin behavior; production HTTPS/CORS Handoff; and full Cross-Context Workspace Safety acceptance.
+
+Do not start the unapplied-Dimension BFCache navigation test in this checkpoint. It may require accepting the browser leave-page prompt and can discard the disposable draft. Human approval of that specific destructive test action is required before running it. The previously documented pending-draft automated and Codex evidence remains distinct from this Human report. PUBLIC RELEASE NO-GO remains in force.
