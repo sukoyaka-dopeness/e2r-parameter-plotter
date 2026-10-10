@@ -2,7 +2,7 @@
 
 Date: 2026-10-11
 
-Status: Human PASS recorded for Tests 16-25 within the listed boundaries. Test 26 has a Human PASS for Tab-origin Arrow editing and a FAIL for mouse-to-keyboard transition; the bounded focus correction is Codex-verified and awaits Human retest. Cross-Context Workspace Safety full acceptance and production verification remain pending. Publication remains NO-GO.
+Status: Quadrant Footer and Pointer-to-Keyboard Focus improvements are HUMAN BROWSER ACCEPTED / PASS / CLOSED for the bounded observations in Tests 23-27 below. Earlier FAIL and PENDING entries are retained as history and superseded by the post-fix Human results. Cross-Context Workspace Safety full acceptance and production verification remain pending. PUBLIC RELEASE remains NO-GO.
 
 ## Human Browser Acceptance evidence
 
@@ -18,7 +18,7 @@ This records the Human's Edge Browser Review. PASS applies only to the listed ac
 | 21 | PASS | Reloading the tab containing the newer empty Dataset preserves it; the older tab cannot overwrite it with an Assessment edit. |
 | 22 — Home | PASS | At 390px the early warning wraps, the language control is visible, and Home centering and actions remain usable. |
 | 22 — Matrix | PASS | At 390px the table scrolls horizontally to its final Dimension; its selector, Assessment input, and delete action can be reached. Matrix horizontal scrolling is accepted for this layout. |
-| 22 — Quadrant | VISUAL FAIL | At 390px multiple explanatory paragraphs below the plot overlapped and could not be read. This is the defect addressed by this checkpoint; it is not Human-accepted yet. |
+| 22 — Quadrant | VISUAL FAIL | At 390px multiple explanatory paragraphs below the plot overlapped and could not be read. This was the initial failure; Human later confirmed the corrected rendering in Tests 23-24 below. |
 
 ## Quadrant defect and correction
 
@@ -49,7 +49,7 @@ Home and Matrix's 390px Human PASS results above are retained as Human evidence.
 
 The existing Cross-Context Workspace Safety decision and playbook remain applicable: E2R-SPEC `docs/cross-app/cross-context-workspace-safety-design-2026-10-10.md`, Knowledge `decisions/cross-context-workspace-safety.md`, and `playbooks/workspace-safety-review-and-acceptance.md`. No safety contract, locale behavior, Dataset, schema, Validator, Candidate state, or Application Version changed.
 
-Human Browser review is still needed to confirm that the corrected Quadrant explanations are readable at 390px and that normal-width presentation remains acceptable. Tests 16–21 and the reported Home/Matrix parts of Test 22 remain limited Human PASS; Codex verification does not upgrade the Quadrant result.
+At the time of this checkpoint, Human review of the corrected Quadrant explanations was pending. That pending state was later resolved by Human Tests 23-24, recorded below. Tests 16-21 and the reported Home/Matrix parts of Test 22 remain limited Human PASS; this later Quadrant closure does not broaden those boundaries.
 
 Other pending scope remains unchanged: exhaustive cross-tab form coverage, strict BFCache and abnormal-termination recovery, production GitHub Pages same-origin behavior, production HTTPS/CORS Handoff, and complete Cross-Context Workspace Safety acceptance. Publication remains NO-GO.
 
@@ -72,7 +72,7 @@ Before this follow-up, the shared `.plot-foot .small { flex: 1 }` rule also appl
 
 The isolated Edge browser fixture at `http://127.0.0.1:5308/e2r-parameter-plotter/` was used with a disposable Ashen Crown sample. At 390px and 1280px, the two explanation paragraphs remained separate and the count badge was visually distinct. Both zero-count and populated-count states were checked; populated axes showed ten points. Document width matched the viewport at 390px and the available 1265px layout width at the 1280px emulation. ArrowUp changed the focused point Y value from 3 to 4, retained focus, and updated the accessible name and live value status. This is Codex Browser Verification, not Human Browser Acceptance.
 
-Human review remains pending for the plotted-count placement at 390px and 1280px. Tests 23-24 remain accepted only for the paragraph-overlap correction. Home, Matrix, workspace safety, and the previous acceptance boundaries are unchanged. Publication remains NO-GO.
+At the time of this follow-up, plotted-count placement remained pending Human review. Human subsequently confirmed the plotted-count presentation in screenshots at 390px and 1280px; see the bounded closure below. Tests 23-24 still cover paragraph readability only. Home, Matrix, and workspace-safety boundaries are unchanged. Publication remains NO-GO.
 
 
 ## Follow-up: pointer-to-keyboard focus and Human Tests 25-26
@@ -84,7 +84,7 @@ Human review remains pending for the plotted-count placement at 390px and 1280px
 | 25 | PASS | With The Ashen Crown and Command Authority / Combat Capability selected, ten Entities were plotted and the `10 plotted` count displayed normally. This records the reported sample/axis result only. |
 | 26 - Tab-origin editing | PASS | ArrowUp edited the point reached by keyboard focus. |
 | 26 - Mouse-to-keyboard | FAIL | Clicking Rowan Vale selected it, but ArrowUp did not edit it; subsequent Tab appeared to skip that point. This is the observed interaction that motivated the correction. |
-| 26 - corrected interaction | PENDING | Human retest is needed. Codex verification does not change the Human FAIL. |
+| 26 - corrected interaction | PENDING at that time; superseded below | The post-fix Human retest is recorded in the formal closure section. |
 
 ### Cause and correction
 
@@ -96,8 +96,30 @@ After a completed point click, the app now clears the previous keyboard announce
 
 On the isolated Edge fixture at `http://127.0.0.1:5308/e2r-parameter-plotter/`, a disposable English Ashen Crown Dataset was loaded and the requested axes selected. Before the correction, clicking Rowan Vale left `document.activeElement` at `BODY`; Rowan became selected but ArrowUp did not change its label/value. After the correction, the same pointer click left Rowan Vale selected and focused (`focusIndex` 3 in the plotted-point list). ArrowUp changed Combat Capability from 5 to 6, retained focus on Rowan, and updated its accessible name and polite status. Tab then followed native document order to Rowan's adjacent label button; the clicked dot was not skipped from the current focus position. This is Codex Browser Verification, not Human Browser Acceptance.
 
-At 390px and 1280px emulation, document width matched the available viewport width (390px and 1265px respectively), with no horizontal overflow. The operation used the existing selected/Focus visual emphasis and did not alter the plotted-count or footer layout. Screen-reader output was not tested. The separate plotted-count responsive placement remains pending Human review at both widths; Test 25 confirms only its reported 10-Entity scenario.
+At 390px and 1280px emulation, document width matched the available viewport width (390px and 1265px respectively), with no horizontal overflow. The operation used the existing selected/Focus visual emphasis and did not alter the plotted-count or footer layout. Screen-reader output was not tested. At the time of this follow-up, plotted-count responsive placement was pending Human review; subsequent screenshot confirmation and Test 25 are recorded in the closure below.
 
 Automated verification after this correction: `npm.cmd run check` passed syntax checks for 37 application modules and all 166/166 tests. `scripts/build-pages.mjs` built 59 static files into the isolated same-origin fixture; the fixture CSS hash matched source. The existing pointer drag path is preserved by code inspection and the interaction regression test; a new drag gesture was not performed in this browser run.
 
-Human Browser retest should: (1) click Rowan Vale's plotted dot, (2) confirm its selected/focused indication, (3) press ArrowUp and verify only Rowan's Y Assessment changes and its current X/Y values are announced, and (4) press Tab and confirm focus advances naturally from the clicked point. Repeat at 390px and normal width as needed. Existing Tests 16-25 boundaries and Matrix horizontal-scroll acceptance remain unchanged. Cross-Context Workspace Safety full acceptance and publication remain pending / NO-GO.
+At the time of this entry, Human retest of Test 26 was pending. Human later confirmed click followed by ArrowUp and separately confirmed the next Tab destination in Test 27; see the formal closure below. Cross-Context Workspace Safety full acceptance and publication remain pending / NO-GO.
+
+
+## Formal closure: Quadrant Footer and Pointer-to-Keyboard Focus
+
+Human Browser Acceptance is PASS / CLOSED for the limited Quadrant observations in Tests 23-27. The prior Test 22 visual failure and Test 26 pointer-to-keyboard failure remain in the history above; the later Human checks below supersede their former pending/failed current status only for the corrected behavior they exercised.
+
+| Test / observation | Human result | Confirmed scope |
+|---|---|---|
+| 23 | PASS | At 390px, the Quadrant explanatory paragraphs no longer overlap and are readable. |
+| 24 | PASS | At 1280px, the explanatory paragraphs remain separate and readable. |
+| Plotted count | PASS | Human screenshots at 390px and 1280px show "0 plotted" visually independent from explanatory text. |
+| 25 | PASS | The Ashen Crown with Command Authority / Combat Capability plots ten Entities and displays "10 plotted". |
+| 26, after correction | PASS | Human clicked a plotted Entity and successfully used ArrowUp. Tab-origin Arrow editing was already Human PASS. |
+| 27 | PASS | After clicking Rowan Vale, one Tab press moved focus to that point's Name label, matching the existing Tab order. |
+
+### Evidence boundaries
+
+Human-confirmed actions are the viewport observations and pointer/keyboard actions listed above. Separately, Codex Browser Verification confirmed the edited Assessment value, accessible name and polite status update, and focus retention. The automated interaction regression test and code review confirm the existing drag path remains wired; a drag gesture was not performed during the Codex browser run. No screen-reader device or runtime review was performed. No PASS is claimed for other operations, viewports, browsers, or assistive technologies.
+
+### Closure boundary and remaining safety work
+
+This closes only the Quadrant footer presentation and pointer-to-keyboard focus improvement represented by Tests 23-27. It does not close Cross-Context Workspace Safety. Pending work includes strict BFCache behavior, abnormal-termination recovery, exhaustive cross-tab coverage of all forms, production GitHub Pages same-origin behavior, production HTTPS/CORS Handoff, and untested browser/viewport/assistive-technology combinations. PUBLIC RELEASE NO-GO remains in force. Preserve these boundaries in successor acceptance records.
