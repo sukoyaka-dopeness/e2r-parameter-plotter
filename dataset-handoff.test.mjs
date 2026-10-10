@@ -88,5 +88,5 @@ test('Handoff loading and replacement reuse the existing Home and loss-confirmat
   assert.match(source,/receiveDataset\('handoff-dataset',parsed\.dataset\)/);
   assert.match(source,/request\.kind!=='handoff-dataset'\)clearDatasetHandoffFragment\(\)/);
   assert.match(source,/function clearDatasetHandoffFragment\(\)/);
-  assert.match(source,/hasLossSensitiveWork\(s\)\)startReplacement\(kind,incoming\)/);
+  assert.match(source,/hasCurrentLossSensitiveWork\(\)\)startReplacement\(kind,incoming\)/);
 });

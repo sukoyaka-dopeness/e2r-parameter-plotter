@@ -60,6 +60,15 @@
 .sample-action { margin-top: 12px; }
 .home-actions button:hover { background: #f5f6f8; }
 .home-notice { margin-top: 16px; padding: 10px 12px; border: 1px solid #d8a9a9; border-radius: 6px; background: #fff5f4; color: #542226; overflow-wrap: anywhere; text-align: left; }
+.home-notice.cross-tab-work-warning { width: 100%; box-sizing: border-box; }
+.home-notice.cross-tab-work-warning.is-uncertain { border-color: #d5c88a; background: #fffbed; color: #51451d; }
+.home-replacement-feedback { box-sizing: border-box; width: 100%; }
+.home-replacement-feedback h2 { margin: 0 0 8px; font-size: 18px; font-weight: 600; line-height: 1.3; }
+.home-replacement-feedback p { margin: 8px 0; overflow-wrap: anywhere; }
+.home-replacement-feedback-actions { display: grid; gap: 8px; margin-top: 12px; }
+.home-replacement-feedback-actions button { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 1px solid #dfe3ea; border-radius: 6px; background: #fff; color: #202331; font: inherit; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
+.home-replacement-feedback-actions button:disabled { cursor: wait; opacity: .75; }
+.home-replacement-feedback-actions button:focus-visible { outline: 3px solid #344b9b; outline-offset: 2px; }
 .app-footer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

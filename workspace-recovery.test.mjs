@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fresh} from './model.js';
-import {hasLossSensitiveWork,installBeforeUnloadProtection,shouldWarnBeforeUnload} from './workspace-recovery.js';
+import {hasLossSensitiveWork,hasPendingAssessmentDraft,installBeforeUnloadProtection,shouldWarnBeforeUnload} from './workspace-recovery.js';
 
 test('replacement guard protects Dataset changes and unprotected/degraded work, not persisted view state',()=>{
   const state=fresh({version:'1.0',entities:[],events:[],relations:[]});
@@ -19,6 +19,15 @@ test('replacement guard protects Dataset changes and unprotected/degraded work, 
   assert.equal(shouldWarnBeforeUnload(state),true);
   state.pendingDraft=false;state.persistence.status='degraded';
   assert.equal(shouldWarnBeforeUnload(state),true);
+});
+
+test('an uncommitted numeric Assessment input is loss-sensitive workspace work',()=>{
+  const dirtyInput={};
+  const root={querySelector(selector){assert.equal(selector,'input[type="number"][data-value][data-dirty="true"]');return dirtyInput;}};
+  assert.equal(hasPendingAssessmentDraft(root),true);
+  root.querySelector=()=>null;
+  assert.equal(hasPendingAssessmentDraft(root),false);
+  assert.equal(hasPendingAssessmentDraft(null),false);
 });
 
 test('beforeunload protection is installed on the Window event target for pending drafts only when needed',()=>{

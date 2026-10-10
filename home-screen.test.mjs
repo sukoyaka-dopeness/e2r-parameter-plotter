@@ -187,3 +187,50 @@ test('Home entry uses native Dataset file acquisition and a bundled sample path'
   assert.match(source,/data-go-home/);
   assert.match(source,/else if\(action==='open'\)openDatasetFilePicker\(\)/);
 });
+
+
+test('Home has no peer warning when no other tab has loss-sensitive work',()=>{
+  assert.equal(homeMarkup({peerWorkStatus:{kind:'clear'}}).includes('cross-tab-work-warning'),false);
+});
+
+test('Home explains active peer work and recovery in both UI locales',()=>{
+  const en=homeMarkup({peerWorkStatus:{kind:'work',count:1},locale:'en'});
+  const ja=homeMarkup({peerWorkStatus:{kind:'work',count:1},locale:'ja'});
+  assert.match(en,/Another ParameterPlotter tab has unsaved work/);
+  assert.match(en,/Save or discard it in that tab/);
+  assert.notEqual(ja,en);
+  assert.notEqual(ja,en);
+});
+
+test('Home distinguishes uncertain coordination without claiming peer work exists',()=>{
+  const markup=homeMarkup({peerWorkStatus:{kind:'unknown'},locale:'en'});
+  assert.match(markup,/could not be checked safely/);
+  assert.match(markup,/does not confirm that unsaved work exists/);
+  assert.match(markup,/is-uncertain/);
+});
+
+test('replacement refusal takes priority over the duplicate peer warning and offers retry and cancel',()=>{
+  const markup=homeMarkup({peerWorkStatus:{kind:'work',count:1},replacementFeedback:{kind:'peer-work',reason:'Another ParameterPlotter tab has unapplied work.'},locale:'en'});
+  assert.match(markup,/role="alert"/);
+  assert.match(markup,/did not change the saved workspace/);
+  assert.match(markup,/data-retry-replacement/);
+  assert.match(markup,/data-cancel-replacement-feedback/);
+  assert.doesNotMatch(markup,/Details:/);
+  assert.equal(markup.includes('class="home-notice cross-tab-work-warning'),false);
+});
+
+test('uncertain post-write refusal tells the user to reload without offering a blind retry',()=>{
+  const markup=homeMarkup({replacementFeedback:{kind:'write-unverified',reason:'The workspace was written, but its saved revision could not be verified.',canRetry:false},locale:'en'});
+  assert.match(markup,/Do not assume either Dataset is current/);
+  assert.match(markup,/reload this tab to inspect the saved state/);
+  assert.doesNotMatch(markup,/data-retry-replacement/);
+  assert.match(markup,/data-cancel-replacement-feedback/);
+});
+
+test('stale saved revisions direct the user to reload instead of retrying the same stale candidate',()=>{
+  const markup=homeMarkup({replacementFeedback:{kind:'stale-revision',reason:'The saved workspace changed in another tab.',canRetry:false},locale:'en'});
+  assert.match(markup,/reload this tab to check the current state/);
+  assert.doesNotMatch(markup,/data-retry-replacement/);
+  assert.match(markup,/Close notice/);
+  assert.doesNotMatch(markup,/Details:/);
+});

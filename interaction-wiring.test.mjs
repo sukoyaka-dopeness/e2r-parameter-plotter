@@ -60,12 +60,38 @@ test('successor entry point wires replacement rendering, form identity, stale-no
   assert.match(source,/applyDimensionAndRescale\(s,next\)/);
   assert.match(source,/s\.pendingDraft=false;\}update\(\);return;\}\s*if\(action==='cancel'\)/);
   assert.match(source,/function clearLifecycleNotice\(\)\{\s*if\(!lifecycleNotice\)return;\s*lifecycleNotice='';\s*root\.querySelector\('\.lifecycle-notice'\)\?\.remove\(\);/);
-  assert.match(source,/installBeforeUnloadProtection\(window,\(\)=>s\)/);
+  assert.match(source,/installBeforeUnloadProtection\(window,\(\)=>\(\{\.\.\.s,pendingDraft:s\.pendingDraft\|\|hasPendingAssessmentDraft\(root\)\}\)\)/);
+  assert.match(source,/homePeerWorkStatus=status;\s*if\(surface==='home'\)render\(\);/);
   assert.doesNotMatch(source,/document\.addEventListener\(['"]beforeunload['"]/);
   assert.match(source,/placeholder="Describe this Entity"/);
   assert.doesNotMatch(source,/placeholder="Describe this temporary Entity"/);
   assert.match(source,/nav class="tabs" aria-label="Views"[^\n]*aria-current="\$\{s\.view===v\?'page':'false'\}"/);
   assert.doesNotMatch(source,/aria-pressed=/);
+});
+
+test('peer replacement refusal is rendered on Home and cancellation invalidates pending writes',async()=>{
+  const [main,home]=await Promise.all([
+    readFile(new URL('./main.js',import.meta.url),'utf8'),
+    readFile(new URL('./home-screen.js',import.meta.url),'utf8'),
+  ]);
+  assert.match(main,/replacementFeedback:replacementRefusal/);
+  assert.match(main,/peerWorkStatus:replacementRefusal\?null:homePeerWorkStatus/);
+  const replacementFlow=main.slice(main.indexOf('async function activateIncoming'));
+  assert.ok(replacementFlow.indexOf('if(attemptId!==replacementAttemptId)return {ok:false,cancelled:true}')<replacementFlow.indexOf('if(activeTabs.length)return {ok:false,blockedByPeer:true'));
+  assert.match(main,/const kind=result\.blockedByPeer\?'peer-work'/);
+  assert.match(main,/replacement=null;replacementRefusal=\{request,kind,reason:/);
+  assert.match(main,/function cancelReplacementFeedback\(\)\{replacementAttemptId\+\+/);
+  assert.match(home,/replacementFeedback\?''/);
+  assert.match(home,/data-retry-replacement/);
+  assert.match(home,/data-cancel-replacement-feedback/);
+});
+
+test('workspace persistence refusal presents one specific status instead of duplicating lifecycle feedback',async()=>{
+  const main=await readFile(new URL('./main.js',import.meta.url),'utf8');
+  assert.match(main,/blockedByPeer:true,reason:'Another ParameterPlotter tab has unapplied work/);
+  assert.match(main,/workspaceSaveFailureMessage\(result,s\.persistence\.message,locale\)/);
+  assert.match(main,/lifecycleNotice='';\s*render\(\);/);
+  assert.match(main,/if\(result\.ok\)\{expectedWorkspaceRaw=result\.raw;return;\}\s*if\(hasCurrentLossSensitiveWork\(\)\)\{\s*s\.persistence=/);
 });
 
 test('current Dataset context uses the E2R metadata title and an absent-title fallback',()=>{

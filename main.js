@@ -11,7 +11,7 @@ import {sizeRadarLabels, PROTOTYPE_SPOKE_CAP, radarPositionAtPoint} from './rada
 import {startQuadrantPointDrag} from './quadrant-drag.js';
 import {keepRadarRowVisible} from './radar-list.js';
 import {containDrawerFocus, focusDrawer} from './drawer-focus.js';
-import {hasLossSensitiveWork, installBeforeUnloadProtection} from './workspace-recovery.js';
+import {hasLossSensitiveWork, hasPendingAssessmentDraft, installBeforeUnloadProtection} from './workspace-recovery.js';
 import {replacementMarkup} from './replacement-safety.js';
 import {randomDimensionValue} from './profile-random.js';
 import {candidateAuthoringAvailable, createDatasetEntity, editDatasetEntity, entityDeleteEligibility, deleteDatasetEntity, deleteDatasetDimension, rescaledAssessmentValue, applyDimensionAndRescale, upgradeDimensionAssessment} from './successor-domain.js';
@@ -34,6 +34,7 @@ import {captureDocumentScroll, restoreDocumentScroll, revealInDocument} from './
 import {placePlotContextMenuAfterTrigger, closePlotContextMenu} from './plot-context-menu-focus.js';
 import {parseDatasetHandoffFragment, fetchDatasetHandoff, parseHandoffJson, removeDatasetUrlFromHash} from './dataset-handoff.js';
 import {createWorkspaceCoordinator} from './cross-tab-workspace.js';
+import {workspaceSaveFailureMessage} from './workspace-save-feedback.js';
 const localeRequest=requestedLocale(window.location.hash);
 const savedLocale=readSavedLocale(window.localStorage);
 const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
@@ -44,6 +45,7 @@ try { expectedWorkspaceRaw=localStorage.getItem(WORKSPACE_STORAGE_KEY); } catch 
 const workspaceCoordinator=createWorkspaceCoordinator({storage:window.localStorage,lockManager:navigator.locks,windowObject:window});
 let s = load();
 workspaceCoordinator.setActive(hasLossSensitiveWork(s));
+let homePeerWorkStatus={kind:'checking'};
 let surface = 'home';
 let homeError = '';
 let handoffStatus = '';
@@ -73,6 +75,8 @@ let editEntityId = null;
 let drawerOpener = null;
 let drawerOpenerLocation = 'header';
 let replacement = null;
+let replacementRefusal = null;
+let replacementAttemptId = 0;
 const startupHandoff=parseDatasetHandoffFragment(window.location.hash,{allowLocalhost:['localhost','127.0.0.1','[::1]'].includes(window.location.hostname.toLowerCase())&&window.location.protocol==='http:'});
 let radarScroll = 0;
 let matrixDragId = null;
@@ -83,6 +87,7 @@ let entityDeleteNotice = null;
 let entityFormError = null;
 let rescaleProposal = null;
 const root = document.querySelector('#app');
+const hasCurrentLossSensitiveWork=()=>hasLossSensitiveWork(s)||hasPendingAssessmentDraft(root);
 const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name = id => { const list=entities(s),i=list.findIndex(e=>e.id===id); return i<0?'Select Entity':label(list[i],i); };
 function options(items, current, first='Choose…') { return `<option value="">${first}</option>`+items.map(x=>`<option value="${esc(x.id)}" ${x.id===current?'selected':''}>${esc(x.name)}</option>`).join(''); }
@@ -122,33 +127,33 @@ function fillDimensionForm(){const f=document.querySelector('#dimension-form'),d
 let saveScheduled=false;
 let saveChain=Promise.resolve();
 function scheduleWorkspaceSave(){
-  workspaceCoordinator.setActive(hasLossSensitiveWork(s));
+  workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());
   if(saveScheduled)return;
   saveScheduled=true;
   saveChain=saveChain.then(async()=>{
     saveScheduled=false;
     const result=await workspaceCoordinator.withWriteLock(({activeTabs})=>{
-      if(activeTabs.length)return {ok:false,reason:'Another ParameterPlotter tab has unapplied work. Save or cancel it before changing this shared workspace.'};
+      if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has unapplied work. Save or cancel it before changing this shared workspace.'};
       return saveIfCurrent(s,expectedWorkspaceRaw);
     });
     if(result.ok){expectedWorkspaceRaw=result.raw;return;}
-    if(hasLossSensitiveWork(s)){
-      s.persistence={status:'degraded',message:locale==='ja'?'別のタブに未適用の作業があるか、安全確認ができませんでした。このタブの変更はメモリに保持し、保存済みWorkspaceは置き換えていません。':'Another tab has unapplied work, or cross-tab safety could not be verified. This tab kept its changes in memory and did not replace the saved workspace.'};
+    if(hasCurrentLossSensitiveWork()){
+      s.persistence={status:'degraded',message:workspaceSaveFailureMessage(result,s.persistence.message,locale)};
       workspaceCoordinator.setActive(true);
-      lifecycleNotice=s.persistence.message;
+      lifecycleNotice='';
       render();
     }
   }).catch(error=>{
     saveScheduled=false;
-    if(hasLossSensitiveWork(s)){
+    if(hasCurrentLossSensitiveWork()){
       s.persistence={status:'degraded',message:locale==='ja'?'クロスタブ安全性を確認できないため保存を停止しました。変更はメモリに保持されています。':`Workspace save was stopped because cross-tab safety could not be verified. ${error?.message||''}`.trim()};
       workspaceCoordinator.setActive(true);
-      lifecycleNotice=s.persistence.message;
+      lifecycleNotice='';
       render();
     }
   });
 }
-function update(){workspaceCoordinator.setActive(hasLossSensitiveWork(s));scheduleWorkspaceSave();render();}
+function update(){workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();render();}
 function openConfirmation(kind,id){confirmation={kind,id};render();}
 function cancelConfirmation(){const prior=confirmation;confirmation=null;render();if(prior){const key=prior.kind==='dimension'?'deleteDimension':'entityMenu';[...root.querySelectorAll(`[data-${key.replace(/[A-Z]/g,x=>'-'+x.toLowerCase())}]`)].find(x=>x.dataset[key]===prior.id)?.focus();}}
 function trapDialogTab(event,selector){
@@ -164,7 +169,7 @@ function commitNumeric(input){
  if(error){showNumericError(input,error);input.focus();return false;}
  showNumericError(input,null);
  if(input.dataset.dirty!=='true'){input.blur();return true;}
- const [entity,dimension]=input.dataset.value.split('|');setValue(s,entity,dimension,input.value);update();return true;
+ const [entity,dimension]=input.dataset.value.split('|');if(!setValue(s,entity,dimension,input.value))return false;input.dataset.dirty='false';update();return true;
 }
 function focusMatrixRow(id){s.selected=id;matrixFocus={id,until:Date.now()+1800};closeDrawers();setTimeout(()=>{matrixFocus=null;root.querySelector('.row-target')?.classList.remove('row-target');},1800);}
 function closeDrawers(){
@@ -180,7 +185,9 @@ function closeDrawers(){
 }
 function openDrawer(kind,opener){clearTimeout(closeTimer);closingDrawer=null;drawerOpener=opener||document.activeElement;drawerOpenerLocation=drawerOpener.closest('main')?'main':'header';s.poolOpen=kind==='entity';s.dimensionOpen=kind==='dimension';update();focusDrawer(root);}
 document.addEventListener('click',e=>{
- if(replacement){if(e.target.closest('[data-cancel-replacement]')){replacement=null;render();root.querySelector('.workspace-more-trigger')?.focus();return;}if(e.target.closest('[data-confirm-replacement]')){void activateIncoming();return;}return;}
+ if(replacementRefusal&&e.target.closest('[data-retry-replacement]')){e.preventDefault();retryReplacement();return;}
+ if(replacementRefusal&&e.target.closest('[data-cancel-replacement-feedback]')){e.preventDefault();cancelReplacementFeedback();return;}
+ if(replacement){if(e.target.closest('[data-cancel-replacement]')){cancelReplacement();return;}if(e.target.closest('[data-confirm-replacement]')){void activateIncoming();return;}return;}
   if(e.target.matches('[data-cancel-confirmation]')){cancelConfirmation();return;}
   const b=e.target.closest('button,[data-action]');if(!b)return;
   const keyboardPointId=quadrantPointSelectionFromClick(e);
@@ -406,6 +413,7 @@ commitNumeric=function(input){
  showNumericError(input,null);
  if(input.dataset.dirty!=='true'){input.blur();return true;}
   if(!setValue(s,entity,dimensionId,input.value)){showNumericError(input,numericError(input.value,false,dimension));return false;}
+  input.dataset.dirty='false';
   profileRandomNotice='';const matrixWrap=s.view==='Matrix'?input.closest('.matrix-wrap'):null,matrixScrollTop=matrixWrap?.scrollTop,pageX=window.scrollX,pageY=window.scrollY;
   update();
   if(matrixWrap){const nextWrap=root.querySelector('.matrix-wrap');if(nextWrap)nextWrap.scrollTop=matrixScrollTop;window.scrollTo(pageX,pageY);}
@@ -418,7 +426,10 @@ document.addEventListener('input',e=>{
  const input=e.target;
  if(input.matches('input[type=number][data-value]')){
   const dimension=s.dimensions.find(d=>d.id===input.dataset.value.split('|')[1]);input.dataset.dirty='true';
-  showNumericError(input,numericError(input.value,input.validity.badInput,dimension));e.stopImmediatePropagation();return;
+  showNumericError(input,numericError(input.value,input.validity.badInput,dimension));
+  workspaceCoordinator.setActive(true);
+  root.querySelector('.pending-draft-status')?.removeAttribute('hidden');
+  e.stopImmediatePropagation();return;
  }
  if(input.matches('input[type=range][data-value]')){
   e.stopImmediatePropagation();const [entity,dimension]=input.dataset.value.split('|');if(!setValue(s,entity,dimension,input.value))return;
@@ -514,7 +525,7 @@ function rescaleMarkup(){
 function currentReplacementMarkup(){return replacement?replacementMarkup(replacement):'';}
 function renderHome(){
  const notice=s.persistence.status==='degraded'?s.persistence.message:'';
- root.innerHTML=homeMarkup({canContinue:s.workspaceCreated&&s.persistence.status==='saved',notice,sampleError:homeError,handoffStatus,handoffError})+footerMarkup()+(creditsOpen?creditsMarkup():'')+currentReplacementMarkup();
+ root.innerHTML=homeMarkup({canContinue:s.workspaceCreated&&s.persistence.status==='saved',notice,sampleError:homeError,handoffStatus,handoffError,peerWorkStatus:replacementRefusal?null:homePeerWorkStatus,replacementFeedback:replacementRefusal,locale})+footerMarkup()+(creditsOpen?creditsMarkup():'')+currentReplacementMarkup();
  document.title='ParameterPlotter';
  root.className='app-frame home-page';
  root.querySelectorAll('header,main,footer').forEach(element=>element.inert=Boolean(replacement));
@@ -522,6 +533,17 @@ function renderHome(){
  if(creditsOpen)root.querySelector('[data-close-credits]')?.focus();
  if(replacement)root.querySelector('[data-cancel-replacement]')?.focus();
 }
+function refreshHomePeerWorkStatus(){
+ void workspaceCoordinator.peerWorkStatus().then(status=>{
+  if(homePeerWorkStatus.kind===status.kind&&homePeerWorkStatus.count===status.count)return;
+  homePeerWorkStatus=status;
+  if(surface==='home')render();
+ });
+}
+workspaceCoordinator.subscribe(refreshHomePeerWorkStatus);
+window.addEventListener('focus',refreshHomePeerWorkStatus);
+window.addEventListener('pageshow',refreshHomePeerWorkStatus);
+refreshHomePeerWorkStatus();
 const baseRender=render;
 render=function(){
  if(surface==='home'){renderHome();return;}
@@ -567,27 +589,35 @@ function showFileError(message){if(surface==='home'){homeError=message;fileError
 function downloadJson(filename,value){
  try{const blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=filename;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return true;}catch(error){lifecycleNotice=`Download could not be handed off: ${error?.message||'browser download unavailable'}`;render();return false;}
 }
-function startReplacement(kind,incoming){const homeFocus={ 'new-dataset':'new','sample-dataset':'sample','dataset':'open','handoff-dataset':s.workspaceCreated&&s.persistence.status==='saved'?'continue':'open' };replacement={kind,state:incoming,returnSurface:surface,returnFocus:surface==='home'?homeFocus[kind]:null,datasetTitle:incoming.dataset?.extensions?.metadata?.title};render();root.querySelector('[data-cancel-replacement]')?.focus();}
-function cancelReplacement(){const request=replacement;replacement=null;surface=request?.returnSurface||'workspace';render();if(surface==='home'&&request?.returnFocus)root.querySelector(`[data-home-action="${request.returnFocus}"]`)?.focus();else if(surface==='workspace')root.querySelector('.workspace-more-trigger')?.focus();}
+function startReplacement(kind,incoming){replacementAttemptId++;replacementRefusal=null;const homeFocus={ 'new-dataset':'new','sample-dataset':'sample','dataset':'open','handoff-dataset':s.workspaceCreated&&s.persistence.status==='saved'?'continue':'open' };replacement={kind,state:incoming,returnSurface:surface,returnFocus:surface==='home'?homeFocus[kind]:null,datasetTitle:incoming.dataset?.extensions?.metadata?.title};render();root.querySelector('[data-cancel-replacement]')?.focus();}
+function cancelReplacement(){replacementAttemptId++;const request=replacement;replacement=null;replacementRefusal=null;surface=request?.returnSurface||'workspace';render();if(surface==='home'&&request?.returnFocus)root.querySelector(`[data-home-action="${request.returnFocus}"]`)?.focus();else if(surface==='workspace')root.querySelector('.workspace-more-trigger')?.focus();}
+function cancelReplacementFeedback(){replacementAttemptId++;const request=replacementRefusal?.request;replacementRefusal=null;render();const focusAction=request?.returnFocus||({ 'new-dataset':'new','sample-dataset':'sample','dataset':'open','handoff-dataset':'continue' }[request?.kind])||'new';if(request?.returnSurface==='home')root.querySelector(`[data-home-action="${focusAction}"]`)?.focus();void refreshHomePeerWorkStatus();}
+function retryReplacement(){if(!replacementRefusal||replacementRefusal.checking||replacementRefusal.canRetry===false)return;const request=replacementRefusal.request;replacementRefusal={...replacementRefusal,checking:true};render();void activateIncoming(request);}
 function receiveDataset(kind,dataset){
+ replacementRefusal=null;
  const incoming=fresh(readDataset(dataset),{ui:{workspaceCreated:true}});
- if(hasLossSensitiveWork(s))startReplacement(kind,incoming);
+ if(hasCurrentLossSensitiveWork())startReplacement(kind,incoming);
  else{replacement={kind,state:incoming,returnSurface:surface};activateIncoming();}
 }
-async function activateIncoming(){
- if(!replacement)return;
- const request=replacement,incoming=request.state;incoming.workspaceCreated=true;
+async function activateIncoming(requestOverride=null){
+ const attemptId=++replacementAttemptId,request=requestOverride||replacement;
+ if(!request)return;
+ const incoming=request.state;incoming.workspaceCreated=true;
  const result=await workspaceCoordinator.withWriteLock(({activeTabs})=>{
+  if(attemptId!==replacementAttemptId)return {ok:false,cancelled:true};
   if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has unapplied work. Save or cancel that work before opening a replacement Dataset.'};
   return saveIfCurrent(incoming,expectedWorkspaceRaw);
  });
+ if(attemptId!==replacementAttemptId||result.cancelled)return;
  if(!result.ok){
   const message=locale==='ja'?`別のタブに未適用の作業があるか、安全確認ができませんでした。現在のWorkspaceは保持されています。他のタブで作業を保存または取り消してから、再試行してください。Handoffの場合は、このタブを再読み込みしてください。`:`${result.reason||'Cross-tab safety could not be verified.'} The current workspace was kept. Finish or cancel work in the other tab, then retry or reload this Handoff tab.`;
   if(request.kind==='handoff-dataset'){replacement=null;showHandoffFailure(message);return;}
-  if(replacement!==request){homeError=message;fileError=message;render();return;}
-  fileError=message;lifecycleNotice=message;render();root.querySelector('[data-confirm-replacement]')?.focus();return;
+  if(request.returnSurface!=='home'){replacement=null;lifecycleNotice=message;render();root.querySelector('.workspace-more-trigger')?.focus();return;}
+  if(!requestOverride&&replacement!==request)return;
+  const kind=result.blockedByPeer?'peer-work':result.conflict?'stale-revision':/was written/i.test(result.reason||'')?'write-unverified':'unknown';
+  replacement=null;replacementRefusal={request,kind,reason:result.reason||'Cross-tab safety could not be verified.',canRetry:kind==='peer-work'||kind==='unknown',checking:false};render();root.querySelector('[data-retry-replacement], [data-cancel-replacement-feedback]')?.focus();return;
  }
- expectedWorkspaceRaw=result.raw;replacement=null;startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';handoffError='';if(request.kind!=='handoff-dataset')clearDatasetHandoffFragment();surface='workspace';s=incoming;fileError='';homeError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;datasetTitleDraft=null;s.pendingDraft=false;workspaceCoordinator.setActive(hasLossSensitiveWork(s));
+ expectedWorkspaceRaw=result.raw;replacement=null;replacementRefusal=null;startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';handoffError='';if(request.kind!=='handoff-dataset')clearDatasetHandoffFragment();surface='workspace';s=incoming;fileError='';homeError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;datasetTitleDraft=null;s.pendingDraft=false;workspaceCoordinator.setActive(hasLossSensitiveWork(s));
  lifecycleNotice='';
  render();
  const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}
@@ -626,7 +656,7 @@ function exportCurrentDataset(){
  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);s.validation=validation;
  if(!validation.valid){s.readOnly=true;lifecycleNotice='Export blocked: Validator errors remain. No repair or normalization was applied.';render();return;}
  if(!downloadJson('parameterplotter-dataset.e2r.json',dataset))return;
- exportBaseline(s);workspaceCoordinator.setActive(hasLossSensitiveWork(s));scheduleWorkspaceSave();lifecycleNotice='E2R JSON download was handed to the browser. This Dataset snapshot is now the clean Export baseline; keep the downloaded file yourself. Browser-local persistence is unchanged.';render();
+ exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();lifecycleNotice='E2R JSON download was handed to the browser. This Dataset snapshot is now the clean Export baseline; keep the downloaded file yourself. Browser-local persistence is unchanged.';render();
 }
 function relationDeletionFeedback(id){
  const result=entityDeleteEligibility(s,id);if(!result.allowed){entityDeleteNotice={id,reason:result.reason,relations:result.relations||[]};render();root.querySelector('.confirm-dialog button')?.focus();return;}
@@ -670,9 +700,9 @@ function captureSuccessorClick(event){
  if(target.closest('[data-edit-dimension]')){event.preventDefault();event.stopImmediatePropagation();dimensionDraft=null;dimensionError=null;dimensionWarning=null;s.editDimension=target.closest('[data-edit-dimension]').dataset.editDimension;s.dimensionFormOpen=true;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}
  if(target.closest('[data-delete-dimension]')){event.preventDefault();event.stopImmediatePropagation();const id=target.closest('[data-delete-dimension]').dataset.deleteDimension;if(candidateAuthoringAvailable(s))openConfirmation('dimension',id);return;}
  if(target.dataset.action==='add-entity'){event.preventDefault();event.stopImmediatePropagation();entityFormError=null;editEntityId=null;s.entityFormOpen=true;entityMenu=null;pendingEntityDraft={editId:null,name:'',description:''};render();root.querySelector('#entity-form [name="dataset-entity-name"]')?.focus();return;}
- if(target.dataset.action==='cancel-entity-form'){event.preventDefault();event.stopImmediatePropagation();entityFormError=null;s.entityFormOpen=false;editEntityId=null;pendingEntityDraft=null;s.pendingDraft=false;workspaceCoordinator.setActive(hasLossSensitiveWork(s));render();return;}
+ if(target.dataset.action==='cancel-entity-form'){event.preventDefault();event.stopImmediatePropagation();entityFormError=null;s.entityFormOpen=false;editEntityId=null;pendingEntityDraft=null;s.pendingDraft=false;workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());render();return;}
  if(target.dataset.action==='add-dimension'){event.preventDefault();event.stopImmediatePropagation();if(!candidateAuthoringAvailable(s))return;dimensionQuery='';dimensionDraft=null;dimensionError=null;s.editDimension=null;s.dimensionFormOpen=true;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}
- if(target.dataset.action==='cancel-dimension-form'){event.preventDefault();event.stopImmediatePropagation();dimensionDraft=null;dimensionError=null;s.pendingDraft=false;s.dimensionFormOpen=false;s.editDimension=null;workspaceCoordinator.setActive(hasLossSensitiveWork(s));render();return;}
+ if(target.dataset.action==='cancel-dimension-form'){event.preventDefault();event.stopImmediatePropagation();dimensionDraft=null;dimensionError=null;s.pendingDraft=false;s.dimensionFormOpen=false;s.editDimension=null;workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());render();return;}
  if(target.dataset.action==='clear-axis-assessments'){event.preventDefault();event.stopImmediatePropagation();openConfirmation('axisClear',target.dataset.entity);return;}
  if(target.matches('[data-cancel-confirmation]')){event.preventDefault();event.stopImmediatePropagation();cancelConfirmation();return;}
  if(target.hasAttribute('data-confirm-delete')&&confirmation){event.preventDefault();event.stopImmediatePropagation();const request=confirmation;confirmation=null;
@@ -750,7 +780,7 @@ document.addEventListener('input',event=>{
  if(s.pendingDraft)workspaceCoordinator.setActive(true);
  if(s.pendingDraft)root.querySelector('.pending-draft-status')?.removeAttribute('hidden');
 },true);
-installBeforeUnloadProtection(window,()=>s);
+installBeforeUnloadProtection(window,()=>({...s,pendingDraft:s.pendingDraft||hasPendingAssessmentDraft(root)}));
 document.addEventListener('keydown',event=>{
  if(replacement||entityDeleteNotice||rescaleProposal){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();if(replacement){cancelReplacement();return;}if(entityDeleteNotice)entityDeleteNotice=null;if(rescaleProposal)rescaleProposal=null;render();}else if(event.key==='Tab')trapDialogTab(event,'.confirm-dialog');}
 },true);

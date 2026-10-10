@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activeWorkspaceTabs,createWorkspaceCoordinator} from './cross-tab-workspace.js';
+import {activeWorkspaceTabs,createWorkspaceCoordinator,inspectWorkspacePeerWork} from './cross-tab-workspace.js';
 import {fresh,saveIfCurrent,WORKSPACE_STORAGE_KEY} from './model.js';
 
 class MemoryStorage {
@@ -54,4 +54,47 @@ test('workspace coordination fails closed when Web Locks are unavailable',async(
   const result=await coordinator.withWriteLock(()=>({ok:true}));
   assert.equal(result.ok,false);
   assert.match(result.reason,/cannot safely coordinate/i);
+});
+
+test('early warning reports only active same-app peers and ignores unrelated app locks',()=>{
+  const storage=new MemoryStorage();
+  storage.setItem('e2r:parameter-plotter:workspace-tab:busy','{"tabId":"busy","active":true}');
+  storage.setItem('e2r:parameter-plotter:workspace-tab:idle','{"tabId":"idle","active":false}');
+  const held=new Set([
+    'e2r:parameter-plotter:workspace-tab:busy',
+    'e2r:parameter-plotter:workspace-tab:idle',
+    'e2r:narrativeline:workspace-tab:other-app',
+  ]);
+  assert.deepEqual(inspectWorkspacePeerWork(storage,held,'self'),{kind:'work',count:1});
+  assert.deepEqual(inspectWorkspacePeerWork(storage,new Set(['e2r:parameter-plotter:workspace-tab:idle']),'self'),{kind:'clear'});
+});
+
+test('early warning is uncertain when an active peer lock has no trustworthy status marker',()=>{
+  assert.deepEqual(inspectWorkspacePeerWork(new MemoryStorage(),new Set(['e2r:parameter-plotter:workspace-tab:peer']),'self'),{kind:'unknown'});
+});
+
+test('coordinator exposes peer status and reflects peer work changes',async()=>{
+  const storage=new MemoryStorage(),locks=makeLockManager();
+  const first=createWorkspaceCoordinator({storage,lockManager:locks,windowObject:null,tabId:'first'});
+  const second=createWorkspaceCoordinator({storage,lockManager:locks,windowObject:null,tabId:'second'});
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.deepEqual(await second.peerWorkStatus(),{kind:'clear'});
+  first.setActive(true);
+  assert.deepEqual(await second.peerWorkStatus(),{kind:'work',count:1});
+  first.setActive(false);
+  assert.deepEqual(await second.peerWorkStatus(),{kind:'clear'});
+  first.dispose();second.dispose();
+});
+
+test('coordinator notifies Home only for ParameterPlotter peer-status changes',async()=>{
+  const listeners=new Map();
+  const target={addEventListener(name,listener){listeners.set(name,listener);}};
+  const coordinator=createWorkspaceCoordinator({storage:new MemoryStorage(),lockManager:makeLockManager(),windowObject:target,tabId:'self'});
+  let notifications=0;
+  coordinator.subscribe(()=>{notifications++;});
+  listeners.get('storage')({key:'e2r:narrativeline:workspace-tab:peer'});
+  assert.equal(notifications,0);
+  listeners.get('storage')({key:'e2r:parameter-plotter:workspace-tab:peer'});
+  assert.equal(notifications,1);
+  coordinator.dispose();
 });
