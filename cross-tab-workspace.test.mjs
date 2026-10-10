@@ -20,7 +20,7 @@ function makeLockManager(){
       const callback=typeof optionsOrCallback==='function'?optionsOrCallback:maybeCallback;
       if(held.has(name))return Promise.resolve(callback(null));
       const token={name};held.set(name,token);
-      return Promise.resolve(callback(token)).finally(()=>{if(name!=='e2r:parameter-plotter:workspace-tab:'+name.split(':').at(-1))held.delete(name);});
+      return Promise.resolve(callback(token)).finally(()=>{held.delete(name);});
     },
     async query(){return {held:[...held.values()]};},
   };
@@ -97,4 +97,29 @@ test('coordinator notifies Home only for ParameterPlotter peer-status changes',a
   listeners.get('storage')({key:'e2r:parameter-plotter:workspace-tab:peer'});
   assert.equal(notifications,1);
   coordinator.dispose();
+});
+
+test('pagehide releases tab coordination and persisted pageshow reacquires it with pending-work status',async()=>{
+  const storage=new MemoryStorage(),locks=makeLockManager(),windowTarget=new EventTarget();
+  const coordinator=createWorkspaceCoordinator({storage,lockManager:locks,windowObject:windowTarget,tabId:'bfcache'});
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(locks.held.has(coordinator.statusKey),true);
+  coordinator.setActive(true);
+  assert.equal(JSON.parse(storage.getItem(coordinator.statusKey)).active,true);
+
+  const pagehide=new Event('pagehide');Object.defineProperty(pagehide,'persisted',{value:true});windowTarget.dispatchEvent(pagehide);
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(storage.getItem(coordinator.statusKey),null);
+  assert.equal(locks.held.has(coordinator.statusKey),false);
+
+  const pageshow=new Event('pageshow');Object.defineProperty(pageshow,'persisted',{value:true});windowTarget.dispatchEvent(pageshow);
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(locks.held.has(coordinator.statusKey),true);
+  assert.equal(JSON.parse(storage.getItem(coordinator.statusKey)).active,true);
+  assert.deepEqual(await coordinator.peerWorkStatus(),{kind:'clear'});
+
+  coordinator.dispose();
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(storage.getItem(coordinator.statusKey),null);
+  assert.equal(locks.held.has(coordinator.statusKey),false);
 });
