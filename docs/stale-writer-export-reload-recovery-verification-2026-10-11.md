@@ -140,3 +140,38 @@ Codex reproduced the core sequence in a newly launched, isolated headless Edge p
 - `npm.cmd run check` during this investigation passed syntax checks for 37 application modules and 167/167 tests. This is not evidence that the Test 32 ordering is safe; the orchestration case is not covered by those tests.
 - No runtime fix was made, as requested. Potential next-step choices for Human review are: (a) make a refused candidate remain blocked until a clearly deliberate retry/resolve action; (b) separate E2R JSON Export from Workspace persistence so Export alone cannot commit a previously refused in-memory candidate; or (c) adopt another bounded rule that preserves apply/export semantics and makes the save authorization explicit. These choices affect recovery UX and persistence semantics, so this document does not select one.
 - **Open:** determine the intended authorization meaning of Export after a peer refusal, whether refusal state must persist across automatic saves, and how the originating tab is informed when an Export-time Workspace save is refused. Until a Human-approved implementation and focused regression verification exist, treat this path as a safety issue, keep Cross-Context Workspace Safety pending, and retain PUBLIC RELEASE NO-GO.
+
+## Test 32 safety fix — rejected Workspace write isolation
+
+Status: Runtime fix implemented and Codex-verified in an isolated Edge profile. Human Browser Acceptance for the fix is pending. The incident record above remains the historical account of the failure and reproduction; this section records the later Human-approved resolution.
+
+### Adopted Human principles
+
+The Human approved these rules for ParameterPlotter:
+
+1. Export is not approval to replace the shared browser-local Workspace.
+2. A refused Workspace write must not later succeed implicitly through automatic saving.
+3. The UI must report the browser-local Workspace save result accurately.
+
+These rules preserve the existing Dataset replacement confirmation, Web Lock coordination, saved-revision comparison, fail-closed behavior, and Export / Reload recovery. They are not promoted to other E2R applications.
+
+### Implementation
+
+- Added a tab-lifetime Workspace write gate shared by automatic Workspace saves and incoming Dataset replacement writes. A refused or unverifiable write remains latched for the page lifetime; Export, later state notifications, and automatic saves cannot retry it against a changed peer state or unchanged serialized revision.
+- Reload is the normal recovery boundary: a fresh page reads the currently persisted Workspace. Where an existing replacement flow already offers an explicit Retry, that user action clears the local gate only for the retry attempt, which re-runs the existing peer and saved-revision checks. It does not bypass either check.
+- E2R JSON Export remains available for the in-memory Dataset and does not clear the write refusal. Its browser download request remains a separate notice; the app still does not claim that a file completed downloading. When the associated browser-local save is refused, both facts remain visible: the JSON download was requested, while Workspace saving is degraded or paused.
+- Workspace status now shows a pending save until the asynchronous result is known, changes to saved only after verified success, and changes to degraded / unsaved after refusal even if Export has just cleared the Dataset-modified flag. This corrects the earlier Test 32-A status that could continue to read as saved after the browser-local write had been refused.
+- No serialization format, Dataset content, schema, Candidate status, or Application Version changed.
+
+### Verification
+
+- **Automated Test PASS:** the Test 32 sequence is covered by a two-tab gate orchestration test: B's initial peer refusal, A's Export-time peer refusal, then B's Export follow-up. The saved revision remains A and no write is made after B's refusal. Additional tests cover sticky stale-revision and coordination failures, explicit replacement Retry, normal successful writes, and accurate save-status copy.
+- **Codex Browser Verified:** Microsoft Edge 154 headless, launched by Codex with a newly created unique profile and download folder. The app was served from the working tree at `http://127.0.0.1:5321/`; two tabs shared that exact origin and used the disposable bundled Ashen Crown sample. B's Apply was refused while A was active. A's Export downloaded and parsed as title A, while its Workspace-save refusal changed its UI to degraded / unsaved. B's Export downloaded and parsed as title B, but the shared localStorage Workspace remained title A. After closing the isolated A tab, reloading B and choosing Continue Editing restored A; a subsequent edit saved successfully. The test kept separate copies of both same-named browser downloads for JSON inspection.
+- The first browser attempt used an old temporary profile that contained restored tabs and a Japanese locale. It was not counted as verification. A subsequent run used a new GUID-named profile; its test completed successfully. The app server and browser profiles were isolated from the Human's existing `5312` environment and its downloads.
+- **Final automated verification:** `npm.cmd run check` passed syntax checks for 38 application modules and all 176/176 tests. `npm.cmd run build` generated 60 static Pages files. `git diff --check` passed.
+
+### Acceptance and release boundary
+
+- Test 30-A-N remains Human Browser ACCEPTED / PASS only for its recorded operations. Test 31 remains Codex Browser Verified for its recorded ordering and copy review. Neither result is rewritten by this fix.
+- The Test 32 Human Browser report remains an Incident / FAIL history. This Codex result does not promote the fix to Human Acceptance; Human review of the repaired ordering and status feedback is pending.
+- Cross-Context Workspace Safety remains pending overall. PUBLIC RELEASE NO-GO remains in force.

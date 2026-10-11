@@ -14,6 +14,8 @@ export function homeMarkup({canContinue=false,notice='',sampleError='',handoffSt
   const ja=locale==='ja';
   const feedbackCopy=replacementFeedback?.kind==='peer-work'
     ? ja?'別のParameterPlotterタブに保護が必要な作業があります。この置換操作では保存済みWorkspaceは変更されていません。別タブの入力を適用または取り消し、残したいDatasetの変更をExportしてから再試行してください。':'Another ParameterPlotter tab has work that needs protection. This replacement attempt did not change the saved workspace. Apply or cancel open input in that tab, and export any Dataset changes you need to keep before retrying.'
+    :replacementFeedback?.kind==='prior-save-refusal'
+      ? ja?'以前のWorkspace保存が安全確認で拒否されたため、このタブからの保存はReloadまで停止しています。必要なDatasetをE2R JSONとしてExportし、ダウンロードを確認してからReloadし、保存済みWorkspaceを開いてください。':'Workspace saving in this tab remains paused after an earlier safety refusal. Export any Dataset work you need as E2R JSON and check the download, then reload and open the saved Workspace.'
     :replacementFeedback?.kind==='stale-revision'
       ? ja?'別のタブで保存済みWorkspaceが更新されたため、置換を停止しました。このタブの変更はメモリに保持されています。残したい作業をE2R JSONへExportし、ダウンロードを確認してから、このタブを再読み込みし、「Continue Editing」を選んで最新の保存状態を開いてください。':'Another tab changed the saved workspace revision, so replacement stopped. Your current changes remain in memory. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.'
       :replacementFeedback?.kind==='write-unverified'
@@ -22,7 +24,7 @@ export function homeMarkup({canContinue=false,notice='',sampleError='',handoffSt
   const feedbackTitle=ja?'Datasetの置換は完了しませんでした':'Dataset replacement was not completed';
   const detailsLabel=ja?'詳細':'Details';
   const retryLabel=replacementFeedback?.checking?(ja?'安全確認中…':'Checking workspace safety...'):(ja?'置換を再試行':'Retry replacement');
-  const cancelLabel=(replacementFeedback?.kind==='write-unverified'||replacementFeedback?.kind==='stale-revision')?(ja?'通知を閉じる':'Close notice'):(ja?'置換を取り消す':'Cancel replacement');
+  const cancelLabel=(replacementFeedback?.kind==='write-unverified'||replacementFeedback?.kind==='stale-revision'||replacementFeedback?.kind==='prior-save-refusal')?(ja?'通知を閉じる':'Close notice'):(ja?'置換を取り消す':'Cancel replacement');
   const showFeedbackReason=replacementFeedback?.reason&&!['peer-work','stale-revision'].includes(replacementFeedback.kind);
   const feedback=replacementFeedback?`<section class="home-notice home-replacement-feedback" role="${replacementFeedback.checking?'status':'alert'}" aria-live="polite"><h2>${feedbackTitle}</h2><p>${escapeHtml(feedbackCopy)}</p>${showFeedbackReason?`<p class="replacement-feedback-reason"><strong>${detailsLabel}:</strong> ${escapeHtml(replacementFeedback.reason)}</p>`:''}<div class="home-replacement-feedback-actions">${replacementFeedback.canRetry===false?'':`<button data-retry-replacement ${replacementFeedback.checking?'disabled':''}>${retryLabel}</button>`}<button data-cancel-replacement-feedback>${cancelLabel}</button></div></section>` : '';
   return `<header class="app-header home-header"><a class="app-brand" href="#home">ParameterPlotter</a></header>

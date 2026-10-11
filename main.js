@@ -35,6 +35,7 @@ import {placePlotContextMenuAfterTrigger, closePlotContextMenu} from './plot-con
 import {parseDatasetHandoffFragment, fetchDatasetHandoff, parseHandoffJson, removeDatasetUrlFromHash} from './dataset-handoff.js';
 import {createWorkspaceCoordinator} from './cross-tab-workspace.js';
 import {workspaceSaveFailureMessage} from './workspace-save-feedback.js';
+import {createWorkspaceWriteGate} from './workspace-write-gate.js';
 const localeRequest=requestedLocale(window.location.hash);
 const savedLocale=readSavedLocale(window.localStorage);
 const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
@@ -43,6 +44,7 @@ let localeConflict=initialLocale.conflict;
 let expectedWorkspaceRaw=null;
 try { expectedWorkspaceRaw=localStorage.getItem(WORKSPACE_STORAGE_KEY); } catch {}
 const workspaceCoordinator=createWorkspaceCoordinator({storage:window.localStorage,lockManager:navigator.locks,windowObject:window});
+const workspaceWriteGate=createWorkspaceWriteGate();
 let s = load();
 workspaceCoordinator.setActive(hasLossSensitiveWork(s));
 let homePeerWorkStatus={kind:'checking'};
@@ -126,31 +128,42 @@ function renderDimensionList(){const q=dimensionQuery.toLowerCase();document.que
 function fillDimensionForm(){const f=document.querySelector('#dimension-form'),d=dimensionDraft||s.dimensions.find(x=>x.id===s.editDimension);if(!d||!f)return;f.elements.namedItem('dimension-name').value=d.name;f.elements.namedItem('dimension-low').value=d.low;f.elements.namedItem('dimension-high').value=d.high;}
 let saveScheduled=false;
 let saveChain=Promise.resolve();
-function scheduleWorkspaceSave(){
+let exportNoticePending=false;
+function scheduleWorkspaceSave({exportRequested=false}={}){
+  if(exportRequested)exportNoticePending=true;
   workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());
+  if(workspaceWriteGate.refusal){
+    s.persistence={status:'degraded',message:workspaceSaveFailureMessage(workspaceWriteGate.refusal,s.persistence.message,locale,{priorRefusal:true})};
+    workspaceCoordinator.setActive(true);
+    if(!exportRequested)lifecycleNotice='';
+    exportNoticePending=false;
+    render();
+    return;
+  }
   if(saveScheduled)return;
   saveScheduled=true;
+  s.persistence={...s.persistence,status:'saving'};
   saveChain=saveChain.then(async()=>{
     saveScheduled=false;
-    const result=await workspaceCoordinator.withWriteLock(({activeTabs})=>{
+    const result=await workspaceWriteGate.run(()=>workspaceCoordinator.withWriteLock(({activeTabs})=>{
       if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before changing this shared workspace.'};
       return saveIfCurrent(s,expectedWorkspaceRaw);
-    });
-    if(result.ok){expectedWorkspaceRaw=result.raw;return;}
-    if(hasCurrentLossSensitiveWork()){
-      s.persistence={status:'degraded',message:workspaceSaveFailureMessage(result,s.persistence.message,locale)};
-      workspaceCoordinator.setActive(true);
-      lifecycleNotice='';
-      render();
-    }
+    }));
+    if(result.ok){expectedWorkspaceRaw=result.raw;exportNoticePending=false;render();return;}
+    if(result.cancelled)return;
+    const refusal=result.priorRefusal||result;
+    s.persistence={status:'degraded',message:workspaceSaveFailureMessage(refusal,s.persistence.message,locale,{priorRefusal:Boolean(result.priorRefusal)})};
+    workspaceCoordinator.setActive(true);
+    if(!exportNoticePending)lifecycleNotice='';
+    exportNoticePending=false;
+    render();
   }).catch(error=>{
     saveScheduled=false;
-    if(hasCurrentLossSensitiveWork()){
       s.persistence={status:'degraded',message:locale==='ja'?'クロスタブ安全性を確認できないため保存を停止しました。変更はメモリに保持されています。':`Workspace save was stopped because cross-tab safety could not be verified. ${error?.message||''}`.trim()};
       workspaceCoordinator.setActive(true);
-      lifecycleNotice='';
+      if(!exportNoticePending)lifecycleNotice='';
+      exportNoticePending=false;
       render();
-    }
   });
 }
 function update(){workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();render();}
@@ -562,10 +575,10 @@ render=function(){
  const subtitle=root.querySelector('header .sub');if(subtitle)subtitle.textContent='Author E2R Entities and Dimension Assessments. Browser-local persistence is separate from E2R Dataset Export.';
  const actions=root.querySelector('.header-actions');if(actions)actions.innerHTML=runtimeHeader();
  const main=root.querySelector(':scope > main'),toolbar=document.createElement('nav');toolbar.className='workspace-action-bar';toolbar.setAttribute('aria-label','Workspace actions');toolbar.innerHTML=workspaceActionsMarkup({readOnly:s.readOnly,authoringUnavailable:s.readOnly||s.candidateUnsupported});
- const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);topline.innerHTML=`<div class="dataset-context"><span>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'} · ${s.dimensions.length} Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${s.persistence.status==='saved'?'Saved locally':'Degraded / unsaved'}</span>`;}
+ const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);const workspaceStatus=s.persistence.status==='saved'?'Saved locally':s.persistence.status==='saving'?'Saving locally…':'Degraded / unsaved';topline.innerHTML=`<div class="dataset-context"><span>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'} · ${s.dimensions.length} Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${workspaceStatus}</span>`;}
  const title=s.dataset.extensions?.metadata?.title??'',editor=document.createElement('form');editor.className='dataset-title-editor';editor.innerHTML=`<label for="dataset-title-input">Dataset title</label><div class="dataset-title-editor-controls"><input id="dataset-title-input" name="dataset-title" type="text" value="${esc(datasetTitleDraft??title)}" ${s.readOnly?'disabled':''}><button type="submit" ${s.readOnly||(datasetTitleDraft??title)===title?'disabled':''}>Apply</button></div>`;
  let status=root.querySelector('.successor-status');if(!status){status=document.createElement('section');status.className='successor-status';}
- if(status)status.innerHTML=`<div class="persistence-status" role="status"><strong>${s.persistence.status==='saved'?'Workspace saved in this browser':'Browser-local workspace degraded / unsaved'}</strong>${s.persistence.message?`<p>${esc(s.persistence.message)}</p>`:'<p>To save an E2R Dataset file, use Export E2R JSON.</p>'}</div><p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p>${lifecycleNotice?`<p class="lifecycle-notice" role="status">${esc(lifecycleNotice)}</p>`:''}${diagnosticMarkup()}`;
+ if(status){const persistenceLabel=s.persistence.status==='saved'?'Workspace saved in this browser':s.persistence.status==='saving'?'Saving browser-local workspace…':'Browser-local workspace degraded / unsaved';const persistenceDetail=s.persistence.message?`<p>${esc(s.persistence.message)}</p>`:s.persistence.status==='saving'?'<p>Waiting for browser-local save confirmation.</p>':'<p>To save an E2R Dataset file, use Export E2R JSON.</p>';status.innerHTML=`<div class="persistence-status" role="status"><strong>${persistenceLabel}</strong>${persistenceDetail}</div><p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p>${lifecycleNotice?`<p class="lifecycle-notice" role="status">${esc(lifecycleNotice)}</p>`:''}${diagnosticMarkup()}`;}
  main?.prepend(editor,toolbar,status);
  const entityDrawer=root.querySelector('.drawer[aria-label="Entity Pool"]');if(entityDrawer){const p=entityDrawer.querySelector(':scope > p');if(p)p.textContent='Entities are edited directly in this Dataset. Dimensions and values are saved in the Dataset and included in exports.';const action=entityDrawer.querySelector('.pool-action button');if(action){action.textContent='Add Entity';action.disabled=s.readOnly;action.dataset.action='add-entity';}}
  const entityForm=root.querySelector('#entity-form');if(entityForm){const heading=entityForm.querySelector('h3');if(heading)heading.textContent=editEntityId?'Edit Entity':'New Entity';const nameInput=entityForm.elements.namedItem('temporary-entity-name'),description=entityForm.elements.namedItem('temporary-entity-description'),entity=s.dataset.entities.find(item=>item?.id===editEntityId);nameInput.name='dataset-entity-name';nameInput.removeAttribute('required');nameInput.removeAttribute('maxlength');nameInput.placeholder='Optional Entity name';description.name='dataset-entity-description';nameInput.value=pendingEntityDraft?.editId===editEntityId?pendingEntityDraft.name:(entity?.name??'');description.value=pendingEntityDraft?.editId===editEntityId?pendingEntityDraft.description:(entity?.description??'');const nameLabel=nameInput.closest('label'),descriptionLabel=description.closest('label');if(nameLabel)nameLabel.firstChild.textContent='Name (optional)';if(descriptionLabel)descriptionLabel.firstChild.textContent='Description (optional)';if(entityFormError){const error=document.createElement('p');error.className='field-error';error.setAttribute('role','alert');error.textContent=entityFormError;entityForm.insertBefore(error,entityForm.querySelector('.actions'));}}
@@ -592,7 +605,7 @@ function downloadJson(filename,value){
 function startReplacement(kind,incoming){replacementAttemptId++;replacementRefusal=null;const homeFocus={ 'new-dataset':'new','sample-dataset':'sample','dataset':'open','handoff-dataset':s.workspaceCreated&&s.persistence.status==='saved'?'continue':'open' };replacement={kind,state:incoming,returnSurface:surface,returnFocus:surface==='home'?homeFocus[kind]:null,datasetTitle:incoming.dataset?.extensions?.metadata?.title};render();root.querySelector('[data-cancel-replacement]')?.focus();}
 function cancelReplacement(){replacementAttemptId++;const request=replacement;replacement=null;replacementRefusal=null;surface=request?.returnSurface||'workspace';render();if(surface==='home'&&request?.returnFocus)root.querySelector(`[data-home-action="${request.returnFocus}"]`)?.focus();else if(surface==='workspace')root.querySelector('.workspace-more-trigger')?.focus();}
 function cancelReplacementFeedback(){replacementAttemptId++;const request=replacementRefusal?.request;replacementRefusal=null;render();const focusAction=request?.returnFocus||({ 'new-dataset':'new','sample-dataset':'sample','dataset':'open','handoff-dataset':'continue' }[request?.kind])||'new';if(request?.returnSurface==='home')root.querySelector(`[data-home-action="${focusAction}"]`)?.focus();void refreshHomePeerWorkStatus();}
-function retryReplacement(){if(!replacementRefusal||replacementRefusal.checking||replacementRefusal.canRetry===false)return;const request=replacementRefusal.request;replacementRefusal={...replacementRefusal,checking:true};render();void activateIncoming(request);}
+function retryReplacement(){if(!replacementRefusal||replacementRefusal.checking||replacementRefusal.canRetry===false)return;const request=replacementRefusal.request;workspaceWriteGate.retryExplicitly();replacementRefusal={...replacementRefusal,checking:true};render();void activateIncoming(request);}
 function receiveDataset(kind,dataset){
  replacementRefusal=null;
  const incoming=fresh(readDataset(dataset),{ui:{workspaceCreated:true}});
@@ -603,14 +616,23 @@ async function activateIncoming(requestOverride=null){
  const attemptId=++replacementAttemptId,request=requestOverride||replacement;
  if(!request)return;
  const incoming=request.state;incoming.workspaceCreated=true;
- const result=await workspaceCoordinator.withWriteLock(({activeTabs})=>{
+ const result=await workspaceWriteGate.run(()=>workspaceCoordinator.withWriteLock(({activeTabs})=>{
   if(attemptId!==replacementAttemptId)return {ok:false,cancelled:true};
   if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before opening a replacement Dataset.'};
   return saveIfCurrent(incoming,expectedWorkspaceRaw);
- });
+ }));
  if(attemptId!==replacementAttemptId||result.cancelled)return;
  if(!result.ok){
+  if(result.priorRefusal){
+   const message=locale==='ja'?'このタブのWorkspace保存は安全のため停止したままです。必要なDatasetをE2R JSONとしてExportし、ダウンロードを確認してからReloadし、保存済みWorkspaceを開いてください。':'Workspace saving in this tab remains paused after an earlier safety refusal. Export any Dataset work you need as E2R JSON and check the download, then reload and open the saved Workspace.';
+   replacement=null;s.persistence={status:'degraded',message};workspaceCoordinator.setActive(true);
+   if(request.returnSurface==='home')replacementRefusal={request,kind:'prior-save-refusal',reason:message,canRetry:false,checking:false};
+   else lifecycleNotice=message;
+   render();
+   return;
+  }
   const message=locale==='ja'?`別のタブに未適用の作業があるか、安全確認ができませんでした。現在のWorkspaceは保持されています。他のタブで作業を保存または取り消してから、再試行してください。Handoffの場合は、このタブを再読み込みしてください。`:`${result.reason||'Cross-tab safety could not be verified.'} The current workspace was kept. Finish or cancel work in the other tab, then retry or reload this Handoff tab.`;
+  s.persistence={status:'degraded',message:workspaceSaveFailureMessage(result,s.persistence.message,locale)};workspaceCoordinator.setActive(true);
   if(request.kind==='handoff-dataset'){replacement=null;showHandoffFailure(message);return;}
   if(request.returnSurface!=='home'){replacement=null;lifecycleNotice=message;render();root.querySelector('.workspace-more-trigger')?.focus();return;}
   if(!requestOverride&&replacement!==request)return;
@@ -656,7 +678,7 @@ function exportCurrentDataset(){
  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);s.validation=validation;
  if(!validation.valid){s.readOnly=true;lifecycleNotice='Export blocked: Validator errors remain. No repair or normalization was applied.';render();return;}
  if(!downloadJson('parameterplotter-dataset.e2r.json',dataset))return;
- exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();lifecycleNotice=locale==='ja'?'E2R JSONのダウンロードをブラウザーに依頼しました。完了はこの画面では確認できないため、必要なファイルがダウンロードされたことを確認してください。ブラウザー内Workspaceへの保存は別の処理です。':'The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.';render();
+ exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave({exportRequested:true});lifecycleNotice=locale==='ja'?'E2R JSONのダウンロードをブラウザーに依頼しました。完了はこの画面では確認できないため、必要なファイルがダウンロードされたことを確認してください。ブラウザー内Workspaceへの保存は別の処理です。':'The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.';render();
 }
 function relationDeletionFeedback(id){
  const result=entityDeleteEligibility(s,id);if(!result.allowed){entityDeleteNotice={id,reason:result.reason,relations:result.relations||[]};render();root.querySelector('.confirm-dialog button')?.focus();return;}

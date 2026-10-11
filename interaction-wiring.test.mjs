@@ -93,8 +93,13 @@ test('workspace persistence refusal presents one specific status instead of dupl
   assert.match(main,/The browser was asked to download the E2R JSON\. This app cannot confirm that the download completed/);
   assert.match(main,/ブラウザーに依頼しました。完了はこの画面では確認できないため/);
   assert.match(main,/workspaceSaveFailureMessage\(result,s\.persistence\.message,locale\)/);
-  assert.match(main,/lifecycleNotice='';\s*render\(\);/);
-  assert.match(main,/if\(result\.ok\)\{expectedWorkspaceRaw=result\.raw;return;\}\s*if\(hasCurrentLossSensitiveWork\(\)\)\{\s*s\.persistence=/);
+  assert.match(main,/if\(!exportNoticePending\)lifecycleNotice='';\s*exportNoticePending=false;\s*render\(\);/);
+  assert.match(main,/scheduleWorkspaceSave\(\{exportRequested:true\}\)/);
+  assert.match(main,/workspaceWriteGate\.run\(\(\)=>workspaceCoordinator\.withWriteLock/);
+  assert.match(main,/if\(result\.ok\)\{expectedWorkspaceRaw=result\.raw;exportNoticePending=false;render\(\);return;\}/);
+  assert.match(main,/const refusal=result\.priorRefusal\|\|result;\s*s\.persistence=\{status:'degraded'/);
+  assert.match(main,/function retryReplacement\(\)\{[^}]*workspaceWriteGate\.retryExplicitly\(\)/);
+  assert.match(main,/s\.persistence\.status==='saving'\?'Saving locally/);
   assert.match(translateUiText('Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.'),/別のParameterPlotterタブで保存済みWorkspaceが更新されました/);
   assert.match(translateUiText('The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.'),/ダウンロードをブラウザーに依頼しました/);
 });

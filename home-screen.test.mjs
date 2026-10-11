@@ -244,3 +244,11 @@ test('stale saved revisions direct the user to reload instead of retrying the sa
   assert.match(japanese,/ダウンロードを確認してから/);
   assert.match(japanese,/「Continue Editing」を選んで最新の保存状態を開いてください/);
 });
+
+test('a prior refused workspace write explains the reload boundary without an automatic retry',()=>{
+  const markup=homeMarkup({replacementFeedback:{kind:'prior-save-refusal',reason:'Saving stays paused until reload.',canRetry:false},locale:'en'});
+  assert.match(markup,/paused after an earlier safety refusal/);
+  assert.match(markup,/check the download, then reload and open the saved Workspace/);
+  assert.doesNotMatch(markup,/data-retry-replacement/);
+  assert.match(markup,/Close notice/);
+});

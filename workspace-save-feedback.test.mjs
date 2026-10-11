@@ -24,3 +24,11 @@ test('unclassified failures retain their actual reason without inventing a cause
   assert.equal(message,'Storage access was denied.');
   assert.match(workspaceSaveFailureMessage({ok:false},'', 'ja'),/安全性を確認できなかった/);
 });
+
+test('a later attempt after refusal explains that saving stays paused until reload',()=>{
+  const english=workspaceSaveFailureMessage({blockedByPeer:true},'', 'en',{priorRefusal:true});
+  assert.match(english,/paused until reload/);
+  assert.match(english,/check that the download completed/);
+  const japanese=workspaceSaveFailureMessage({blockedByPeer:true},'', 'ja',{priorRefusal:true});
+  assert.match(japanese,/Reloadまで停止/);
+});

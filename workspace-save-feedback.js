@@ -1,4 +1,7 @@
-export function workspaceSaveFailureMessage(result, currentMessage = '', locale = 'en') {
+export function workspaceSaveFailureMessage(result, currentMessage = '', locale = 'en', {priorRefusal=false} = {}) {
+  if (priorRefusal) return locale === 'ja'
+    ? '以前のWorkspace保存が安全確認で拒否されたため、このタブからの保存はReloadまで停止しています。必要なDatasetをE2R JSONとしてExportし、ダウンロードを確認してからReloadし、保存済みWorkspaceを開いてください。'
+    : 'A previous Workspace save was refused for safety, so saving from this tab is paused until reload. Export any Dataset work you need as E2R JSON and check that the download completed, then reload and open the saved Workspace.';
   if (result?.conflict && currentMessage) return currentMessage;
   if (result?.blockedByPeer) {
     return locale === 'ja'
