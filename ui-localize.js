@@ -146,7 +146,10 @@ const phrases = [
 ];
 
 phrases.push(
-  ['E2R JSON download was handed to the browser. This Dataset snapshot is now the clean Export baseline; keep the downloaded file yourself. Browser-local persistence is unchanged.','E2R JSONのダウンロードをブラウザーに渡しました。ダウンロードしたファイルはご自身で保管してください。ブラウザー内の作業状態は変わりません。'],
+  ['Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.','別のParameterPlotterタブで保存済みWorkspaceが更新されました。このタブから上書きはしていません。残したい作業をE2R JSONへExportし、ダウンロードを確認してからこのタブを再読み込みし、「Continue Editing」を選んで最新の保存済みWorkspaceを開いてください。'],
+  ['Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before changing this shared workspace.','別のParameterPlotterタブに保護が必要な作業があります。共有Workspaceを変更する前に、そのタブの入力を適用または取り消し、残したいDatasetの変更をExportしてください。'],
+  ['Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before opening a replacement Dataset.','別のParameterPlotterタブに保護が必要な作業があります。置換Datasetを開く前に、そのタブの入力を適用または取り消し、残したいDatasetの変更をExportしてください。'],
+  ['The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.','E2R JSONのダウンロードをブラウザーに依頼しました。このアプリでは完了を確認できないため、ファイルがダウンロードされたことを確認してから利用してください。ブラウザー内Workspaceへの保存は別の処理です。'],
   ['E2R Dataset Export is unavailable during diagnostic read-only inspection.','診断のための読み取り専用表示中はE2Rデータセットを書き出せません。'],
   ['Export blocked: Validator errors remain. No repair or normalization was applied.','Validatorエラーがあるため書き出せません。修復や正規化は行っていません。'],
   ['The Dataset was opened in memory, but the browser-local copy was not replaced. It remains unsaved and may be lost on reload or browser close.','データセットはメモリー上で開きましたが、ブラウザー内のコピーは更新されませんでした。作業状態は未保存で、再読み込みやブラウザーを閉じると失われる可能性があります。'],

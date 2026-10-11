@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {formAttributeId,rescaleActionFor} from './successor-event-wiring.js';
 import {datasetTitleFor} from './dataset-context.js';
 import {replacementMarkup} from './replacement-safety.js';
+import {translateUiText} from './ui-localize.js';
 
 test('dimension submit identifies the form attribute even when a named control masks form.id',()=>{
   const form={id:{value:'dimension-id-control'},getAttribute:name=>name==='id'?'dimension-form':null};
@@ -88,10 +89,14 @@ test('peer replacement refusal is rendered on Home and cancellation invalidates 
 
 test('workspace persistence refusal presents one specific status instead of duplicating lifecycle feedback',async()=>{
   const main=await readFile(new URL('./main.js',import.meta.url),'utf8');
-  assert.match(main,/blockedByPeer:true,reason:'Another ParameterPlotter tab has unapplied work/);
+  assert.match(main,/blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection/);
+  assert.match(main,/The browser was asked to download the E2R JSON\. This app cannot confirm that the download completed/);
+  assert.match(main,/ブラウザーに依頼しました。完了はこの画面では確認できないため/);
   assert.match(main,/workspaceSaveFailureMessage\(result,s\.persistence\.message,locale\)/);
   assert.match(main,/lifecycleNotice='';\s*render\(\);/);
   assert.match(main,/if\(result\.ok\)\{expectedWorkspaceRaw=result\.raw;return;\}\s*if\(hasCurrentLossSensitiveWork\(\)\)\{\s*s\.persistence=/);
+  assert.match(translateUiText('Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.'),/別のParameterPlotterタブで保存済みWorkspaceが更新されました/);
+  assert.match(translateUiText('The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.'),/ダウンロードをブラウザーに依頼しました/);
 });
 
 test('current Dataset context uses the E2R metadata title and an absent-title fallback',()=>{

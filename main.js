@@ -133,7 +133,7 @@ function scheduleWorkspaceSave(){
   saveChain=saveChain.then(async()=>{
     saveScheduled=false;
     const result=await workspaceCoordinator.withWriteLock(({activeTabs})=>{
-      if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has unapplied work. Save or cancel it before changing this shared workspace.'};
+      if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before changing this shared workspace.'};
       return saveIfCurrent(s,expectedWorkspaceRaw);
     });
     if(result.ok){expectedWorkspaceRaw=result.raw;return;}
@@ -605,7 +605,7 @@ async function activateIncoming(requestOverride=null){
  const incoming=request.state;incoming.workspaceCreated=true;
  const result=await workspaceCoordinator.withWriteLock(({activeTabs})=>{
   if(attemptId!==replacementAttemptId)return {ok:false,cancelled:true};
-  if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has unapplied work. Save or cancel that work before opening a replacement Dataset.'};
+  if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before opening a replacement Dataset.'};
   return saveIfCurrent(incoming,expectedWorkspaceRaw);
  });
  if(attemptId!==replacementAttemptId||result.cancelled)return;
@@ -656,7 +656,7 @@ function exportCurrentDataset(){
  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);s.validation=validation;
  if(!validation.valid){s.readOnly=true;lifecycleNotice='Export blocked: Validator errors remain. No repair or normalization was applied.';render();return;}
  if(!downloadJson('parameterplotter-dataset.e2r.json',dataset))return;
- exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();lifecycleNotice='E2R JSON download was handed to the browser. This Dataset snapshot is now the clean Export baseline; keep the downloaded file yourself. Browser-local persistence is unchanged.';render();
+ exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();lifecycleNotice=locale==='ja'?'E2R JSONのダウンロードをブラウザーに依頼しました。完了はこの画面では確認できないため、必要なファイルがダウンロードされたことを確認してください。ブラウザー内Workspaceへの保存は別の処理です。':'The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.';render();
 }
 function relationDeletionFeedback(id){
  const result=entityDeleteEligibility(s,id);if(!result.allowed){entityDeleteNotice={id,reason:result.reason,relations:result.relations||[]};render();root.querySelector('.confirm-dialog button')?.focus();return;}

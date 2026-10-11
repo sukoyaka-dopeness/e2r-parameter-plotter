@@ -182,7 +182,7 @@ export function saveIfCurrent(s, expectedRaw){
     return {ok:false,reason:s.persistence.message};
   }
   if(current!==expectedRaw){
-    s.persistence={status:'degraded',message:'Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep, then reload before continuing.'};
+    s.persistence={status:'degraded',message:'Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.'};
     return {ok:false,conflict:true,reason:s.persistence.message};
   }
   const ok=save(s);

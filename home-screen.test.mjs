@@ -196,8 +196,11 @@ test('Home has no peer warning when no other tab has loss-sensitive work',()=>{
 test('Home explains active peer work and recovery in both UI locales',()=>{
   const en=homeMarkup({peerWorkStatus:{kind:'work',count:1},locale:'en'});
   const ja=homeMarkup({peerWorkStatus:{kind:'work',count:1},locale:'ja'});
-  assert.match(en,/Another ParameterPlotter tab has unsaved work/);
-  assert.match(en,/Save or discard it in that tab/);
+  assert.match(en,/Another ParameterPlotter tab has work that needs protection/);
+  assert.match(en,/Apply or cancel open input in that tab/);
+  assert.match(en,/export any Dataset changes/);
+  assert.match(ja,/保護が必要な作業があります/);
+  assert.match(ja,/残したいDatasetの変更をExport/);
   assert.notEqual(ja,en);
   assert.notEqual(ja,en);
 });
@@ -205,14 +208,15 @@ test('Home explains active peer work and recovery in both UI locales',()=>{
 test('Home distinguishes uncertain coordination without claiming peer work exists',()=>{
   const markup=homeMarkup({peerWorkStatus:{kind:'unknown'},locale:'en'});
   assert.match(markup,/could not be checked safely/);
-  assert.match(markup,/does not confirm that unsaved work exists/);
+  assert.match(markup,/does not confirm that another tab has work needing protection/);
   assert.match(markup,/is-uncertain/);
 });
 
 test('replacement refusal takes priority over the duplicate peer warning and offers retry and cancel',()=>{
-  const markup=homeMarkup({peerWorkStatus:{kind:'work',count:1},replacementFeedback:{kind:'peer-work',reason:'Another ParameterPlotter tab has unapplied work.'},locale:'en'});
+  const markup=homeMarkup({peerWorkStatus:{kind:'work',count:1},replacementFeedback:{kind:'peer-work',reason:'Another ParameterPlotter tab has work that needs protection.'},locale:'en'});
   assert.match(markup,/role="alert"/);
   assert.match(markup,/did not change the saved workspace/);
+  assert.match(markup,/work that needs protection/);
   assert.match(markup,/data-retry-replacement/);
   assert.match(markup,/data-cancel-replacement-feedback/);
   assert.doesNotMatch(markup,/Details:/);
@@ -229,8 +233,14 @@ test('uncertain post-write refusal tells the user to reload without offering a b
 
 test('stale saved revisions direct the user to reload instead of retrying the same stale candidate',()=>{
   const markup=homeMarkup({replacementFeedback:{kind:'stale-revision',reason:'The saved workspace changed in another tab.',canRetry:false},locale:'en'});
-  assert.match(markup,/reload this tab to check the current state/);
+  assert.match(markup,/changes remain in memory/);
+  assert.match(markup,/Export any work you need to keep as E2R JSON/);
+  assert.match(markup,/check that the download completed/);
+  assert.match(markup,/reload this tab and choose Continue Editing to open the latest saved workspace/);
   assert.doesNotMatch(markup,/data-retry-replacement/);
   assert.match(markup,/Close notice/);
   assert.doesNotMatch(markup,/Details:/);
+  const japanese=homeMarkup({replacementFeedback:{kind:'stale-revision',reason:'別のタブで保存済みWorkspaceが更新されました。',canRetry:false},locale:'ja'});
+  assert.match(japanese,/ダウンロードを確認してから/);
+  assert.match(japanese,/「Continue Editing」を選んで最新の保存状態を開いてください/);
 });
