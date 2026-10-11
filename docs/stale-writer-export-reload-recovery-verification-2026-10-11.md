@@ -1,7 +1,7 @@
 # ParameterPlotter Stale-Writer Export and Reload Recovery Verification
 
 Date: 2026-10-11
-Status: Human Browser Test 30-A-N remains ACCEPTED / PASS only for its recorded operations. Test 31's isolated warning transition remains Codex Browser Verified. Test 32 is a Human-reported safety incident whose central Workspace replacement sequence was reproduced in an isolated Codex Edge profile; the save-gate transition and storage result are documented below. No runtime fix or Acceptance change has been made. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
+Status: Test 30-A-N remains Human Browser ACCEPTED / PASS only for its recorded operations. Test 31's isolated warning transition remains Codex Browser Verified. Test 32 is retained below as a historical Human-reported safety incident and reproduced failure. Its runtime fix was Codex Browser Verified, and Test 33-A-P later received bounded Human Browser ACCEPTED / PASS for the repaired sequence. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
 
 ## Scope and authority
 
@@ -139,11 +139,11 @@ Codex reproduced the core sequence in a newly launched, isolated headless Edge p
 - Existing automated tests verify that `saveIfCurrent()` rejects a raw revision mismatch, that Web Locks coordination reports active peers, and that the replacement flow refuses peer work. They do not model the two-tab orchestration where a peer refusal is followed by Export, the other tab's Export save is blocked, and the first tab's later save succeeds against the unchanged raw revision.
 - `npm.cmd run check` during this investigation passed syntax checks for 37 application modules and 167/167 tests. This is not evidence that the Test 32 ordering is safe; the orchestration case is not covered by those tests.
 - No runtime fix was made, as requested. Potential next-step choices for Human review are: (a) make a refused candidate remain blocked until a clearly deliberate retry/resolve action; (b) separate E2R JSON Export from Workspace persistence so Export alone cannot commit a previously refused in-memory candidate; or (c) adopt another bounded rule that preserves apply/export semantics and makes the save authorization explicit. These choices affect recovery UX and persistence semantics, so this document does not select one.
-- **Open:** determine the intended authorization meaning of Export after a peer refusal, whether refusal state must persist across automatic saves, and how the originating tab is informed when an Export-time Workspace save is refused. Until a Human-approved implementation and focused regression verification exist, treat this path as a safety issue, keep Cross-Context Workspace Safety pending, and retain PUBLIC RELEASE NO-GO.
+- **Open at the end of the initial investigation (before the fix below):** determine the intended authorization meaning of Export after a peer refusal, whether refusal state must persist across automatic saves, and how the originating tab is informed when an Export-time Workspace save is refused. The subsequent Human-approved fix and Test 33 acceptance below resolve this question for their documented ParameterPlotter sequence only; Cross-Context Workspace Safety remains pending overall.
 
 ## Test 32 safety fix — rejected Workspace write isolation
 
-Status: Runtime fix implemented and Codex-verified in an isolated Edge profile. Human Browser Acceptance for the fix is pending. The incident record above remains the historical account of the failure and reproduction; this section records the later Human-approved resolution.
+Status at the implementation checkpoint: Runtime fix implemented and Codex-verified in an isolated Edge profile; Human Browser Acceptance was then pending. Test 33 below later closed Human review for its recorded sequence only. The incident record above remains the historical account of the failure and reproduction.
 
 ### Adopted Human principles
 
@@ -173,5 +173,34 @@ These rules preserve the existing Dataset replacement confirmation, Web Lock coo
 ### Acceptance and release boundary
 
 - Test 30-A-N remains Human Browser ACCEPTED / PASS only for its recorded operations. Test 31 remains Codex Browser Verified for its recorded ordering and copy review. Neither result is rewritten by this fix.
-- The Test 32 Human Browser report remains an Incident / FAIL history. This Codex result does not promote the fix to Human Acceptance; Human review of the repaired ordering and status feedback is pending.
+- The Test 32 Human Browser report remains an Incident / FAIL history. Its original failure is not erased by the fix or later acceptance. The former pending status below was superseded by the bounded Test 33 Human Browser Acceptance recorded in the following section.
 - Cross-Context Workspace Safety remains pending overall. PUBLIC RELEASE NO-GO remains in force.
+
+## Test 33 — Human Acceptance of rejected Workspace write isolation
+
+Date: 2026-10-11. Human Browser Acceptance is recorded only for the operations A-P below, performed in Microsoft Edge InPrivate at `http://127.0.0.1:5322/` with the repaired ParameterPlotter working tree and The Ashen Crown / 灰冠の王国 (10 Entities / 7 Dimensions / 70 Assessments).
+
+### Human Browser evidence: Test 33-A-P
+
+- **A-E — initial state:** Tab A opened the sample, applied title `Test 33 Protected Work A`, and showed browser-local Workspace saved while Dataset changes remained unexported. Tab B in the same InPrivate window showed the cross-tab protection warning; Continue Editing loaded saved A.
+- **F — rejected write:** Tab B applied `Test 33 Blocked Work B`. Its Workspace write was refused because Tab A had protected work. B's Dataset remained in memory at 10 / 7 / 70; the UI showed that the browser-local Workspace was not saved.
+- **G — Tab A Export:** The submitted E2R JSON and Edge download history showed the exported file; its content contained title A. The associated browser-local Workspace write was refused by B's protected work, and Tab A's UI showed the save failure separately from the JSON Export result.
+- **H — Tab B Export:** The submitted E2R JSON and Edge download history showed the exported file; its content contained title B. Export did not release B's prior Workspace-save refusal; the UI continued to report that writes from this tab were paused until Reload.
+- **I — shared Workspace check:** a read-only check of `e2r-parameter-plotter-local-workspace-v2` returned `['Test 33 Protected Work A']` after B's Export. This directly confirms the stored title value only; it is not a byte-for-byte comparison of the full Workspace.
+- **J-L — Reload Recovery:** Human explicitly accepted Edge's reload confirmation, returned to Home, and used Continue Editing. Title A and counts 10 / 7 / 70 were restored; Workspace status was saved and the refusal warning cleared.
+- **M-N — competing tab close:** Human accepted Edge's departure confirmation and closed Tab A after its Dataset had been exported. Tab B remained open.
+- **O-P — recovery write:** Tab B applied `Test 33 Recovery Save B`; Apply succeeded, Workspace showed saved with no refusal warning, and counts remained 10 / 7 / 70. A read-only check of the shared Workspace key returned `['Test 33 Recovery Save B']`.
+
+**Human Browser Acceptance: Test 33-A-P ACCEPTED / PASS, limited to these observed operations and this Edge InPrivate, same-origin setup.** The evidence supports the three adopted ParameterPlotter principles in this sequence: Export did not authorize replacing the shared Workspace; the refused B write did not later become an implicit save after Export; and the UI reflected Workspace refusal separately from the JSON download request/result evidence available to Human. Reload restored saved A, and after the competing tab closed, B could safely save a new edit.
+
+The Human evidence does not establish every interleaving, every form, other browsers, full Workspace byte equality, Web Lock internals, BFCache or abnormal-termination behavior, or production hosting behavior. The downloaded files and download-history observations were Human evidence; no claim is made that Codex independently inspected those Test 33 downloads.
+
+### Evidence relationship and status
+
+- **Test 32:** historical Safety Incident / Human Browser FAIL. The incident remains in the record as the pre-fix failure.
+- **Test 32 fix:** runtime fix implemented and Codex Browser Verified in the isolated Edge reproduction documented above.
+- **Test 33:** Human Browser ACCEPTED / PASS only for A-P and the environment described above. This closes Human review of the repaired sequence within that scope; it does not retroactively change Test 32's result.
+- **Test 30:** its prior bounded Human PASS remains limited to its original sequence. **Test 31:** its isolated sequence remains Codex Browser Verified.
+- Cross-Context Workspace Safety remains pending overall. PUBLIC RELEASE NO-GO remains in force.
+
+Still pending are exhaustive form-specific and interleaving coverage; BFCache operations beyond the bounded accepted tests; abnormal termination acceptance beyond its recorded Codex evidence; ParameterPlotter × NarrativeLine BFCache interaction; and production GitHub Pages same-origin and HTTPS/CORS Handoff checks. No result in Test 33 closes these items.
