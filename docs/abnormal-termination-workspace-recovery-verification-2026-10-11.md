@@ -1,7 +1,7 @@
 # ParameterPlotter Abnormal-Termination Workspace Recovery Verification
 
 Date: 2026-10-11
-Status: Source review, automated verification, and one Human-approved isolated Edge browser-process-tree termination test completed. The saved workspace survived restart and coordination recovered; the unsaved Dimension form draft did not survive. Human Browser Acceptance is PENDING. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
+Status: Source review, automated verification, and one Human-approved isolated Edge browser-process-tree termination test completed. The saved workspace survived restart and coordination recovered; the unsaved Dimension form draft did not survive. Test 36 Human Acceptance is prepared but has not been performed; no abnormal termination was run during this preparation. Human Browser Acceptance remains PENDING. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
 
 ## Authority and existing behavior reviewed
 
@@ -66,3 +66,46 @@ The Human adopted the following ParameterPlotter-specific policy on 2026-10-11:
 This policy does not waive existing safety for Dataset replacement, normal page departure, BFCache restoration, or saved-revision conflicts. No runtime behavior was changed to record this decision. Human Browser Acceptance of the Codex crash test remains PENDING, and Cross-Context Workspace Safety remains open.
 
 The unresolved future question is how, if at all, ParameterPlotter should preserve unapplied form drafts across abnormal termination. That work requires a separate design decision before implementation; the current adopted recovery baseline is the last Apply-saved browser-local Workspace.
+
+## Test 36 - Human abnormal-termination acceptance preparation
+
+Date: 2026-10-11. Preparation only; no acceptance operation, browser termination, page reload, profile cleanup, or test Dataset editing was performed by Codex.
+
+### Existing recovery boundary and evidence
+
+The existing ParameterPlotter decision remains: recover the last Apply-edited Dataset whose browser-local Workspace save succeeded. Unapplied form drafts are not promised after abnormal termination; draft autosave/recovery remains a separate future design question. Normal page-departure beforeunload protection remains in force. This is ParameterPlotter-specific and is not generalized to other applications.
+
+The current implementation stores the saved Workspace under localStorage key e2r-parameter-plotter-local-workspace-v2. A successful Apply schedules a guarded browser-local save; the UI distinguishes saved, saving, and degraded/unsaved states. E2R JSON Export is a separate file-download request and does not prove that the browser-local Workspace was saved. The live form draft itself is not serialized into that Workspace. Cross-tab writes continue to use the Web Lock, saved-revision check, and the Test 34 serialized write gate.
+
+Prior evidence remains bounded:
+
+- **Automated Test:** existing checks cover saved revision conflicts, fail-closed coordination, peer-work isolation, and pagehide / persisted-pageshow coordination lifecycle. These do not simulate browser-process crashes by themselves.
+- **Codex Browser Verified:** the prior isolated Edge test observed the saved Ashen Crown Dataset (10 Entities / 7 Dimensions / 70 Assessments) after abrupt termination of one Human-approved disposable Edge process tree and restart using the same profile. The unsaved Dimension draft was absent; a fresh tab lock was acquired, a stale marker did not block Continue Editing, and a later Apply saved. This was one browser-process-tree test, not renderer-only crash or native session-restore coverage.
+- **Human Browser Acceptance:** still pending. The prior Codex evidence does not establish Human acceptance.
+
+### Prepared Human environment
+
+- Local source checkout HEAD: 9a0cf1fd90afb95af48d39357ccb8db974f10d74. Test 34 runtime repair 6087be6729498774d4247863327b27fc8386e80d is an ancestor of this checkout.
+- Current-worktree HTTP server: http://127.0.0.1:5334/ (HTTP 200). It is separate from ports 5312, 5322, and 5331 and serves the current ParameterPlotter worktree.
+- A new regular Edge instance was opened at the app Home using an explicit separate user-data directory: C:\Users\extra\AppData\Local\Temp\e2r-pp-test36-human-acceptance-20261011. It was not started with InPrivate or headless flags; Edge sync was disabled. Root PID at preparation was 4664. The profile directory is separate from the Human's existing Edge profile. Its local browser storage persists across Edge process exit while the directory remains; it is not an InPrivate profile. Because it is under Temp, do not allow cleanup to remove it before the test and evidence review. No Dataset was loaded and no acceptance action was performed in this window.
+- Server and profile are prepared for Human-controlled testing. Codex has not opened DevTools or read/changed this profile's storage.
+
+### Proposed Human scenario and expected result
+
+1. Confirm the visible Edge window is the dedicated Test 36 profile, not InPrivate, and the address is http://127.0.0.1:5334/. Do not use the regular profile or the 5312 / 5322 / 5331 environments.
+2. Open the bundled The Ashen Crown sample. Confirm 10 Entities / 7 Dimensions / 70 Assessments. Apply a disposable title such as Test 36 Saved Baseline. Wait until the UI explicitly reports the browser-local Workspace saved. Do not leave a form draft open; this test is for the adopted saved-Workspace recovery boundary.
+3. Record a screenshot of the saved title, counts, and save status. If a separate E2R JSON backup is desired, use a dedicated download directory and confirm the file exists; treat it only as a file backup, not as evidence of browser-local Workspace persistence. Export is optional and not required for this recovery test.
+4. Stop before any force termination. Codex must revalidate and present the exact root process, all descendants tied to this user-data directory, the disposable saved Dataset at risk, and the recovery path. A separate explicit Human approval is required for the specific termination operation. This preparation does not authorize it.
+5. Only after that approval, terminate only the revalidated dedicated Edge process tree. Do not terminate by process name, do not close other Edge processes, and stop if any process ownership or profile argument is ambiguous.
+6. Relaunch Edge in regular mode with the same user-data directory and open a fresh ParameterPlotter page. Do not mistake a restored in-memory page/tab for the saved Workspace: use Home / Continue Editing from a new page when available. Confirm Test 36 Saved Baseline, counts 10/7/70, and a saved-local-Workspace status.
+7. Apply a second disposable title, such as Test 36 Recovery Save, and confirm that the recovered session can save and that no stale-tab warning remains. Capture the result. Do not create an unapplied form draft or test its crash recovery.
+
+Expected acceptance would cover only one abnormal termination of the dedicated Edge process tree, saved Workspace recovery, and a later successful save in this profile. It would not establish unapplied-draft recovery, renderer-only crashes, operating-system/browser data loss, other browsers, other forms, cross-app interaction, production hosting, or universal crash recovery.
+
+### Safety stops and recovery
+
+Stop without terminating anything if the profile path or Edge mode is uncertain, an unexpected tab/process is present, the test Dataset is not disposable, the Apply save status is not confirmed, a pending draft is visible, another app is open in the profile, or the isolated server is unavailable. If the Workspace is not recoverable after an approved test, keep the profile and evidence intact; reopen the bundled sample in that same dedicated profile only if Human directs it. Do not clear localStorage or delete the profile as a recovery shortcut. Preserve any optional exported file in the dedicated download location.
+
+If an actual process-tree termination is needed, its approval request must state the freshly observed PID tree and command lines, profile ownership, target origin, possible loss of the browser session or any unconfirmed in-memory work, expected effect on other applications (none if isolation is revalidated), and the exact relaunch/recovery procedure. Approval for one test applies only to that revalidated process tree and one termination.
+
+No abnormal termination was run for Test 36 preparation. Human Browser Acceptance remains PENDING; Cross-Context Workspace Safety remains open; PUBLIC RELEASE NO-GO remains in force.
