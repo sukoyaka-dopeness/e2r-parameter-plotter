@@ -1,7 +1,7 @@
 # ParameterPlotter Stale-Writer Export and Reload Recovery Verification
 
 Date: 2026-10-11
-Status: Test 30-A-N remains Human Browser ACCEPTED / PASS only for its recorded operations. Test 31's isolated warning transition remains Codex Browser Verified. Test 32 is retained below as a historical Human-reported safety incident and reproduced failure. Its runtime fix was Codex Browser Verified, and Test 33-A-P later received bounded Human Browser ACCEPTED / PASS for the repaired sequence. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
+Status: Test 35-B-V is Human Browser ACCEPTED / PASS only for the recorded operations and environment. Test 35's duplicate warning copy is an unresolved UX follow-up, not a confirmed safety defect. Test 34's exact concurrent save/replace interleaving remains covered by automated regression tests, not Human Browser reproduction. Tests 30 and 33 retain their bounded Human acceptance, Test 31 remains Codex Browser Verified, and Test 32 remains the historical safety incident and pre-fix failure. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
 
 ## Scope and authority
 
@@ -265,3 +265,34 @@ The regression test starts a scheduled-save stand-in and an incoming-replacement
 Tests 30-A-N remain accepted only for their recorded operations. Test 31 remains Codex Browser Verified. Test 32 remains the historical Human-reported safety incident and reproduced pre-fix failure. Test 33-A-P remains bounded Human Browser ACCEPTED / PASS for its recorded repaired sequence. This follow-up does not broaden or revoke those results.
 
 Cross-Context Workspace Safety remains pending. PUBLIC RELEASE NO-GO remains in force.
+
+## Test 35 - Human Browser acceptance and UX observation
+
+Date: 2026-10-11. Evidence supplied by Human from Microsoft Edge InPrivate at http://127.0.0.1:5331/, using two same-origin ParameterPlotter tabs and The Ashen Crown / 灰冠の王国 (10 Entities / 7 Dimensions / 70 Assessments). Tested source commit: 6087be6729498774d4247863327b27fc8386e80d, including the Test 34 concurrent write-gate serialization fix.
+
+### Human Browser ACCEPTED / PASS - Tests 35-B-V
+
+Acceptance is limited to the operations below; it does not establish all writer interleavings, all editing forms, other browsers, BFCache, abnormal termination, or production-host behavior.
+
+- **35-B-F - setup and peer state:** Home and the sample loaded. Tab A applied Test 35 Protected Work A and confirmed browser-local Workspace save while the Dataset remained not exported. Tab B showed the same-app peer-work warning; Continue Editing restored saved A.
+- **35-G-K - refused replacement and cancel:** From B, Human requested the sample replacement, explicitly chose to discard-and-open, and the peer-work guard refused replacement. Retry and Cancel controls appeared. Human canceled the candidate; replacement-specific controls cleared while the cross-tab and Workspace-save-stopped warnings remained. A read-only localStorage query for e2r-parameter-plotter-local-workspace-v2 returned the title Test 35 Protected Work A. This verifies that title value only, not byte-for-byte equality of the whole Workspace.
+- **35-L-O - A export:** Human confirmed A and counts 10/7/70, exported E2R JSON, saw the file in Edge downloads and Windows Explorer, and inspected the submitted parameterplotter-dataset.e2r (19).json. The parsed Dataset contained the A title and 10 Entities / 7 Dimensions / 70 Assessments. E2R Validator was not run on this submitted file. Tab A separately showed that its browser-local Workspace save had been refused by the competing tab; B's read-only localStorage check still showed A.
+- **35-P-R - Reload recovery:** Human approved Edge's reload confirmation. B returned Home, the save-stopped warning cleared, and the peer-work warning remained. Continue Editing restored A and counts 10/7/70 with Workspace shown as saved.
+- **35-S-V - conflict resolution and resumed save:** Human approved closing A after Edge's departure confirmation. B then applied Test 35 Recovery Save B; the title Apply succeeded, Workspace showed saved, and counts remained 10/7/70. A final read-only localStorage query returned Test 35 Recovery Save B.
+
+These observations support the three adopted safety principles within this sequence: Export did not authorize replacement of shared Workspace; the refused B write remained stopped until Reload; and browser-local Workspace save failure/success was reflected in UI. The actual E2R JSON file was inspected for title and record counts, but not schema-validated.
+
+### UX observation - repeated warning copy (follow-up pending)
+
+During 35-I-J, the replacement refusal notice and the Workspace-save-stopped status appeared together. Their state meanings differ, but their cross-tab cause and recovery explanation substantially overlap. After Cancel, the peer-work warning and save-stopped warning remained. Human records this as a UX improvement candidate, not a safety failure. No copy was removed or merged and no UX design was selected here. A future follow-up should clarify replacement outcome versus browser-local save state while retaining the necessary safety and recovery information.
+
+### Evidence boundary and remaining safety work
+
+- **Human Browser:** the bounded Test 35-B-V operations above, including submitted-file inspection and read-only title checks.
+- **Codex Browser Verified:** Test 34 isolated Edge covered sequential peer refusal, refusal persistence through Export, saved-A protection, Reload recovery, and a subsequent save. It did not force the exact concurrent autosave versus activateIncoming timing.
+- **Automated Test:** Test 34's deterministic concurrent gate test covers an already-queued incoming write after a scheduled-save refusal; npm.cmd run check recorded 178/178 tests and syntax checks for 38 modules at that checkpoint.
+- **Source Audit:** both automatic saves and Dataset replacement converge on the serialized write gate; Web Lock, peer-work, saved-revision, and fail-closed checks remain in place.
+
+Test 35 does not itself reproduce the precise asynchronous interleaving from Test 34. Cross-Context Workspace Safety remains pending, including untested interleavings and form paths, BFCache/abnormal-termination coverage beyond recorded checkpoints, cross-app and production-host verification, and other browser configurations. Test 32 remains the historical incident; Test 33's bounded pass and Test 34's fix evidence are retained without expansion.
+
+PUBLIC RELEASE NO-GO remains in force.
