@@ -1,7 +1,7 @@
 # ParameterPlotter Abnormal-Termination Workspace Recovery Verification
 
 Date: 2026-10-11
-Status: Source review, automated verification, and one Human-approved isolated Edge browser-process-tree termination test completed. The saved workspace survived restart and coordination recovered; the unsaved Dimension form draft did not survive. Test 36 Human Acceptance is prepared but has not been performed; no abnormal termination was run during this preparation. Human Browser Acceptance remains PENDING. Cross-Context Workspace Safety remains open. PUBLIC RELEASE NO-GO remains in force.
+Status: Test 36 Human Browser Acceptance is PASS within the documented Test 36-G/H/M/N scenario only. The saved Apply-saved Workspace recovered after one approved dedicated Edge process-tree termination; cross-tab refusal, JSON Export, Reload recovery, and a subsequent saved edit were also Human-confirmed in the stated sequence. Unapplied-form crash recovery, other crash modes, and broader Cross-Context Workspace Safety remain unaccepted. PUBLIC RELEASE NO-GO remains in force.
 
 ## Authority and existing behavior reviewed
 
@@ -63,7 +63,7 @@ The Human adopted the following ParameterPlotter-specific policy on 2026-10-11:
 - The existing protection for unapplied work during normal page departure remains in force.
 - This decision does not automatically apply to NarrativeLine or LiaisonScape.
 
-This policy does not waive existing safety for Dataset replacement, normal page departure, BFCache restoration, or saved-revision conflicts. No runtime behavior was changed to record this decision. Human Browser Acceptance of the Codex crash test remains PENDING, and Cross-Context Workspace Safety remains open.
+This policy does not waive existing safety for Dataset replacement, normal page departure, BFCache restoration, or saved-revision conflicts. No runtime behavior was changed to record this decision. At the time this decision was recorded, Human Browser Acceptance was pending; the later limited Test 36 Human Acceptance is recorded below. Cross-Context Workspace Safety remains open.
 
 The unresolved future question is how, if at all, ParameterPlotter should preserve unapplied form drafts across abnormal termination. That work requires a separate design decision before implementation; the current adopted recovery baseline is the last Apply-saved browser-local Workspace.
 
@@ -87,8 +87,8 @@ Prior evidence remains bounded:
 
 - Local source checkout HEAD: 9a0cf1fd90afb95af48d39357ccb8db974f10d74. Test 34 runtime repair 6087be6729498774d4247863327b27fc8386e80d is an ancestor of this checkout.
 - Current-worktree HTTP server: http://127.0.0.1:5334/ (HTTP 200). It is separate from ports 5312, 5322, and 5331 and serves the current ParameterPlotter worktree.
-- A new regular Edge instance was opened at the app Home using an explicit separate user-data directory: C:\Users\extra\AppData\Local\Temp\e2r-pp-test36-human-acceptance-20261011. It was not started with InPrivate or headless flags; Edge sync was disabled. Root PID at preparation was 4664. The profile directory is separate from the Human's existing Edge profile. Its local browser storage persists across Edge process exit while the directory remains; it is not an InPrivate profile. Because it is under Temp, do not allow cleanup to remove it before the test and evidence review. No Dataset was loaded and no acceptance action was performed in this window.
-- Server and profile are prepared for Human-controlled testing. Codex has not opened DevTools or read/changed this profile's storage.
+- The preparation launch record showed a regular Edge process with the dedicated user-data-dir and root PID 4664, but this did not establish which window Human actually used. Test 36-G later found that Human reviewed the normal Edge Default Profile Path, not the intended Temp profile; that review was not isolated and was not counted as Acceptance. The dedicated Temp profile was retained.
+- Test 36-H directly launched Edge with the dedicated user-data-dir and confirmed the app target and edge://version Profile Path under that directory. Human verified the Profile Path before preparing Test 36 Isolated Saved Baseline. Codex did not edit or clear this profile storage.
 
 ### Proposed Human scenario and expected result
 
@@ -108,4 +108,33 @@ Stop without terminating anything if the profile path or Edge mode is uncertain,
 
 If an actual process-tree termination is needed, its approval request must state the freshly observed PID tree and command lines, profile ownership, target origin, possible loss of the browser session or any unconfirmed in-memory work, expected effect on other applications (none if isolation is revalidated), and the exact relaunch/recovery procedure. Approval for one test applies only to that revalidated process tree and one termination.
 
-No abnormal termination was run for Test 36 preparation. Human Browser Acceptance remains PENDING; Cross-Context Workspace Safety remains open; PUBLIC RELEASE NO-GO remains in force.
+This was the status at the end of the preparation checkpoint: no abnormal termination had yet been run and Human Acceptance was pending. Test 36-N and its limited Human acceptance supersede that status; see the following section. Cross-Context Workspace Safety remains open; PUBLIC RELEASE NO-GO remains in force.
+
+## Test 36-G / H / M / N - Profile isolation and Human recovery acceptance
+
+### Profile-isolation correction and execution evidence
+
+Test 36-G established that the earlier Human-reviewed window used the normal Edge Default Profile Path (`C:\Users\extra\AppData\Local\Microsoft\Edge\User Data\Default`), not the intended Temp profile. The earlier process-launch observation did not prove that Human had operated that isolated window. Test 36-H directly launched Edge with `--user-data-dir=C:\Users\extra\AppData\Local\Temp\e2r-pp-test36-human-acceptance-20261011`; Human checked `edge://version`, and Codex confirmed the matching process arguments, app URL, and profile path. No old Default-profile Workspace was treated as the isolated baseline.
+
+At Test 36-N preflight, root PID 20800 was revalidated by its parent PID 31680, start time 2026-10-11 16:34:18.527 +09:00, Edge executable, owner `MSI\extra`, and dedicated user-data-dir. Its dynamically enumerated nine child Edge processes all belonged to that root, had the same owner, and referenced the dedicated profile. The earlier child PID 37744 was absent; dynamic child revalidation was explicitly authorized, so the changed child set did not expand the root target. Default Edge PID 11672 and the server `node.exe` PID 38884 on port 5334 were separate and preserved.
+
+Immediately before termination, read-only inspection found the saved workspace title `Test 36 Isolated Saved Baseline`, with 10 Entities / 7 Dimensions / 70 Assessments. The UI reported browser-local save success; no unapplied-edit warning was visible. Codex force-terminated the one approved dedicated Edge process tree. The dedicated-profile Edge process count then reached zero, while Default Edge and server PID 38884 remained available. Edge was restarted with the same user-data-dir as root PID 20052. The 5334 ParameterPlotter Home loaded and `Continue Editing` was available. Codex did not activate it or modify the Dataset.
+
+### Human Browser Acceptance - PASS, tested scope only
+
+Human subsequently confirmed the following recovery and cross-tab sequence in the dedicated profile:
+
+1. The recovered baseline was `Test 36 Isolated Saved Baseline`, with 10 Entities / 7 Dimensions / 70 Assessments.
+2. Following recovery, cross-tab work protection was exercised. A competing tab caused a Workspace save refusal; the UI indicated the save was not successful.
+3. The save-refused changes were exported as E2R JSON. Export was treated separately from browser-local Workspace persistence; no whole-file E2R schema validation is claimed here.
+4. Closing the competing tab did not silently resume the refused write. Reload returned to the last successfully saved baseline.
+5. Human then saved `Test 36 Reload Recovery Save`; after Reload, that title and saved state persisted.
+6. `Test 36 Post-Recovery Save` identifies the change exported while Workspace persistence was refused; `Test 36 Reload Recovery Save` identifies the later successful browser-local save.
+
+This is **HUMAN BROWSER ACCEPTED / PASS for the described dedicated Edge profile, one browser-process-tree termination, the saved-baseline recovery, and the listed post-recovery cross-tab/export/reload/save sequence only**. The JSON Export is not evidence of a Workspace save. A complete schema/Validator validation of the exported file was not performed. The temporary profile was checked through `edge://version`; its earlier Default-profile mismatch remains recorded as a setup failure, not an acceptance result.
+
+The observed recovery-time cross-tab protection warning is recorded as an observation, not a safety failure or approved UX redesign. The earlier Test 32 Incident / FAIL and Test 33-35 limited acceptances remain historical evidence and are not erased or broadened by Test 36.
+
+### Remaining limits
+
+Unapplied-form crash recovery remains outside the adopted guarantee and was not tested as a desired outcome. This test does not establish renderer-only crash recovery, operating-system failure, browser-native session restoration, all forms or race orderings, other apps, other browsers, production hosting, full schema validation of the exported JSON, or full Cross-Context Workspace Safety acceptance. Cross-Context Workspace Safety remains Pending and PUBLIC RELEASE remains NO-GO.
