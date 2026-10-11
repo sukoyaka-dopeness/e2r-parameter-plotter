@@ -207,7 +207,7 @@ Still pending are exhaustive form-specific and interleaving coverage; BFCache op
 
 ## Test 34 — cross-tab save-path coverage audit
 
-Date: 2026-10-11. This is a source audit and a deterministic write-gate race probe. No runtime code was changed, and no Human Browser Acceptance is claimed. A safety-sensitive issue was found; investigation stops before runtime repair pending Human direction.
+Date: 2026-10-11. Initial audit snapshot: source audit and deterministic write-gate race probe; no runtime code had yet been changed, and no Human Browser Acceptance was claimed. The finding and initial stop point are retained as history. The subsequent Human-approved repair and verification are recorded in “Test 34 follow-up — concurrent Workspace write-gate isolation” below.
 
 ### Save and replacement paths mapped
 
@@ -237,6 +237,31 @@ A deterministic isolated Node probe started two `gate.run()` calls before resolv
 
 The sticky gate protects later sequential attempts, including Export-triggered attempts, after a refusal has completed. It does not currently establish that all attempts already in flight are stopped by that refusal. Therefore the Test 32 principle “a refused Workspace write must not later succeed implicitly” is not yet established for overlapping save-path calls. No actual application/browser overwrite from this race has been observed in this audit, so this is a source-confirmed gate race and a browser-unverified safety risk, not a new Human Browser FAIL.
 
-A bounded runtime repair would need to make write-gate attempts mutually ordered or otherwise ensure that every pending writer rechecks the refusal immediately before its protected persistence callback. The regression test should overlap a refused scheduled save with an incoming Dataset write (and verify no later candidate write), then verify that a fresh page or deliberate safe recovery can write after revalidation. Those changes affect the safety mechanism and are not made here. Human approval is required before runtime repair and actual browser reproduction; the repo already permits tests and documentation work, but no meaningful passing regression can be added for the race without first adopting and implementing that repair.
+A bounded runtime repair would need to make write-gate attempts mutually ordered or otherwise ensure that every pending writer rechecks the refusal immediately before its protected persistence callback. The regression test should overlap a refused scheduled save with an incoming Dataset write (and verify no later candidate write), then verify that a fresh page or deliberate safe recovery can write after revalidation. At the initial audit snapshot those changes had not been made; Human later approved a bounded repair, recorded below. The initial decision boundary is retained as historical context.
+
+Cross-Context Workspace Safety remains pending. PUBLIC RELEASE NO-GO remains in force.
+
+### Test 34 follow-up — concurrent Workspace write-gate isolation
+
+Date: 2026-10-11. Human approved a ParameterPlotter-only runtime repair, regression tests, and isolated Edge verification. The concurrent-write issue below was confirmed by source audit and a deterministic gate-level race probe; an actual shared-Workspace overwrite through the browser race had not been observed before this repair.
+
+#### Repair
+
+`workspace-write-gate.js` now serializes every `run()` attempt through a promise tail. Each queued attempt checks the sticky refusal only after earlier attempts settle. A peer-work, stale-revision, or coordination refusal therefore blocks work that had already entered `run()` but had not yet reached its protected persistence callback. The queue continues after resolved failures and thrown attempts. Cancellation does not latch refusal. The existing explicit replacement Retry remains the only in-page action that clears a latched refusal; reload remains the recovery boundary for stale or refused Workspace state. Web Locks, peer-work checks, saved-revision checks, and fail-closed behavior are unchanged.
+
+The regression test starts a scheduled-save stand-in and an incoming-replacement stand-in concurrently. The scheduled save resolves with peer-work refusal; the already-queued replacement must return that refusal without executing its mutation callback, leaving the protected value unchanged. Separate tests retain coverage for cancellation, explicit Retry, stale-revision, coordination failure, and ordinary success.
+
+#### Verification evidence
+
+- **Source Audit:** both `scheduleWorkspaceSave()` and `activateIncoming()` use this shared gate. The save scheduler's own queue remains separate, but all gate entries now serialize before either protected attempt can proceed. This closes the source-confirmed race at the shared gate boundary.
+- **Automated Test:** `node --test workspace-write-gate.test.mjs` passed 8/8, including the newly overlapping refusal case.
+- **Automated Test / syntax:** `npm.cmd run check` passed syntax checks for 38 modules and the full suite, 178/178 tests.
+- **Build:** `npm.cmd run build` completed and generated 60 Pages files.
+- **Codex Browser Verified:** in an isolated headless Edge 154 profile, two same-origin ParameterPlotter tabs loaded The Ashen Crown (10 Entities / 7 Dimensions / 70 Assessments). Tab A saved `Test 34 Protected A`; tab B loaded that revision and its `Test 34 Blocked B` save was refused. The shared localStorage title remained A. After B requested E2R JSON export, the shared title remained A and the UI continued to show the prior refusal plus the distinction between JSON download request and browser-local Workspace persistence. Reload and Continue Editing restored A; after that recovery, B saved `Test 34 Recovery B` successfully. This browser sequence verifies sequential peer refusal, Export not clearing the refusal, protected saved state, reload recovery, and subsequent save.
+- The isolated headless run did not produce a downloaded JSON file in its configured download directory. The UI reported that it requested a browser download and correctly did not claim completion. This run therefore does not verify the downloaded file's contents.
+- The exact simultaneous race between an already-pending automatic save and `activateIncoming()` was not forced through the UI. The deterministic gate test covers that interleaving at the shared gate abstraction; the browser check covers the real app's refusal and recovery paths, not the precise concurrent UI timing.
+- **Human Browser Acceptance:** pending. No new Human acceptance is inferred from Codex's test or browser run.
+
+Tests 30-A-N remain accepted only for their recorded operations. Test 31 remains Codex Browser Verified. Test 32 remains the historical Human-reported safety incident and reproduced pre-fix failure. Test 33-A-P remains bounded Human Browser ACCEPTED / PASS for its recorded repaired sequence. This follow-up does not broaden or revoke those results.
 
 Cross-Context Workspace Safety remains pending. PUBLIC RELEASE NO-GO remains in force.

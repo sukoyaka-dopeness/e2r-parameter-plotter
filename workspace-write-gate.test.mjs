@@ -45,6 +45,44 @@ test('Test 32 ordering keeps the protected revision after both tabs export', asy
   assert.equal(writeCount,0);
 });
 
+test('an already-started incoming write waits for a scheduled-save refusal', async()=>{
+  const gate=createWorkspaceWriteGate();
+  let finishScheduledSave;
+  const scheduledSaveWait=new Promise(resolve=>finishScheduledSave=resolve);
+  let sharedWorkspace='Protected A';
+  let incomingAttemptStarted=false;
+
+  const scheduledSave=gate.run(async()=>{
+    await scheduledSaveWait;
+    return {ok:false,blockedByPeer:true,reason:'peer work'};
+  });
+  const incomingReplacement=gate.run(async()=>{
+    incomingAttemptStarted=true;
+    sharedWorkspace='Unapproved incoming B';
+    return {ok:true,raw:sharedWorkspace};
+  });
+
+  assert.equal(incomingAttemptStarted,false);
+  finishScheduledSave();
+  assert.equal((await scheduledSave).blockedByPeer,true);
+  const replacementResult=await incomingReplacement;
+
+  assert.equal(replacementResult.ok,false);
+  assert.equal(replacementResult.priorRefusal.blockedByPeer,true);
+  assert.equal(incomingAttemptStarted,false);
+  assert.equal(sharedWorkspace,'Protected A');
+});
+
+test('a queued write can proceed after a cancelled attempt', async()=>{
+  const gate=createWorkspaceWriteGate();
+  let calls=0;
+  const cancelled=gate.run(async()=>({ok:false,cancelled:true}));
+  const afterCancel=gate.run(async()=>{calls++;return {ok:true};});
+  assert.equal((await cancelled).cancelled,true);
+  assert.equal((await afterCancel).ok,true);
+  assert.equal(calls,1);
+});
+
 test('stale-revision refusal also blocks all later writes until page recovery', async()=>{
   const gate=createWorkspaceWriteGate();
   let writes=0;
