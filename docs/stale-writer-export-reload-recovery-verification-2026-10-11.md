@@ -204,3 +204,39 @@ The Human evidence does not establish every interleaving, every form, other brow
 - Cross-Context Workspace Safety remains pending overall. PUBLIC RELEASE NO-GO remains in force.
 
 Still pending are exhaustive form-specific and interleaving coverage; BFCache operations beyond the bounded accepted tests; abnormal termination acceptance beyond its recorded Codex evidence; ParameterPlotter × NarrativeLine BFCache interaction; and production GitHub Pages same-origin and HTTPS/CORS Handoff checks. No result in Test 33 closes these items.
+
+## Test 34 — cross-tab save-path coverage audit
+
+Date: 2026-10-11. This is a source audit and a deterministic write-gate race probe. No runtime code was changed, and no Human Browser Acceptance is claimed. A safety-sensitive issue was found; investigation stops before runtime repair pending Human direction.
+
+### Save and replacement paths mapped
+
+- Dataset title Apply, Entity and Dimension authoring Apply, Assessment edits, Quadrant/Radar changes, and other workspace-state updates call `update()`, which marks the tab's work state and schedules the shared browser-local Workspace writer. Range Assessment edits call the same save scheduler directly. These paths do not each implement their own persistence guard.
+- The scheduled writer calls `workspaceWriteGate.run(...)`, then obtains the ParameterPlotter Web Lock and checks active same-app tabs before calling `saveIfCurrent()` against the expected serialized revision. This is the common persistence path for applied state and Export-triggered Workspace persistence.
+- E2R JSON Export first requests a file download from the in-memory Dataset, updates the Export baseline, and then schedules browser-local Workspace persistence through that same gate. The download request and Workspace save are distinct outcomes; browser code does not confirm download completion.
+- Incoming sample, file, new Dataset, and Startup Handoff replacement converge on `activateIncoming()`. That is a second caller of `workspaceWriteGate.run(...)`; it repeats the Web Lock peer check and saved-revision comparison before changing the active Workspace.
+- Continue Editing loads the saved Workspace; this path reads storage and does not itself write it. Reload begins a new page lifetime and reads the persisted revision. Explicit replacement Retry clears the page-lifetime refusal gate and then re-runs the guarded incoming write; it is a deliberate replacement action, not an automatic save retry.
+- Unapplied title/entity/dimension forms are tracked as loss-sensitive peer work and departure-protected drafts. They are not committed into the Dataset until Apply. Dataset replacement has its separate confirmation and peer/revision gate.
+
+### Finding: concurrent write-gate calls can outlive the first refusal
+
+`workspace-write-gate.js` checks the sticky refusal at the start of `run()`, then awaits the supplied attempt. It does not serialize calls or re-check a refusal created while another call is already awaiting its attempt. Consequently, two callers can both pass the initial check. If the first attempt returns a peer/stale/coordination refusal and latches it, a second already-started attempt can still return success and persist its candidate.
+
+The app has two independently initiated callers: `scheduleWorkspaceSave()` and `activateIncoming()`. The scheduled writer serializes scheduled saves with `saveChain` / `saveScheduled`, but incoming Dataset replacement does not use that chain. Both paths request the shared Web Lock, which serializes the protected callbacks; the source does not serialize the gate decisions across those callbacks. A second lock waiter that passed the gate before the first refusal is latched is therefore a candidate path around the intended sticky refusal. The refusal can become latched while that second operation is already in flight.
+
+A deterministic isolated Node probe started two `gate.run()` calls before resolving the first. The first returned `{ok:false, blockedByPeer:true}`; the second then ran and returned `{ok:true}`, changing the probe's shared value to its candidate, while `gate.refusal` remained set. This proves a race in the gate abstraction. It is not proof that the real browser has completed this interleaving or that production storage was overwritten; the browser lock scheduling and exact UI timing remain unverified.
+
+### Existing verification and gap
+
+- `npm.cmd test`: PASS, 176/176 tests on 2026-10-11.
+- Existing `workspace-write-gate.test.mjs` covers sequential peer refusal followed by Export-triggered save, the Test 32 sequence, stale-revision refusal, coordination failure, explicit Retry, and ordinary success. It does not start two `run()` calls concurrently, nor combine a scheduled save with `activateIncoming()` waiting on the same write lock.
+- Source audit found no separate `localStorage.setItem()` persistence path in application code outside `model.js`; guarded call sites are `scheduleWorkspaceSave()` and `activateIncoming()`. `model.save()` is used through `saveIfCurrent()` for these guarded writes.
+- No isolated browser verification was attempted for the newly found race. Since the deterministic probe found that the core safety gate permits a post-refusal in-flight attempt, intentionally driving this race through the UI before resolving the safety defect could risk a disposable shared Workspace write and would not change the need for a Human-approved runtime repair. Test 33 remains valid only for its observed, sequential operation order.
+
+### Safety assessment and decision boundary
+
+The sticky gate protects later sequential attempts, including Export-triggered attempts, after a refusal has completed. It does not currently establish that all attempts already in flight are stopped by that refusal. Therefore the Test 32 principle “a refused Workspace write must not later succeed implicitly” is not yet established for overlapping save-path calls. No actual application/browser overwrite from this race has been observed in this audit, so this is a source-confirmed gate race and a browser-unverified safety risk, not a new Human Browser FAIL.
+
+A bounded runtime repair would need to make write-gate attempts mutually ordered or otherwise ensure that every pending writer rechecks the refusal immediately before its protected persistence callback. The regression test should overlap a refused scheduled save with an incoming Dataset write (and verify no later candidate write), then verify that a fresh page or deliberate safe recovery can write after revalidation. Those changes affect the safety mechanism and are not made here. Human approval is required before runtime repair and actual browser reproduction; the repo already permits tests and documentation work, but no meaningful passing regression can be added for the race without first adopting and implementing that repair.
+
+Cross-Context Workspace Safety remains pending. PUBLIC RELEASE NO-GO remains in force.
