@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fresh,load,save,readDataset,datasetForWorkspace,exportBaseline,markDatasetModified} from './model.js';
+import {fresh,load,save,readDataset,datasetForWorkspace,datasetForExport,exportBaseline,markDatasetModified} from './model.js';
 import {DIMENSION_ASSESSMENT_ID} from './model.js';
 import {applyAssessment,applyDimensionAndRescale,createDatasetEntity,deleteDatasetEntity,editDatasetEntity,entityDeleteEligibility,rescaledAssessmentValue,upgradeDimensionAssessment} from './successor-domain.js';
 import {validateDataset} from './vendor/e2r-validator/index.js';
@@ -23,6 +23,29 @@ test('Candidate payload authoring is Dataset data and retains unknown sibling Ex
   assert.deepEqual(dataset.extensions[DIMENSION_ASSESSMENT_ID].assessments,[{entityId:'e1',dimensionId:'d1',value:0}]);
   assert.equal(validateDataset(dataset).valid,true);
   assert.equal(state.datasetModified,true);
+});
+
+test('Export adds a complete Specification declaration to a supported copy without changing Dataset or Workspace data',()=>{
+  const dataset={version:'1.0',entities:[{id:'e1'}],events:[],relations:[],extensions:{metadata:{title:'Export only'},[DIMENSION_ASSESSMENT_ID]:{specVersion:'0.2.0',dimensions:[],assessments:[]}}};
+  const state=fresh(dataset),before=structuredClone(state.dataset),workspaceBefore=datasetForWorkspace(state);
+  const exported=datasetForExport(state),spec=exported.extensions['draft.github.sukoyaka-dopeness.specification'];
+  assert.deepEqual(spec,{specVersion:'0.1.0',uses:[{extension:'metadata',version:'1.0.0'},{extension:DIMENSION_ASSESSMENT_ID,version:'0.2.0'}]});
+  assert.equal(validateDataset(exported).valid,true);
+  assert.deepEqual(fresh(exported).dataset,exported);
+  assert.deepEqual(state.dataset,before);
+  assert.deepEqual(datasetForWorkspace(state),workspaceBefore);
+  assert.deepEqual(exported.extensions.metadata,dataset.extensions.metadata);
+  assert.deepEqual(exported.extensions[DIMENSION_ASSESSMENT_ID],dataset.extensions[DIMENSION_ASSESSMENT_ID]);
+});
+
+test('Export leaves unknown Extensions, unsupported versions, and existing declarations untouched',()=>{
+  const unknown={version:'1.0',entities:[{id:'e1',extensions:{'opaque.example/object':{keep:[1]}}}],events:[],relations:[],extensions:{metadata:{title:'Known'},'opaque.example/dataset':{keep:true}}};
+  const unknownExport=datasetForExport(fresh(unknown));
+  assert.deepEqual(unknownExport,unknown);
+  const unsupported={version:'1.0',entities:[],events:[],relations:[],extensions:{[DIMENSION_ASSESSMENT_ID]:{specVersion:'0.3.0',future:true}}};
+  assert.deepEqual(datasetForExport(fresh(unsupported)),unsupported);
+  const declared={version:'1.0',entities:[],events:[],relations:[],extensions:{metadata:{title:'Known'},'draft.github.sukoyaka-dopeness.specification':{specVersion:'0.1.0',uses:[]}}};
+  assert.deepEqual(datasetForExport(fresh(declared)),declared);
 });
 
 test('new Dimension authoring starts Candidate 0.2.0 and preserves Description text exactly',()=>{
@@ -64,6 +87,12 @@ test('Candidate 0.2.0 validator accepts omitted, multiline, marked-up, and long 
     dimension.description=description;
     assert.equal(validateDataset(dataset).valid,false);
   }
+});
+
+test('unsupported Extension versions are not assigned a guessed version during Export',()=>{
+  const dataset={version:'1.0',entities:[],events:[],relations:[],extensions:{metadata:{title:'Known'},[DIMENSION_ASSESSMENT_ID]:{specVersion:'0.3.0',future:true}}};
+  const exported=datasetForExport(fresh(dataset));
+  assert.deepEqual(exported,dataset);
 });
 
 test('unsupported Candidate version remains opaque and cannot be implicitly downgraded',()=>{

@@ -159,6 +159,40 @@ export function datasetForWorkspace(s){
   }
   return dataset;
 }
+const SPECIFICATION_ID='draft.github.sukoyaka-dopeness.specification';
+function extensionPayloadOccurrences(dataset){
+  const occurrences=new Map();let hasSpecification=false;
+  const visit=value=>{
+    if(!value||typeof value!=='object'||Array.isArray(value)||!value.extensions||typeof value.extensions!=='object'||Array.isArray(value.extensions))return;
+    for(const [id,payload] of Object.entries(value.extensions)){
+      if(id===SPECIFICATION_ID){hasSpecification=true;continue;}
+      const list=occurrences.get(id)||[];list.push({owner:value,payload});occurrences.set(id,list);
+    }
+  };
+  visit(dataset);
+  for(const collection of ['entities','events','relations'])for(const item of dataset[collection]||[])visit(item);
+  return {occurrences,hasSpecification};
+}
+function completeExportSpecification(dataset){
+  const datasetExtensions=dataset?.extensions;
+  if(datasetExtensions!==undefined&&(!datasetExtensions||typeof datasetExtensions!=='object'||Array.isArray(datasetExtensions)))return dataset;
+  const collected=extensionPayloadOccurrences(dataset);
+  if(collected.hasSpecification)return dataset;
+  const occurrences=collected.occurrences;
+  if(!occurrences.size)return dataset;
+  const uses=[];
+  for(const [extension,items] of occurrences){
+    let version;
+    if(extension==='metadata'&&items.every(({owner})=>owner===dataset))version='1.0.0';
+    else if(extension===DIMENSION_ASSESSMENT_ID&&items.length===1&&items[0].owner===dataset&&DIMENSION_ASSESSMENT_VERSIONS.includes(items[0].payload?.specVersion))version=items[0].payload.specVersion;
+    else return dataset;
+    uses.push({extension,version});
+  }
+  const candidate=structuredClone(dataset);
+  candidate.extensions={...(candidate.extensions||{}),[SPECIFICATION_ID]:{specVersion:'0.1.0',uses}};
+  return validateDataset(candidate).valid?candidate:dataset;
+}
+export function datasetForExport(s){return completeExportSpecification(datasetForWorkspace(s));}
 function serializableWorkspace(s,dataset=datasetForWorkspace(s)){
   return JSON.stringify({format:'parameterplotter-local-workspace',version:1,dataset,ui:{workspaceCreated:s.workspaceCreated,selected:s.selected,view:s.view,waiting:s.waiting,quadrant:s.quadrant,radar:s.radar,secondary:s.secondary,matrix:s.matrix,matrixRows:s.matrixRows,matrixPage:s.matrixPage,datasetModified:s.datasetModified,datasetBaseline:s.datasetBaseline}});
 }

@@ -1,4 +1,4 @@
-import {load, saveIfCurrent, WORKSPACE_STORAGE_KEY, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates, validateDataset, datasetForWorkspace, exportBaseline, transactDatasetMutation} from './model.js';
+import {load, saveIfCurrent, WORKSPACE_STORAGE_KEY, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates, validateDataset, datasetForWorkspace, datasetForExport, exportBaseline, transactDatasetMutation} from './model.js';
 import {renderProfile, renderQuadrant, renderRadar, renderMatrix} from './views.js';
 import {dimensionRange, rangePosition, valueAtRangePosition, quadrantOutOfRangeEntities} from './model.js';
 import {layoutPlotLabels} from './plot-labels.js';
@@ -677,7 +677,8 @@ function exportCurrentDataset(){
  if(s.readOnly){lifecycleNotice='E2R Dataset Export is unavailable during diagnostic read-only inspection.';render();return;}
  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);s.validation=validation;
  if(!validation.valid){s.readOnly=true;lifecycleNotice='Export blocked: Validator errors remain. No repair or normalization was applied.';render();return;}
- if(!downloadJson('parameterplotter-dataset.e2r.json',dataset))return;
+ const exportDataset=datasetForExport(s);
+ if(!downloadJson('parameterplotter-dataset.e2r.json',exportDataset))return;
  exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave({exportRequested:true});lifecycleNotice=locale==='ja'?'E2R JSONのダウンロードをブラウザーに依頼しました。完了はこの画面では確認できないため、必要なファイルがダウンロードされたことを確認してください。ブラウザー内Workspaceへの保存は別の処理です。':'The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.';render();
 }
 function relationDeletionFeedback(id){
