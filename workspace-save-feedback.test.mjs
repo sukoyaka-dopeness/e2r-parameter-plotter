@@ -28,7 +28,7 @@ test('unclassified failures retain their actual reason without inventing a cause
 test('a later attempt after refusal explains that saving stays paused until reload',()=>{
   const english=workspaceSaveFailureMessage({blockedByPeer:true},'', 'en',{priorRefusal:true});
   assert.match(english,/paused until reload/);
-  assert.match(english,/check that the download completed/);
+  assert.match(english,/verify the download/);
   const japanese=workspaceSaveFailureMessage({blockedByPeer:true},'', 'ja',{priorRefusal:true});
-  assert.match(japanese,/Reloadまで停止/);
+  assert.match(japanese,/\u518d\u8aad\u307f\u8fbc\u307f\u307e\u3067\u505c\u6b62/);
 });

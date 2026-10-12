@@ -196,12 +196,11 @@ test('Home has no peer warning when no other tab has loss-sensitive work',()=>{
 test('Home explains active peer work and recovery in both UI locales',()=>{
   const en=homeMarkup({peerWorkStatus:{kind:'work',count:1},locale:'en'});
   const ja=homeMarkup({peerWorkStatus:{kind:'work',count:1},locale:'ja'});
-  assert.match(en,/Another ParameterPlotter tab has work that needs protection/);
-  assert.match(en,/Apply or cancel open input in that tab/);
-  assert.match(en,/export any Dataset changes/);
-  assert.match(ja,/保護が必要な作業があります/);
-  assert.match(ja,/残したいDatasetの変更をExport/);
-  assert.notEqual(ja,en);
+  assert.match(en,/Another ParameterPlotter tab has unapplied work/);
+  assert.match(en,/Apply or cancel its open input before retrying replacement/);
+  assert.match(en,/Export any Dataset changes/);
+  assert.ok(ja.includes('E2R JSON'));
+  assert.doesNotMatch(ja,/Export/);
   assert.notEqual(ja,en);
 });
 
@@ -215,7 +214,7 @@ test('Home distinguishes uncertain coordination without claiming peer work exist
 test('replacement refusal takes priority over the duplicate peer warning and offers retry and cancel',()=>{
   const markup=homeMarkup({peerWorkStatus:{kind:'work',count:1},replacementFeedback:{kind:'peer-work',reason:'Another ParameterPlotter tab has work that needs protection.'},locale:'en'});
   assert.match(markup,/role="alert"/);
-  assert.match(markup,/did not change the saved workspace/);
+  assert.match(markup,/saved workspace was not changed/);
   assert.match(markup,/work that needs protection/);
   assert.match(markup,/data-retry-replacement/);
   assert.match(markup,/data-cancel-replacement-feedback/);

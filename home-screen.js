@@ -1,19 +1,25 @@
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 export function homePeerWorkNotice(status, locale='en') {
   if(status?.kind==='work')return locale==='ja'
-    ? '別のParameterPlotterタブに保護が必要な作業があります。元のタブで入力を適用または取り消し、残したいDatasetの変更をExportしてから再試行してください。置換前の安全確認は引き続き行われます。'
-    : 'Another ParameterPlotter tab has work that needs protection. Apply or cancel open input in that tab, and export any Dataset changes you need to keep before retrying. The replacement safety check will still run.';
+    ? '別のParameterPlotterタブに未適用の作業があります。置換を再試行する前に、そのタブの入力を適用または取り消してください。残したいDatasetの変更は、そのタブからE2R JSONとして書き出してください。'
+    : 'Another ParameterPlotter tab has unapplied work. Apply or cancel its open input before retrying replacement. Export any Dataset changes you need to keep from that tab.';
   if(status?.kind==='unknown')return locale==='ja'
     ? '他のParameterPlotterタブの作業状態を安全に確認できませんでした。保護が必要な作業があるとは断定できません。安全確認ができるまでDatasetの置換は進みません。'
     : 'The work state of other ParameterPlotter tabs could not be checked safely. This does not confirm that another tab has work needing protection. Dataset replacement will remain guarded until safety can be verified.';
   return '';
 }
 
-export function homeMarkup({canContinue=false,notice='',sampleError='',handoffStatus='',handoffError='',peerWorkStatus=null,replacementFeedback=null,locale='en'}={}) {
-  const peerNotice=replacementFeedback?'':homePeerWorkNotice(peerWorkStatus,locale);
+export function homeMarkup({canContinue=false,notice='',sampleError='',handoffStatus='',handoffError='',peerWorkStatus=null,peerWorkSaveStopped=false,replacementFeedback=null,locale='en'}={}) {
+  const peerNotice=replacementFeedback?.kind==='peer-work'?'':homePeerWorkNotice(peerWorkStatus,locale);
   const ja=locale==='ja';
+  const duplicatePersistenceNotice=(replacementFeedback?.kind==='peer-work'&&peerWorkStatus?.kind==='work')||(replacementFeedback?.kind==='prior-save-refusal'&&peerWorkSaveStopped);
+  const persistenceNotice=duplicatePersistenceNotice?'':peerWorkSaveStopped
+    ? ja?'前回のWorkspace保存はクロスタブの安全確認で拒否され、このタブからの保存は再読み込みまで停止しています。現在のDatasetはこのタブのメモリに保持され、保存済みWorkspaceは置き換わっていません。このタブに残したい変更をE2R JSONとして書き出し、ダウンロードを確認してください。':'A previous Workspace save was refused during cross-tab safety checks, so saving from this tab remains paused until reload. Its current Dataset remains in memory, and the saved Workspace was not replaced. Export any changes you need to keep from this tab and verify the download.'
+    :notice;
   const feedbackCopy=replacementFeedback?.kind==='peer-work'
-    ? ja?'別のParameterPlotterタブに保護が必要な作業があります。この置換操作では保存済みWorkspaceは変更されていません。別タブの入力を適用または取り消し、残したいDatasetの変更をExportしてから再試行してください。':'Another ParameterPlotter tab has work that needs protection. This replacement attempt did not change the saved workspace. Apply or cancel open input in that tab, and export any Dataset changes you need to keep before retrying.'
+    ? ja?'別のParameterPlotterタブに保護が必要な作業があるため、Datasetの置換を拒否しました。保存済みWorkspaceは変更されていません。別タブの入力を適用または取り消し、必要なDatasetの変更をE2R JSONとして書き出してから再試行してください。':'Another ParameterPlotter tab has work that needs protection. This replacement was refused and the saved workspace was not changed. Apply or cancel that tab’s open input, and export any Dataset changes you need to keep before retrying.'
+    :replacementFeedback?.kind==='prior-save-refusal' && peerWorkSaveStopped
+      ? ja?'前回の安全上の拒否により、このタブからのWorkspace保存は停止中です。必要なDatasetをE2R JSONとして書き出してダウンロードを確認し、再読み込みして保存済みWorkspaceを開いてください。':'Workspace saving in this tab remains paused after an earlier safety refusal. Export any Dataset work you need as E2R JSON and check the download, then reload and open the saved Workspace.'
     :replacementFeedback?.kind==='prior-save-refusal'
       ? ja?'以前のWorkspace保存が安全確認で拒否されたため、このタブからの保存はReloadまで停止しています。必要なDatasetをE2R JSONとしてExportし、ダウンロードを確認してからReloadし、保存済みWorkspaceを開いてください。':'Workspace saving in this tab remains paused after an earlier safety refusal. Export any Dataset work you need as E2R JSON and check the download, then reload and open the saved Workspace.'
     :replacementFeedback?.kind==='stale-revision'
@@ -33,7 +39,7 @@ export function homeMarkup({canContinue=false,notice='',sampleError='',handoffSt
     <p class="home-intro">Compare E2R Entities across Dimensions.</p>
     ${feedback}
     ${peerNotice?`<p class="home-notice cross-tab-work-warning${peerWorkStatus?.kind==='unknown'?' is-uncertain':''}" role="status" aria-live="polite">${escapeHtml(peerNotice)}</p>`:''}
-    ${notice?`<p class="home-notice" role="alert">${escapeHtml(notice)}</p>`:''}
+    ${persistenceNotice?`<p class="home-notice" role="alert">${escapeHtml(persistenceNotice)}</p>`:''}
     ${sampleError?`<p class="home-notice" role="alert">${escapeHtml(sampleError)}</p>`:''}
     ${handoffStatus?`<p class="home-notice" role="status">${escapeHtml(handoffStatus)}</p>`:''}
     ${handoffError?`<p class="home-notice" role="alert">${escapeHtml(handoffError)}</p>`:''}

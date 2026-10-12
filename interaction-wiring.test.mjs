@@ -82,7 +82,7 @@ test('peer replacement refusal is rendered on Home and cancellation invalidates 
   assert.match(main,/const kind=result\.blockedByPeer\?'peer-work'/);
   assert.match(main,/replacement=null;replacementRefusal=\{request,kind,reason:/);
   assert.match(main,/function cancelReplacementFeedback\(\)\{replacementAttemptId\+\+/);
-  assert.match(home,/replacementFeedback\?''/);
+  assert.match(home,/replacementFeedback\?\.kind==='peer-work'\?''/);
   assert.match(home,/data-retry-replacement/);
   assert.match(home,/data-cancel-replacement-feedback/);
 });

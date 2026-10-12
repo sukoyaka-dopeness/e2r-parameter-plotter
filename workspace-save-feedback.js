@@ -1,4 +1,7 @@
 export function workspaceSaveFailureMessage(result, currentMessage = '', locale = 'en', {priorRefusal=false} = {}) {
+  if (priorRefusal && result?.blockedByPeer) return locale === 'ja'
+    ? '前回の保存時に別のParameterPlotterタブに保護が必要な作業があったため、このタブからの保存は再読み込みまで停止しています。現在のDatasetはこのタブのメモリに保持され、保存済みWorkspaceは置き換わっていません。必要なDatasetをE2R JSONとして書き出し、ダウンロードを確認してから、このタブを再読み込みして保存済みWorkspaceを開いてください。'
+    : 'Saving from this tab remains paused until reload because another ParameterPlotter tab had work that needed protection when the earlier save was refused. This tab’s current Dataset remains in memory, and the saved workspace was not replaced. Export any Dataset work you need as E2R JSON, verify the download, then reload this tab and open the saved Workspace.';
   if (priorRefusal) return locale === 'ja'
     ? '以前のWorkspace保存が安全確認で拒否されたため、このタブからの保存はReloadまで停止しています。必要なDatasetをE2R JSONとしてExportし、ダウンロードを確認してからReloadし、保存済みWorkspaceを開いてください。'
     : 'A previous Workspace save was refused for safety, so saving from this tab is paused until reload. Export any Dataset work you need as E2R JSON and check that the download completed, then reload and open the saved Workspace.';
