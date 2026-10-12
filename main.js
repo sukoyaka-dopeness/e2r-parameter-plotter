@@ -25,7 +25,7 @@ import {footerMarkup, creditsMarkup} from './application-shell.js';
 import {requestedLocale, readSavedLocale, readTemporaryLocale, resolveLocale, chooseTemporaryLocale, chooseSavedLocale, localeFragment} from './locale-preference.js';
 import {localeControlMarkup, localeConflictMarkup} from './locale-shell.js';
 import {localizeUi} from './ui-localize.js';
-import {applyDatasetTitle} from './dataset-title.js';
+import {applyDatasetTitle, getDatasetExportFilename} from './dataset-title.js';
 import {revealWithinScrollport} from './drawer-visibility.js';
 import {headerNavigationFocusRequest, restoreHeaderNavigationFocus} from './view-header-focus.js';
 import {matrixPageAfter} from './matrix-navigation.js';
@@ -678,7 +678,7 @@ function exportCurrentDataset(){
  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);s.validation=validation;
  if(!validation.valid){s.readOnly=true;lifecycleNotice='Export blocked: Validator errors remain. No repair or normalization was applied.';render();return;}
  const exportDataset=datasetForExport(s);
- if(!downloadJson('parameterplotter-dataset.e2r.json',exportDataset))return;
+ if(!downloadJson(getDatasetExportFilename(exportDataset),exportDataset))return;
  exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave({exportRequested:true});lifecycleNotice=locale==='ja'?'E2R JSONのダウンロードをブラウザーに依頼しました。完了はこの画面では確認できないため、必要なファイルがダウンロードされたことを確認してください。ブラウザー内Workspaceへの保存は別の処理です。':'The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.';render();
 }
 function relationDeletionFeedback(id){
