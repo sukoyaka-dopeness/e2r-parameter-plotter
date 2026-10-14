@@ -33,6 +33,14 @@ View navigation and editing controls also support keyboard focus. The UI languag
 
 ## Keep and share your work
 
+ParameterPlotter uses one editing tab per origin within the same browser
+profile. The first tab keeps its session even on Home. A second tab shows a
+notice asking you to return to the original tab and close the duplicate; it
+cannot open or edit a Dataset. Closing the original does not automatically
+activate the duplicate. Reload or reopen ParameterPlotter to resume the last
+successfully saved Workspace. After navigating away and back, an ended session
+also requires reload. Unapplied form input is not guaranteed after a crash.
+
 ParameterPlotter saves the working copy in this browser when local storage is available. This browser-local copy is useful for continuing on the same browser, but it is not an exported Dataset file. Use **More → Export E2R JSON** to download a portable copy and keep that file somewhere you control.
 
 The workspace indicates whether changes have been exported and whether browser-local saving is available. If saving to browser storage fails, the in-memory work may be lost when you reload or close the browser. Export a file for a portable copy.

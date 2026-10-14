@@ -61,13 +61,39 @@ test('successor entry point wires replacement rendering, form identity, stale-no
   assert.match(source,/applyDimensionAndRescale\(s,next\)/);
   assert.match(source,/s\.pendingDraft=false;\}update\(\);return;\}\s*if\(action==='cancel'\)/);
   assert.match(source,/function clearLifecycleNotice\(\)\{\s*if\(!lifecycleNotice\)return;\s*lifecycleNotice='';\s*root\.querySelector\('\.lifecycle-notice'\)\?\.remove\(\);/);
-  assert.match(source,/installBeforeUnloadProtection\(window,\(\)=>\(\{\.\.\.s,pendingDraft:s\.pendingDraft\|\|hasPendingAssessmentDraft\(root\)\}\)\)/);
-  assert.match(source,/homePeerWorkStatus=status;\s*if\(surface==='home'\)render\(\);/);
+  assert.match(source,/installBeforeUnloadProtection\(window,\(\)=>\(\{\.\.\.s,pendingDraft:hasCurrentPendingDraft\(\)\}\)\)/);
+  assert.match(source,/homePeerWorkStatus=status;\s*if\(surface==='home'\)\{\s*updateHomePeerWorkStatusView\(\);/);
+  assert.match(source,/if\(homePeerWorkStatus\.kind!=='checking'\)\{\s*homePeerWorkStatus=\{kind:'checking'\}/);
+  assert.match(source,/homePeerWorkStatusRequest/);
+  assert.match(source,/workspaceCoordinator\.subscribe\(refreshHomePeerWorkStatus\)/);
+  assert.doesNotMatch(source,/window\.addEventListener\('focus',refreshHomePeerWorkStatus\)/);
+  const peerRefresh=source.slice(source.indexOf('function refreshHomePeerWorkStatus'),source.indexOf('workspaceCoordinator.subscribe(refreshHomePeerWorkStatus)'));
+  assert.doesNotMatch(peerRefresh,/render\(\)/);
+  assert.doesNotMatch(peerRefresh,/focusedAction\|\|'new'/);
+  assert.match(source,/homeAcquisitionBlocked\(action,homePeerWorkStatus\.kind\)/);
   assert.doesNotMatch(source,/document\.addEventListener\(['"]beforeunload['"]/);
   assert.match(source,/placeholder="Describe this Entity"/);
   assert.doesNotMatch(source,/placeholder="Describe this temporary Entity"/);
   assert.match(source,/nav class="tabs" aria-label="Views"[^\n]*aria-current="\$\{s\.view===v\?'page':'false'\}"/);
   assert.doesNotMatch(source,/aria-pressed=/);
+});
+
+test('Dataset title Apply label is explicit while submit still uses the existing title mutation path',async()=>{
+  const source=await readFile(new URL('./main.js',import.meta.url),'utf8');
+  const titleEditor=source.slice(source.indexOf("editor.className='dataset-title-editor'"),source.indexOf("root.querySelector('.workspace')",source.indexOf("editor.className='dataset-title-editor'")));
+  assert.match(titleEditor,/type="submit"[^>]*>Apply title<\/button>/);
+  assert.match(titleEditor,/s\.readOnly\|\|\(datasetTitleDraft\?\?title\)===title\?'disabled':''/);
+  const submitHandler=source.slice(source.indexOf("if(form.classList.contains('dataset-title-editor'))"),source.indexOf("if(formId==='entity-form')"));
+  assert.match(submitHandler,/transactDatasetMutation\(s,\(\)=>applyDatasetTitle\(s\.dataset,title\)\)/);
+  assert.match(submitHandler,/datasetTitleDraft=null;s\.pendingDraft=false/);
+});
+
+test('draft input changes republish the derived cross-tab protection state when a draft is cleared',async()=>{
+  const source=await readFile(new URL('./main.js',import.meta.url),'utf8');
+  const inputHandler=source.slice(source.indexOf("document.addEventListener('input',event=>{"),source.indexOf("},true);",source.indexOf("document.addEventListener('input',event=>{")));
+  assert.match(inputHandler,/target\.id==='dataset-title-input'\|\|target\.matches\('#entity-form input,#entity-form textarea'\)\|\|target\.closest\('#dimension-form'\)/);
+  assert.match(inputHandler,/workspaceCoordinator\.setActive\(hasCurrentLossSensitiveWork\(\)\)/);
+  assert.doesNotMatch(inputHandler,/if\(s\.pendingDraft\)workspaceCoordinator\.setActive\(true\)/);
 });
 
 test('peer replacement refusal is rendered on Home and cancellation invalidates pending writes',async()=>{
@@ -76,15 +102,29 @@ test('peer replacement refusal is rendered on Home and cancellation invalidates 
     readFile(new URL('./home-screen.js',import.meta.url),'utf8'),
   ]);
   assert.match(main,/replacementFeedback:replacementRefusal/);
-  assert.match(main,/peerWorkStatus:replacementRefusal\?null:homePeerWorkStatus/);
+  assert.match(main,/const peerStatus=homePeerWorkStatus/);
   const replacementFlow=main.slice(main.indexOf('async function activateIncoming'));
   assert.ok(replacementFlow.indexOf('if(attemptId!==replacementAttemptId)return {ok:false,cancelled:true}')<replacementFlow.indexOf('if(activeTabs.length)return {ok:false,blockedByPeer:true'));
   assert.match(main,/const kind=result\.blockedByPeer\?'peer-work'/);
   assert.match(main,/replacement=null;replacementRefusal=\{request,kind,reason:/);
   assert.match(main,/function cancelReplacementFeedback\(\)\{replacementAttemptId\+\+/);
-  assert.match(home,/replacementFeedback\?\.kind==='peer-work'\?''/);
+  assert.match(home,/safePeerStatus\.kind==='checking'\|\|\(replacementFeedback\?\.kind==='peer-work'&&safePeerStatus\.kind==='work'\)\?'':/);
   assert.match(home,/data-retry-replacement/);
   assert.match(home,/data-cancel-replacement-feedback/);
+});
+
+test('degraded Home recovery returns to the retained Workspace without reopening or retrying it',async()=>{
+  const main=await readFile(new URL('./main.js',import.meta.url),'utf8');
+  const home=await readFile(new URL('./home-screen.js',import.meta.url),'utf8');
+  assert.match(main,/const canContinue=s\.workspaceCreated&&s\.persistence\.status==='saved';\s*const canReturnToWorkspace=s\.workspaceCreated&&s\.persistence\.status==='degraded';/);
+  assert.match(main,/homeMarkup\(\{canContinue,canReturnToWorkspace,/);
+  const recovery=main.slice(main.indexOf("else if(action==='return-workspace')"),main.indexOf("else if(action==='new')",main.indexOf("else if(action==='return-workspace')")));
+  assert.match(recovery,/if\(!s\.workspaceCreated\|\|s\.persistence\.status!=='degraded'\)return/);
+  assert.match(recovery,/surface='workspace';render\(\)/);
+  assert.doesNotMatch(recovery,/receiveDataset|activateIncoming|retryExplicitly|scheduleWorkspaceSave/);
+  assert.ok(main.includes("root.querySelector('[data-home-action=\"continue\"], [data-home-action=\"return-workspace\"]')?.focus();"));
+  assert.match(home,/canReturnToWorkspace\s*\?/);
+  assert.match(home,/data-home-action="return-workspace"/);
 });
 
 test('workspace persistence refusal presents one specific status instead of duplicating lifecycle feedback',async()=>{
@@ -98,6 +138,8 @@ test('workspace persistence refusal presents one specific status instead of dupl
   assert.match(main,/workspaceWriteGate\.run\(\(\)=>workspaceCoordinator\.withWriteLock/);
   assert.match(main,/if\(result\.ok\)\{expectedWorkspaceRaw=result\.raw;exportNoticePending=false;render\(\);return;\}/);
   assert.match(main,/const refusal=result\.priorRefusal\|\|result;\s*s\.persistence=\{status:'degraded'/);
+  assert.match(main,/const persistenceMessage=refusal\?workspaceSaveFailureMessage\(refusal,s\.persistence\.message,locale,\{priorRefusal:true\}\):s\.persistence\.message/);
+  assert.match(main,/const notice=s\.persistence\.status==='degraded'\?refusal\?workspaceSaveFailureMessage\(refusal,s\.persistence\.message,locale,\{priorRefusal:true\}\):s\.persistence\.message:''/);
   assert.match(main,/function retryReplacement\(\)\{[^}]*workspaceWriteGate\.retryExplicitly\(\)/);
   assert.match(main,/s\.persistence\.status==='saving'\?'Saving locally/);
   assert.match(translateUiText('Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.'),/別のParameterPlotterタブで保存済みWorkspaceが更新されました/);

@@ -1,3 +1,4 @@
+import {completeSpecification} from './dataset-specification.js';
 const SPECIFICATION_ID='draft.github.sukoyaka-dopeness.specification';
 
 export function getDatasetExportFilename(dataset){
@@ -33,7 +34,16 @@ export function applyDatasetTitle(dataset,title){
        !specification.uses.some(entry=>entry?.extension==='metadata')){
       extensions[SPECIFICATION_ID]={...specification,uses:[...specification.uses,{extension:'metadata',version:'1.0.0'}]};
     }
-  }else delete extensions.metadata;
+  }else {
+    delete extensions.metadata;
+    const specification=extensions[SPECIFICATION_ID];
+    if(specification?.specVersion==='0.1.0'&&Array.isArray(specification.uses)){
+      const entries=specification.uses.filter(entry=>entry?.extension==='metadata');
+      const nested=[...dataset.entities,...dataset.events,...dataset.relations].some(item=>Object.hasOwn(item.extensions||{},'metadata'));
+      if(!nested&&entries.length===1&&entries[0].version==='1.0.0')extensions[SPECIFICATION_ID]={...specification,uses:specification.uses.filter(entry=>entry?.extension!=='metadata')};
+    }
+  }
   if(Object.keys(extensions).length)dataset.extensions=extensions;
   else delete dataset.extensions;
+  if(Object.keys(metadata).length)dataset.extensions=completeSpecification(dataset).extensions;
 }

@@ -96,6 +96,8 @@ test('coordinator notifies Home only for ParameterPlotter peer-status changes',a
   assert.equal(notifications,0);
   listeners.get('storage')({key:'e2r:parameter-plotter:workspace-tab:peer'});
   assert.equal(notifications,1);
+  listeners.get('focus')();
+  assert.equal(notifications,2);
   coordinator.dispose();
 });
 

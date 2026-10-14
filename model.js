@@ -1,3 +1,4 @@
+import {completeSpecification} from './dataset-specification.js';
 import {decimalInterpolate, presentDecimal} from './decimal-presentation.js';
 import {validateDataset} from './vendor/e2r-validator/index.js';
 export {validateDataset};
@@ -159,40 +160,7 @@ export function datasetForWorkspace(s){
   }
   return dataset;
 }
-const SPECIFICATION_ID='draft.github.sukoyaka-dopeness.specification';
-function extensionPayloadOccurrences(dataset){
-  const occurrences=new Map();let hasSpecification=false;
-  const visit=value=>{
-    if(!value||typeof value!=='object'||Array.isArray(value)||!value.extensions||typeof value.extensions!=='object'||Array.isArray(value.extensions))return;
-    for(const [id,payload] of Object.entries(value.extensions)){
-      if(id===SPECIFICATION_ID){hasSpecification=true;continue;}
-      const list=occurrences.get(id)||[];list.push({owner:value,payload});occurrences.set(id,list);
-    }
-  };
-  visit(dataset);
-  for(const collection of ['entities','events','relations'])for(const item of dataset[collection]||[])visit(item);
-  return {occurrences,hasSpecification};
-}
-function completeExportSpecification(dataset){
-  const datasetExtensions=dataset?.extensions;
-  if(datasetExtensions!==undefined&&(!datasetExtensions||typeof datasetExtensions!=='object'||Array.isArray(datasetExtensions)))return dataset;
-  const collected=extensionPayloadOccurrences(dataset);
-  if(collected.hasSpecification)return dataset;
-  const occurrences=collected.occurrences;
-  if(!occurrences.size)return dataset;
-  const uses=[];
-  for(const [extension,items] of occurrences){
-    let version;
-    if(extension==='metadata'&&items.every(({owner})=>owner===dataset))version='1.0.0';
-    else if(extension===DIMENSION_ASSESSMENT_ID&&items.length===1&&items[0].owner===dataset&&DIMENSION_ASSESSMENT_VERSIONS.includes(items[0].payload?.specVersion))version=items[0].payload.specVersion;
-    else return dataset;
-    uses.push({extension,version});
-  }
-  const candidate=structuredClone(dataset);
-  candidate.extensions={...(candidate.extensions||{}),[SPECIFICATION_ID]:{specVersion:'0.1.0',uses}};
-  return validateDataset(candidate).valid?candidate:dataset;
-}
-export function datasetForExport(s){return completeExportSpecification(datasetForWorkspace(s));}
+export function datasetForExport(s){return completeSpecification(datasetForWorkspace(s));}
 function serializableWorkspace(s,dataset=datasetForWorkspace(s)){
   return JSON.stringify({format:'parameterplotter-local-workspace',version:1,dataset,ui:{workspaceCreated:s.workspaceCreated,selected:s.selected,view:s.view,waiting:s.waiting,quadrant:s.quadrant,radar:s.radar,secondary:s.secondary,matrix:s.matrix,matrixRows:s.matrixRows,matrixPage:s.matrixPage,datasetModified:s.datasetModified,datasetBaseline:s.datasetBaseline}});
 }
@@ -241,25 +209,30 @@ export function transactDatasetMutation(s,mutator){
   const before={};
   for(const key of ['dataset','dimensions','values','datasetModified','selected','secondary','waiting','quadrant','radar','matrix','matrixRows'])before[key]=structuredClone(s[key]);
   try{mutator();}catch(error){Object.assign(s,before);return {ok:false,reason:error?.message||'The Dataset change could not be prepared.'};}
-  const dataset=datasetForWorkspace(s),validation=validateDataset(dataset);
+  let dataset=datasetForWorkspace(s);
+  if(candidateOf(dataset)&&JSON.stringify(candidateOf(dataset))!==JSON.stringify(candidateOf(before.dataset))){
+    dataset=completeSpecification(dataset);
+  }
+  const validation=validateDataset(dataset);
   if(!validation.valid){Object.assign(s,before);return {ok:false,reason:'The change would fail Validator checks and was not applied.',diagnostics:validation.diagnostics};}
   s.dataset=dataset;s.validation=validation;s.datasetModified=true;return {ok:true};
 }
 export function getValue(s, entityId, dimensionId) { const v = s.values[entityId]?.[dimensionId]; return typeof v === 'number' && Number.isFinite(v) ? v : null; }
 
+function completeAssessmentEditDeclaration(s){
+  const dataset=datasetForWorkspace(s),completed=completeSpecification(dataset);
+  if(completed!==dataset){s.dataset=completed;s.validation=validateDataset(completed);}
+}
 export function setValue(s, entityId, dimensionId, value) {
   if (!entityId || !dimensionId || s.readOnly || s.candidateUnsupported || !entities(s).some(entity=>entity.id===entityId) || !s.dimensions.some(dimension=>dimension.id===dimensionId)) return false;
   if (value === null || value === '') {
-    if (s.values[entityId]) delete s.values[entityId][dimensionId];
-    s.datasetModified=true;
-    return true;
+    if(s.values[entityId])delete s.values[entityId][dimensionId];
+    completeAssessmentEditDeclaration(s);s.datasetModified=true;return true;
   }
   const dimension=s.dimensions.find(d=>d.id===dimensionId),n=Number(value);
   if (!dimension || !acceptsDimensionValue(dimension,n)) return false;
-  s.values[entityId] ||= {};
-  s.values[entityId][dimensionId] = n;
-  s.datasetModified=true;
-  return true;
+  s.values[entityId] ||= {};s.values[entityId][dimensionId]=n;
+  completeAssessmentEditDeclaration(s);s.datasetModified=true;return true;
 }
 
 export const fmt = (v,dimension) => presentDecimal(v,dimension);

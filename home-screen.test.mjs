@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
-import {homeMarkup} from './home-screen.js';
+import {homeAcquisitionBlocked,homeMarkup,updateHomePeerWorkStatus} from './home-screen.js';
 import {creditsMarkup, footerMarkup} from './application-shell.js';
 import {DIMENSION_ASSESSMENT_ID,entities,fresh,getValue,label,plottedEntities,quadrantOutOfRangeEntities,validateDataset,waitingCandidates} from './model.js';
 import {renderMatrix,renderProfile,renderQuadrant,renderRadar} from './views.js';
@@ -10,7 +10,7 @@ import {ashenCrownSampleUrl} from './sample-datasets.js';
 import {translateUiText} from './ui-localize.js';
 
 test('Home uses the Human-selected start copy and presents primary Dataset acquisition',()=>{
-  const html=homeMarkup();
+  const html=homeMarkup({peerWorkStatus:{kind:'clear'}});
   assert.match(html,/<h1 id="home-title">Get Started<\/h1>/);
   assert.match(html,/<p class="home-intro">Compare E2R Entities across Dimensions\.<\/p>/);
   assert.doesNotMatch(html,/Continue Editing/);
@@ -27,6 +27,124 @@ test('Home offers Continue Editing only when caller confirms recoverable local w
   assert.match(html,/<p class="home-intro">Compare E2R Entities across Dimensions\.<\/p>/);
   assert.match(html,/Continue Editing[\s\S]*New Dataset/);
   assert.doesNotMatch(html,/Browser-local recovery keeps work available|Export E2R JSON when you need a portable Dataset file|home-footnote/);
+});
+
+test('Home keeps acquisition choices visible but unavailable until peer safety is clear',()=>{
+  for(const kind of ['work','unknown']){
+    for(const locale of ['en','ja']){
+      const markup=homeMarkup({peerWorkStatus:{kind,count:1},locale});
+      for(const action of ['new','open','sample']){
+        assert.match(markup,new RegExp(`<button data-home-action="${action}"[^>]*aria-disabled="true"[^>]*aria-describedby="home-acquisition-status"`));
+      }
+      assert.match(markup,/id="home-acquisition-status"/);
+      assert.match(markup,/data-home-action="recheck-peer-work"/);
+      assert.match(markup,/New Dataset|新しいデータセット/);
+      assert.match(markup,/Open E2R Dataset|E2Rデータセットを開く/);
+      assert.match(markup,/Open Sample Dataset|サンプルデータセットを開く/);
+    }
+  }
+  for(const locale of ['en','ja']){
+    const checking=homeMarkup({peerWorkStatus:{kind:'checking'},locale});
+    assert.match(checking,/data-home-action="new"[^>]*aria-disabled="true"[^>]*aria-describedby="home-acquisition-status"/);
+    assert.match(checking,/home-peer-work-checking-visually-hidden[^>]*role="status"/);
+    assert.doesNotMatch(checking,/data-home-action="recheck-peer-work"/);
+  }
+  const clear=homeMarkup({peerWorkStatus:{kind:'clear'}});
+  for(const action of ['new','open','sample']){
+    assert.match(clear,new RegExp(`<button data-home-action="${action}">`));
+    assert.doesNotMatch(clear,new RegExp(`<button data-home-action="${action}"[^>]*aria-disabled`));
+  }
+});
+
+test('peer work blocks only Dataset acquisition, never local Continue or Return actions',()=>{
+  for(const status of ['work','checking','unknown']){
+    for(const action of ['new','open','sample'])assert.equal(homeAcquisitionBlocked(action,status),true);
+    assert.equal(homeAcquisitionBlocked('continue',status),false);
+    assert.equal(homeAcquisitionBlocked('return-workspace',status),false);
+  }
+  for(const action of ['new','open','sample','continue','return-workspace'])assert.equal(homeAcquisitionBlocked(action,'clear'),false);
+});
+
+test('asynchronous peer status updates preserve the Continue button node while changing acquisition availability',()=>{
+  class Element {
+    attributes=new Map();innerHTML='';
+    setAttribute(name,value){this.attributes.set(name,String(value));}
+    removeAttribute(name){this.attributes.delete(name);}
+    getAttribute(name){return this.attributes.get(name)??null;}
+  }
+  const continueButton=new Element(),newButton=new Element(),openButton=new Element(),sampleButton=new Element(),statusRegion=new Element();
+  const nodes=new Map([
+    ['[data-home-peer-status]',statusRegion],
+    ['[data-home-action="continue"]',continueButton],
+    ['[data-home-action="new"]',newButton],
+    ['[data-home-action="open"]',openButton],
+    ['[data-home-action="sample"]',sampleButton],
+  ]);
+  const root={querySelector:selector=>nodes.get(selector)??null};
+  updateHomePeerWorkStatus(root,{peerWorkStatus:{kind:'checking'},locale:'en'});
+  assert.equal(nodes.get('[data-home-action="continue"]'),continueButton);
+  assert.match(statusRegion.innerHTML,/Checking whether another ParameterPlotter tab has work to protect/);
+  assert.match(statusRegion.innerHTML,/home-peer-work-checking-visually-hidden/);
+  for(const button of [newButton,openButton,sampleButton])assert.equal(button.getAttribute('aria-disabled'),'true');
+  updateHomePeerWorkStatus(root,{peerWorkStatus:{kind:'clear'},locale:'en'});
+  assert.equal(nodes.get('[data-home-action="continue"]'),continueButton);
+  assert.equal(statusRegion.innerHTML,'');
+  for(const button of [newButton,openButton,sampleButton])assert.equal(button.getAttribute('aria-disabled'),null);
+});
+
+test('Home keeps checking accessible without visually flashing a transient notice',()=>{
+  const en=homeMarkup({peerWorkStatus:{kind:'checking'},locale:'en'});
+  const ja=homeMarkup({peerWorkStatus:{kind:'checking'},locale:'ja'});
+  assert.match(en,/Checking whether another ParameterPlotter tab has work to protect/);
+  assert.match(en,/unavailable until the safety check finishes/);
+  assert.match(en,/home-peer-work-checking-visually-hidden/);
+  assert.doesNotMatch(en,/data-home-action="recheck-peer-work"/);
+  assert.match(ja,/別のParameterPlotterタブの作業状態を確認しています/);
+  assert.match(ja,/確認が終わるまでDatasetの取得・置換はできません/);
+  assert.match(ja,/home-peer-work-checking-visually-hidden/);
+  assert.equal(translateUiText('Check other tabs again'),'他のタブを再確認');
+});
+
+test('clear Home has no reserved peer-status gap and safety status precedes its actions',async()=>{
+  const markup=homeMarkup({canContinue:true,peerWorkStatus:{kind:'clear'},locale:'en'});
+  const checking=homeMarkup({canContinue:true,peerWorkStatus:{kind:'checking'},locale:'en'});
+  const css=await readFile(new URL('./home-screen.css',import.meta.url),'utf8');
+  assert.match(markup,/class="home-peer-status-slot" data-home-peer-status/);
+  assert.match(markup,/home-peer-status-slot[\s\S]*home-actions/);
+  assert.match(css,/\.home-peer-status-slot:empty\s*\{\s*display:\s*none;/);
+  assert.match(css,/\.home-peer-work-checking-visually-hidden\s*\{[^}]*position:\s*absolute;[^}]*clip:/);
+  assert.match(checking,/home-peer-work-checking-visually-hidden[\s\S]*home-actions/);
+});
+
+test('Continue and degraded Workspace recovery stay available while acquisitions are guarded',()=>{
+  const continuing=homeMarkup({canContinue:true,peerWorkStatus:{kind:'work'}});
+  const returning=homeMarkup({canReturnToWorkspace:true,peerWorkStatus:{kind:'unknown'}});
+  assert.match(continuing,/<button data-home-action="continue">Continue Editing<\/button>/);
+  assert.match(returning,/<button data-home-action="return-workspace">Return to Workspace<\/button>/);
+  for(const markup of [continuing,returning]){
+    assert.match(markup,/data-home-action="new"[^>]*aria-disabled="true"/);
+    assert.doesNotMatch(markup,/data-home-action="continue"[^>]*aria-disabled|data-home-action="return-workspace"[^>]*aria-disabled/);
+  }
+});
+
+test('Home offers a distinct return action for an available degraded Workspace in both locales',()=>{
+  const english=homeMarkup({canReturnToWorkspace:true,notice:'Saving is paused.',locale:'en'});
+  assert.match(english,/<button data-home-action="return-workspace">Return to Workspace<\/button>/);
+  assert.match(english,/Saving is paused\./);
+  assert.doesNotMatch(english,/data-home-action="continue"|Export E2R JSON/);
+
+  const japanese=homeMarkup({canReturnToWorkspace:true,notice:'保存停止中です。',locale:'ja'});
+  assert.match(japanese,/<button data-home-action="return-workspace">Workspaceに戻る<\/button>/);
+  assert.match(japanese,/保存停止中です。/);
+  assert.doesNotMatch(japanese,/data-home-action="continue"|Export E2R JSON/);
+});
+
+test('Home does not offer workspace recovery when no in-memory Workspace is available',()=>{
+  const initial=homeMarkup({canReturnToWorkspace:false,locale:'en'});
+  const degradedWithoutWorkspace=homeMarkup({canReturnToWorkspace:false,notice:'Saved workspace could not be read.',locale:'en'});
+  assert.doesNotMatch(initial,/return-workspace|Return to Workspace|Continue Editing/);
+  assert.doesNotMatch(degradedWithoutWorkspace,/return-workspace|Return to Workspace|Continue Editing/);
+  assert.match(degradedWithoutWorkspace,/Saved workspace could not be read\./);
 });
 
 test('Application shell provides a shared Footer and a bounded Credits dialog',async()=>{
@@ -60,6 +178,11 @@ test('Home uses the white application surface while the workspace remains distin
   assert.match(css,/\.app-footer small\s*\{[^}]*font-size:\s*15px;[^}]*line-height:\s*inherit/s);
   assert.match(css,/\.app-footer \.credits-button,[\s\S]*\.credits-actions button\s*\{[^}]*min-height:\s*36px;[^}]*padding:\s*5px 9px;[^}]*border-radius:\s*4px;[^}]*font-size:\s*15px;[^}]*line-height:\s*120%/);
   assert.match(css,/\.home-actions button\s*\{[^}]*min-height:\s*40px;[^}]*font-size:\s*16px/);
+  assert.match(css,/\.home-actions button\[aria-disabled="true"\]\s*\{[^}]*border-color:\s*#e5e4e7;[^}]*background:\s*#fff;[^}]*color:\s*#08060d;[^}]*opacity:\s*\.45/s);
+  assert.match(css,/\.home-actions button\s*\{[^}]*transition:\s*opacity 140ms ease-out/s);
+  assert.match(css,/\.home-actions button\[aria-disabled="true"\]:hover\s*\{[^}]*border-color:\s*#e5e4e7;[^}]*background:\s*#fff/s);
+  assert.match(base,/button:disabled\{opacity:\.45;cursor:default\}/);
+  assert.match(css,/\.dataset-title-editor button\s*\{[^}]*border:\s*1px solid #e5e4e7;[^}]*background:\s*#fff;[^}]*color:\s*#08060d/s);
   assert.match(css,/\.credits-dialog\s*\{[^}]*width:\s*min\(100%, 28rem\);[^}]*padding:\s*16px;[^}]*border-radius:\s*6px/);
   assert.match(css,/\.credits-metadata p\s*\{\s*margin:\s*0;?\s*\}/);
   assert.doesNotMatch(css,/@media \(max-width: 600px\)[\s\S]*\.app-footer \.credits-button/);
@@ -188,6 +311,19 @@ test('Home entry uses native Dataset file acquisition and a bundled sample path'
   assert.match(source,/else if\(action==='open'\)openDatasetFilePicker\(\)/);
 });
 
+test('Home click handling blocks acquisition unless peer-work status is clear and retains the write gate',async()=>{
+  const main=await readFile(new URL('./main.js',import.meta.url),'utf8');
+  assert.match(main,/homeAcquisitionBlocked\(action,homePeerWorkStatus\.kind\)/);
+  assert.match(main,/if\(action==='recheck-peer-work'\)\{if\(homePeerWorkStatus\.kind!=='checking'\)void refreshHomePeerWorkStatus\(\);return;\}/);
+  const homeClick=main.slice(main.indexOf("if(surface==='home'){"),main.indexOf("if(target.closest('[data-go-home]')"));
+  const continueAction=homeClick.slice(homeClick.indexOf("if(action==='continue')"),homeClick.indexOf("else if(action==='return-workspace')"));
+  assert.match(continueAction,/surface='workspace';render\(\)/);
+  assert.doesNotMatch(continueAction,/receiveDataset|activateIncoming|scheduleWorkspaceSave|workspaceWriteGate/);
+  assert.match(main,/if\(activeTabs\.length\)return \{ok:false,blockedByPeer:true/);
+  assert.match(main,/workspaceWriteGate\.run\(\(\)=>workspaceCoordinator\.withWriteLock/);
+});
+
+
 
 test('Home has no peer warning when no other tab has loss-sensitive work',()=>{
   assert.equal(homeMarkup({peerWorkStatus:{kind:'clear'}}).includes('cross-tab-work-warning'),false);
@@ -199,7 +335,8 @@ test('Home explains active peer work and recovery in both UI locales',()=>{
   assert.match(en,/Another ParameterPlotter tab has unapplied work/);
   assert.match(en,/Apply or cancel its open input before retrying replacement/);
   assert.match(en,/Export any Dataset changes/);
-  assert.ok(ja.includes('E2R JSON'));
+  assert.ok(ja.includes('\u5225\u306eParameterPlotter\u30bf\u30d6\u306b\u672a\u9069\u7528\u306e\u4f5c\u696d\u304c\u3042\u308a\u307e\u3059'));
+  assert.ok(ja.includes('E2R JSON\u3068\u3057\u3066\u66f8\u304d\u51fa\u3057\u3066\u304f\u3060\u3055\u3044'));
   assert.doesNotMatch(ja,/Export/);
   assert.notEqual(ja,en);
 });
@@ -208,46 +345,111 @@ test('Home distinguishes uncertain coordination without claiming peer work exist
   const markup=homeMarkup({peerWorkStatus:{kind:'unknown'},locale:'en'});
   assert.match(markup,/could not be checked safely/);
   assert.match(markup,/does not confirm that another tab has work needing protection/);
+  assert.match(markup,/Choose Check other tabs again to retry the check/);
   assert.match(markup,/is-uncertain/);
+  assert.match(markup,/data-home-action="new"[^>]*aria-disabled="true"/);
+  const japanese=homeMarkup({peerWorkStatus:{kind:'unknown'},locale:'ja'});
+  assert.match(japanese,/別タブに保護が必要な作業があると確認されたわけではありません/);
+  assert.match(japanese,/「他のタブを再確認」からもう一度確認できます/);
+  assert.match(japanese,/data-home-action="recheck-peer-work">他のタブを再確認/);
+  const missing=homeMarkup({peerWorkStatus:null,locale:'en'});
+  assert.match(missing,/could not be checked safely/);
+  assert.match(missing,/aria-describedby="home-acquisition-status"/);
 });
 
-test('replacement refusal takes priority over the duplicate peer warning and offers retry and cancel',()=>{
+test('Home keeps peer work and save-stop notices distinct without repeating recovery copy',()=>{
+  const markup=homeMarkup({peerWorkStatus:{kind:'work'},peerWorkSaveStopped:true,notice:'Peer save was stopped.',locale:'ja'});
+  assert.ok(markup.includes('\u5225\u306eParameterPlotter\u30bf\u30d6\u306b\u672a\u9069\u7528\u306e\u4f5c\u696d\u304c\u3042\u308a\u307e\u3059'));
+  assert.ok(markup.includes('\u73fe\u5728\u306eDataset\u306f\u3053\u306e\u30bf\u30d6\u306e\u30e1\u30e2\u30ea\u306b\u4fdd\u6301'));
+  assert.doesNotMatch(markup,/Export/);
+  assert.equal((markup.match(/role="status"/g)||[]).length,1);
+  assert.equal((markup.match(/role="alert"/g)||[]).length,1);
+});
+
+test('a stopped save remains visible after peer work clears without claiming it is still active',()=>{
+  const markup=homeMarkup({peerWorkStatus:{kind:'clear'},peerWorkSaveStopped:true,locale:'ja'});
+  assert.doesNotMatch(markup,/cross-tab-work-warning/);
+  assert.match(markup,/前回のWorkspace保存はクロスタブの安全確認で拒否され/);
+  assert.match(markup,/再読み込みまで停止しています/);
+  assert.match(markup,/現在のDatasetはこのタブのメモリに保持され/);
+  assert.match(markup,/E2R JSONとして書き出し/);
+  assert.doesNotMatch(markup,/別のParameterPlotterタブに保護が必要な作業があります/);
+});
+
+test('Workspace safety notices can wrap at normal and narrow widths',async()=>{
+  const css=await readFile(new URL('./first-slice.css',import.meta.url),'utf8');
+  assert.match(css,/\.successor-status\s*\{[^}]*min-width:\s*0/s);
+  assert.match(css,/\.persistence-status,[\s\S]*?overflow-wrap:\s*anywhere;[\s\S]*?white-space:\s*normal;/);
+  assert.match(css,/@media \(max-width:\s*720px\)[\s\S]*?\.persistence-status,[\s\S]*?\.lifecycle-notice\s*\{[^}]*padding:/);
+});
+
+test('replacement refusal keeps its dedicated alert and removes the duplicate ordinary peer notice',()=>{
   const markup=homeMarkup({peerWorkStatus:{kind:'work',count:1},replacementFeedback:{kind:'peer-work',reason:'Another ParameterPlotter tab has work that needs protection.'},locale:'en'});
   assert.match(markup,/role="alert"/);
   assert.match(markup,/saved workspace was not changed/);
-  assert.match(markup,/work that needs protection/);
-  assert.match(markup,/data-retry-replacement/);
-  assert.match(markup,/data-cancel-replacement-feedback/);
-  assert.doesNotMatch(markup,/Details:/);
   assert.equal(markup.includes('class="home-notice cross-tab-work-warning'),false);
 });
 
 test('uncertain post-write refusal tells the user to reload without offering a blind retry',()=>{
   const markup=homeMarkup({replacementFeedback:{kind:'write-unverified',reason:'The workspace was written, but its saved revision could not be verified.',canRetry:false},locale:'en'});
   assert.match(markup,/Do not assume either Dataset is current/);
-  assert.match(markup,/reload this tab to inspect the saved state/);
-  assert.doesNotMatch(markup,/data-retry-replacement/);
-  assert.match(markup,/data-cancel-replacement-feedback/);
-});
-
-test('stale saved revisions direct the user to reload instead of retrying the same stale candidate',()=>{
-  const markup=homeMarkup({replacementFeedback:{kind:'stale-revision',reason:'The saved workspace changed in another tab.',canRetry:false},locale:'en'});
-  assert.match(markup,/changes remain in memory/);
   assert.match(markup,/Export any work you need to keep as E2R JSON/);
-  assert.match(markup,/check that the download completed/);
-  assert.match(markup,/reload this tab and choose Continue Editing to open the latest saved workspace/);
+  assert.match(markup,/verify the download before reloading/);
   assert.doesNotMatch(markup,/data-retry-replacement/);
-  assert.match(markup,/Close notice/);
-  assert.doesNotMatch(markup,/Details:/);
-  const japanese=homeMarkup({replacementFeedback:{kind:'stale-revision',reason:'別のタブで保存済みWorkspaceが更新されました。',canRetry:false},locale:'ja'});
-  assert.match(japanese,/ダウンロードを確認してから/);
-  assert.match(japanese,/「Continue Editing」を選んで最新の保存状態を開いてください/);
+  assert.match(markup,/data-cancel-replacement-feedback[^>]*>Close notice</);
+  assert.doesNotMatch(markup,/Cancel replacement/);
 });
 
-test('a prior refused workspace write explains the reload boundary without an automatic retry',()=>{
-  const markup=homeMarkup({replacementFeedback:{kind:'prior-save-refusal',reason:'Saving stays paused until reload.',canRetry:false},locale:'en'});
-  assert.match(markup,/paused after an earlier safety refusal/);
-  assert.match(markup,/check the download, then reload and open the saved Workspace/);
+test('unknown replacement reason remains available in both Home locales',()=>{
+  const reason='Browser tab coordination is unavailable.';
+  const feedback={kind:'unknown',reason,canRetry:true};
+  const english=homeMarkup({replacementFeedback:feedback,locale:'en'});
+  const japanese=homeMarkup({replacementFeedback:feedback,locale:'ja'});
+  assert.match(english,/Details:<\/strong> Browser tab coordination is unavailable\./);
+  assert.match(japanese,/詳細:<\/strong> Browser tab coordination is unavailable\./);
+  assert.match(japanese,/クロスタブの安全性を確認できなかった/);
+});
+
+test('stale revision notice is localized and directs the user to the latest saved workspace',()=>{
+  const en=homeMarkup({replacementFeedback:{kind:'stale-revision',reason:'revision conflict',canRetry:false},locale:'en'});
+  assert.match(en,/changes remain in memory/);
+  assert.match(en,/saved workspace was not overwritten/);
+  assert.match(en,/Export any work you need to keep as E2R JSON/);
+  assert.match(en,/verify the download/);
+  assert.match(en,/reload this tab and choose Continue Editing to open the latest saved workspace/);
+  assert.doesNotMatch(en,/data-retry-replacement/);
+  assert.match(en,/data-cancel-replacement-feedback[^>]*>Close notice</);
+  assert.doesNotMatch(en,/Details:/);
+
+  const ja=homeMarkup({replacementFeedback:{kind:'stale-revision',reason:'revision conflict',canRetry:false},locale:'ja'});
+  assert.match(ja,/\u30e1\u30e2\u30ea\u306b\u4fdd\u6301/);
+  assert.match(ja,/\u4e0a\u66f8\u304d\u3055\u308c\u3066\u3044\u307e\u305b\u3093/);
+  assert.match(ja,/E2R JSON\u3068\u3057\u3066\u66f8\u304d\u51fa\u3057/);
+  assert.match(ja,/\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3092\u78ba\u8a8d/);
+  assert.match(ja,/\u518d\u8aad\u307f\u8fbc\u307f/);
+  assert.match(ja,/\u6700\u65b0\u306eWorkspace/);
+  assert.match(ja,/data-cancel-replacement-feedback[^>]*>\u901a\u77e5\u3092\u9589\u3058\u308b</);
+  assert.doesNotMatch(ja,/data-retry-replacement|Export|Continue Editing/);
+});
+
+test('prior refusal feedback hides only its duplicate persistence notice and keeps later state visible',()=>{
+  const notice='Workspace saving in this tab remains paused after an earlier safety refusal.';
+  const markup=homeMarkup({notice,peerWorkSaveStopped:true,replacementFeedback:{kind:'prior-save-refusal',reason:'Saving stays paused until reload.',canRetry:false},locale:'en'});
+  assert.equal((markup.match(/role="alert"/g)||[]).length,1);
+  assert.equal((markup.match(/Workspace saving in this tab remains paused after an earlier safety refusal/g)||[]).length,1);
+  assert.match(markup,/remains paused after an earlier safety refusal/);
+  assert.match(markup,/Export any Dataset work you need as E2R JSON/);
+  assert.match(markup,/check the download/);
+  assert.match(markup,/reload and open the saved Workspace/);
   assert.doesNotMatch(markup,/data-retry-replacement/);
-  assert.match(markup,/Close notice/);
+  assert.match(markup,/data-cancel-replacement-feedback[^>]*>Close notice</);
+  assert.doesNotMatch(markup,/Cancel replacement/);
+  const afterClose=homeMarkup({notice,peerWorkStatus:{kind:'work'},locale:'en'});
+  assert.match(afterClose,/Workspace saving in this tab remains paused after an earlier safety refusal/);
+  assert.match(afterClose,/cross-tab-work-warning/);
+});
+
+test('stale-revision feedback does not hide a separate persistence notice',()=>{
+  const markup=homeMarkup({notice:'Independent save-state notice.',replacementFeedback:{kind:'stale-revision',reason:'revision changed',canRetry:false},locale:'en'});
+  assert.match(markup,/Independent save-state notice/);
 });

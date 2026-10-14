@@ -25,7 +25,7 @@ test('Dataset acquisition and Export remain grouped behind a non-primary disclos
 
 test('Open Dataset uses its persistent native file input and closes More before invoking it',async()=>{
   const source=await readFile(new URL('./main.js',import.meta.url),'utf8');
-  assert.match(source,/function openDatasetFilePicker\(\)\{cancelStartupHandoff\(\);closeWorkspaceMore\(\{restoreFocus:true\}\);root\.querySelector\('#dataset-file'\)\?\.click\(\);\}/);
+  assert.match(source,/function openDatasetFilePicker\(\)\{if\(!editorSession\.owns\)return;cancelStartupHandoff\(\);closeWorkspaceMore\(\{restoreFocus:true\}\);root\.querySelector\('#dataset-file'\)\?\.click\(\);\}/);
   assert.match(source,/openDatasetFilePicker\(\)/);
   assert.doesNotMatch(source,/workspace-file|workspace-restore|successor-backup|downloadCurrentBackup|readWorkspaceBackup|workspaceBackupFor/);
   assert.match(source,/document\.addEventListener\('click',event=>\{const menu=root\.querySelector\('\.workspace-more'\);if\(menu\?\.open&&!menu\.contains\(event\.target\)\)menu\.open=false;\}\)/);

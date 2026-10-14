@@ -1,3 +1,5 @@
+import {createEmptyDataset} from './dataset-specification.js';
+import {workspaceNotificationPresentation} from './workspace-notifications.js';
 import {load, saveIfCurrent, WORKSPACE_STORAGE_KEY, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates, validateDataset, datasetForWorkspace, datasetForExport, exportBaseline, transactDatasetMutation} from './model.js';
 import {renderProfile, renderQuadrant, renderRadar, renderMatrix} from './views.js';
 import {dimensionRange, rangePosition, valueAtRangePosition, quadrantOutOfRangeEntities} from './model.js';
@@ -11,7 +13,7 @@ import {sizeRadarLabels, PROTOTYPE_SPOKE_CAP, radarPositionAtPoint} from './rada
 import {startQuadrantPointDrag} from './quadrant-drag.js';
 import {keepRadarRowVisible} from './radar-list.js';
 import {containDrawerFocus, focusDrawer} from './drawer-focus.js';
-import {hasLossSensitiveWork, hasPendingAssessmentDraft, installBeforeUnloadProtection} from './workspace-recovery.js';
+import {hasLossSensitiveWork, hasLossSensitiveWorkspaceWork, hasPendingWorkspaceDraft, installBeforeUnloadProtection} from './workspace-recovery.js';
 import {replacementMarkup} from './replacement-safety.js';
 import {randomDimensionValue} from './profile-random.js';
 import {candidateAuthoringAvailable, createDatasetEntity, editDatasetEntity, entityDeleteEligibility, deleteDatasetEntity, deleteDatasetDimension, rescaledAssessmentValue, applyDimensionAndRescale, upgradeDimensionAssessment} from './successor-domain.js';
@@ -19,7 +21,7 @@ import {acceptsDimensionValue, authoredValueAtPosition, matrixEntities, reorderM
 import {formAttributeId, rescaleActionFor} from './successor-event-wiring.js';
 import {workspaceActionsMarkup} from './workspace-actions-menu.js';
 import {focusWorkspaceMoreOnOpen, handleWorkspaceMoreKeydown} from './workspace-more-keyboard.js';
-import {homeMarkup} from './home-screen.js';
+import {homeAcquisitionBlocked,homeMarkup,updateHomePeerWorkStatus} from './home-screen.js';
 import {ashenCrownSampleUrl} from './sample-datasets.js';
 import {footerMarkup, creditsMarkup} from './application-shell.js';
 import {requestedLocale, readSavedLocale, readTemporaryLocale, resolveLocale, chooseTemporaryLocale, chooseSavedLocale, localeFragment} from './locale-preference.js';
@@ -34,20 +36,43 @@ import {captureDocumentScroll, restoreDocumentScroll, revealInDocument} from './
 import {placePlotContextMenuAfterTrigger, closePlotContextMenu} from './plot-context-menu-focus.js';
 import {parseDatasetHandoffFragment, fetchDatasetHandoff, parseHandoffJson, removeDatasetUrlFromHash} from './dataset-handoff.js';
 import {createWorkspaceCoordinator} from './cross-tab-workspace.js';
-import {workspaceSaveFailureMessage} from './workspace-save-feedback.js';
+import {workspaceCoordinationFailureMessage, workspaceSaveFailureMessage} from './workspace-save-feedback.js';
 import {createWorkspaceWriteGate} from './workspace-write-gate.js';
+import {createSingleActiveEditor,installEditorEventGuard} from './single-active-editor.js';
+import {editorSessionMarkup} from './editor-session-screen.js';
+const browserStorage=(()=>{try{return window.localStorage;}catch{return null;}})();
+const browserSessionStorage=(()=>{try{return window.sessionStorage;}catch{return null;}})();
 const localeRequest=requestedLocale(window.location.hash);
-const savedLocale=readSavedLocale(window.localStorage);
-const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(window.sessionStorage),browserLanguage:window.navigator.language});
+const savedLocale=readSavedLocale(browserStorage);
+const initialLocale=resolveLocale({requested:localeRequest,saved:savedLocale,temporary:readTemporaryLocale(browserSessionStorage),browserLanguage:window.navigator.language});
 let locale=initialLocale.locale;
 let localeConflict=initialLocale.conflict;
+const root = document.querySelector('#app');
+let retainedSessionContent=null;
+const editorSession=createSingleActiveEditor({lockManager:navigator.locks,windowObject:window});
+const presentationHandlers={};
+installEditorEventGuard(window,editorSession,presentationHandlers);
+installEditorEventGuard(document,editorSession,presentationHandlers);
+root.className='app-frame home-page';
+root.innerHTML=editorSessionMarkup({kind:editorSession.kind,locale});
+await editorSession.ready;
 let expectedWorkspaceRaw=null;
-try { expectedWorkspaceRaw=localStorage.getItem(WORKSPACE_STORAGE_KEY); } catch {}
-const workspaceCoordinator=createWorkspaceCoordinator({storage:window.localStorage,lockManager:navigator.locks,windowObject:window});
+const workspaceCoordinator=createWorkspaceCoordinator({storage:browserStorage,lockManager:navigator.locks,windowObject:window,ownership:editorSession});
 const workspaceWriteGate=createWorkspaceWriteGate();
-let s = load();
+let s = fresh({version:'1.0',entities:[],events:[],relations:[]});
+if(editorSession.owns){
+  const loaded=await workspaceCoordinator.withWriteLock(({peerTabs})=>{
+    // A live older runtime may predate editor ownership; do not coexist with it.
+    if(peerTabs.length){editorSession.end('blocked');return {ok:false,cancelled:true};}
+    try { expectedWorkspaceRaw=localStorage.getItem(WORKSPACE_STORAGE_KEY); } catch {}
+    s=load();
+    return {ok:true};
+  });
+  if(!loaded.ok&&editorSession.owns)editorSession.end('unavailable');
+}
 workspaceCoordinator.setActive(hasLossSensitiveWork(s));
 let homePeerWorkStatus={kind:'checking'};
+let homePeerWorkStatusRequest=0;
 let surface = 'home';
 let homeError = '';
 let handoffStatus = '';
@@ -88,8 +113,9 @@ let lifecycleNotice = '';
 let entityDeleteNotice = null;
 let entityFormError = null;
 let rescaleProposal = null;
-const root = document.querySelector('#app');
-const hasCurrentLossSensitiveWork=()=>hasLossSensitiveWork(s)||hasPendingAssessmentDraft(root);
+const currentDrafts=()=>({stateDraft:s.pendingDraft,titleDraft:datasetTitleDraft,currentTitle:s.dataset.extensions?.metadata?.title??'',entityDraft:pendingEntityDraft,dimensionDraft,root:retainedSessionContent||root});
+const hasCurrentPendingDraft=()=>hasPendingWorkspaceDraft(currentDrafts());
+const hasCurrentLossSensitiveWork=()=>hasLossSensitiveWorkspaceWork(s,currentDrafts());
 const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name = id => { const list=entities(s),i=list.findIndex(e=>e.id===id); return i<0?'Select Entity':label(list[i],i); };
 function options(items, current, first='Choose…') { return `<option value="">${first}</option>`+items.map(x=>`<option value="${esc(x.id)}" ${x.id===current?'selected':''}>${esc(x.name)}</option>`).join(''); }
@@ -130,6 +156,8 @@ let saveScheduled=false;
 let saveChain=Promise.resolve();
 let exportNoticePending=false;
 function scheduleWorkspaceSave({exportRequested=false}={}){
+  const editorToken=editorSession.capture();
+  if(editorToken===null)return;
   if(exportRequested)exportNoticePending=true;
   workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());
   if(workspaceWriteGate.refusal){
@@ -144,11 +172,13 @@ function scheduleWorkspaceSave({exportRequested=false}={}){
   saveScheduled=true;
   s.persistence={...s.persistence,status:'saving'};
   saveChain=saveChain.then(async()=>{
+    if(!editorSession.isCurrent(editorToken))return;
     saveScheduled=false;
     const result=await workspaceWriteGate.run(()=>workspaceCoordinator.withWriteLock(({activeTabs})=>{
       if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before changing this shared workspace.'};
       return saveIfCurrent(s,expectedWorkspaceRaw);
     }));
+    if(!editorSession.isCurrent(editorToken))return;
     if(result.ok){expectedWorkspaceRaw=result.raw;exportNoticePending=false;render();return;}
     if(result.cancelled)return;
     const refusal=result.priorRefusal||result;
@@ -158,15 +188,16 @@ function scheduleWorkspaceSave({exportRequested=false}={}){
     exportNoticePending=false;
     render();
   }).catch(error=>{
+    if(!editorSession.isCurrent(editorToken))return;
     saveScheduled=false;
-      s.persistence={status:'degraded',message:locale==='ja'?'クロスタブ安全性を確認できないため保存を停止しました。変更はメモリに保持されています。':`Workspace save was stopped because cross-tab safety could not be verified. ${error?.message||''}`.trim()};
+    s.persistence={status:'degraded',message:workspaceCoordinationFailureMessage(error?.message,locale)};
       workspaceCoordinator.setActive(true);
       if(!exportNoticePending)lifecycleNotice='';
       exportNoticePending=false;
       render();
   });
 }
-function update(){workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();render();}
+function update(){if(!editorSession.owns)return;workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();render();}
 function openConfirmation(kind,id){confirmation={kind,id};render();}
 function cancelConfirmation(){const prior=confirmation;confirmation=null;render();if(prior){const key=prior.kind==='dimension'?'deleteDimension':'entityMenu';[...root.querySelectorAll(`[data-${key.replace(/[A-Z]/g,x=>'-'+x.toLowerCase())}]`)].find(x=>x.dataset[key]===prior.id)?.focus();}}
 function trapDialogTab(event,selector){
@@ -385,7 +416,6 @@ document.addEventListener('dragstart',e=>{e.target.closest('.matrix-grip')?.clas
 document.addEventListener('dragend',clearMatrixGripFeedback);
 document.addEventListener('drop',clearMatrixGripFeedback);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')clearMatrixGripFeedback();});
-render();
 addEventListener('resize',()=>{if(s.view==='Matrix')render();else if(s.view==='Quadrant')layoutPlotLabels(root,{animate:true});else if(s.view==='Radar')sizeRadarLabels(root);});
 
 // Range and value-policy controls stay application-local. Older Dimensions
@@ -538,9 +568,12 @@ function rescaleMarkup(){
 function currentReplacementMarkup(){return replacement?replacementMarkup(replacement):'';}
 function renderHome(){
  const refusal=workspaceWriteGate.refusal;
- const notice=s.persistence.status==='degraded'?(refusal?.blockedByPeer?workspaceSaveFailureMessage(refusal,s.persistence.message,locale,{priorRefusal:true}):s.persistence.message):'';
+ const notice=s.persistence.status==='degraded'?refusal?workspaceSaveFailureMessage(refusal,s.persistence.message,locale,{priorRefusal:true}):s.persistence.message:'';
+ const peerStatus=homePeerWorkStatus;
  const peerWorkSaveStopped=Boolean(refusal?.blockedByPeer);
- root.innerHTML=homeMarkup({canContinue:s.workspaceCreated&&s.persistence.status==='saved',notice,sampleError:homeError,handoffStatus,handoffError,peerWorkStatus:replacementRefusal?null:homePeerWorkStatus,peerWorkSaveStopped,replacementFeedback:replacementRefusal,locale})+footerMarkup()+(creditsOpen?creditsMarkup():'')+currentReplacementMarkup();
+ const canContinue=s.workspaceCreated&&s.persistence.status==='saved';
+ const canReturnToWorkspace=s.workspaceCreated&&s.persistence.status==='degraded';
+ root.innerHTML=homeMarkup({canContinue,canReturnToWorkspace,notice,sampleError:homeError,handoffStatus,handoffError,peerWorkStatus:peerStatus,peerWorkSaveStopped,replacementFeedback:replacementRefusal,locale})+footerMarkup()+(creditsOpen?creditsMarkup():'')+currentReplacementMarkup();
  document.title='ParameterPlotter';
  root.className='app-frame home-page';
  root.querySelectorAll('header,main,footer').forEach(element=>element.inert=Boolean(replacement));
@@ -548,19 +581,43 @@ function renderHome(){
  if(creditsOpen)root.querySelector('[data-close-credits]')?.focus();
  if(replacement)root.querySelector('[data-cancel-replacement]')?.focus();
 }
+function updateHomePeerWorkStatusView(){
+ if(!editorSession.owns)return;
+ updateHomePeerWorkStatus(root,{peerWorkStatus:homePeerWorkStatus,replacementFeedback:replacementRefusal,locale});
+}
 function refreshHomePeerWorkStatus(){
- void workspaceCoordinator.peerWorkStatus().then(status=>{
+ if(!editorSession.owns)return;
+ const request=++homePeerWorkStatusRequest;
+ const focusedAction=surface==='home'?document.activeElement?.dataset?.homeAction:null;
+ if(homePeerWorkStatus.kind!=='checking'){
+  homePeerWorkStatus={kind:'checking'};
+  if(surface==='home')updateHomePeerWorkStatusView();
+ }
+ void workspaceCoordinator.peerWorkStatus().catch(()=>({kind:'unknown'})).then(status=>{
+  if(request!==homePeerWorkStatusRequest||!editorSession.owns)return;
   if(homePeerWorkStatus.kind===status.kind&&homePeerWorkStatus.count===status.count)return;
   homePeerWorkStatus=status;
-  if(surface==='home')render();
+  if(surface==='home'){
+   updateHomePeerWorkStatusView();
+   if(focusedAction==='recheck-peer-work'){const focusTarget=root.querySelector(`[data-home-action="${focusedAction}"]`)||root.querySelector('[data-home-action="new"]');focusTarget?.focus();}
+  }
  });
 }
 workspaceCoordinator.subscribe(refreshHomePeerWorkStatus);
-window.addEventListener('focus',refreshHomePeerWorkStatus);
 window.addEventListener('pageshow',refreshHomePeerWorkStatus);
 refreshHomePeerWorkStatus();
 const baseRender=render;
 render=function(){
+ if(!editorSession.owns){
+  if(!retainedSessionContent&&root.querySelector('.workspace,[data-home-action]')){
+   retainedSessionContent=document.createDocumentFragment();
+   while(root.firstChild)retainedSessionContent.appendChild(root.firstChild);
+  }
+  root.className='app-frame home-page';root.innerHTML=editorSessionMarkup({kind:editorSession.kind,locale})+(creditsOpen?creditsMarkup():'');
+  root.querySelectorAll(':scope > header,:scope > main,:scope > footer').forEach(element=>element.inert=Boolean(creditsOpen));
+  if(creditsOpen)root.querySelector('[data-close-credits]')?.focus();
+  return;
+ }
  if(surface==='home'){renderHome();return;}
  baseRender();
  root.insertAdjacentHTML('beforeend',footerMarkup()+(creditsOpen?creditsMarkup():''));
@@ -577,10 +634,17 @@ render=function(){
  const subtitle=root.querySelector('header .sub');if(subtitle)subtitle.textContent='Author E2R Entities and Dimension Assessments. Browser-local persistence is separate from E2R Dataset Export.';
  const actions=root.querySelector('.header-actions');if(actions)actions.innerHTML=runtimeHeader();
  const main=root.querySelector(':scope > main'),toolbar=document.createElement('nav');toolbar.className='workspace-action-bar';toolbar.setAttribute('aria-label','Workspace actions');toolbar.innerHTML=workspaceActionsMarkup({readOnly:s.readOnly,authoringUnavailable:s.readOnly||s.candidateUnsupported});
- const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);const workspaceStatus=s.persistence.status==='saved'?'Saved locally':s.persistence.status==='saving'?'Saving locally…':'Degraded / unsaved';topline.innerHTML=`<div class="dataset-context"><span>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'} · ${s.dimensions.length} Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span>Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${workspaceStatus}</span>`;}
- const title=s.dataset.extensions?.metadata?.title??'',editor=document.createElement('form');editor.className='dataset-title-editor';editor.innerHTML=`<label for="dataset-title-input">Dataset title</label><div class="dataset-title-editor-controls"><input id="dataset-title-input" name="dataset-title" type="text" value="${esc(datasetTitleDraft??title)}" ${s.readOnly?'disabled':''}><button type="submit" ${s.readOnly||(datasetTitleDraft??title)===title?'disabled':''}>Apply</button></div>`;
+ const topline=root.querySelector('.topline');if(topline){const assessmentCount=s.dimensions.reduce((count,dimension)=>count+Object.values(s.values).filter(values=>typeof values?.[dimension.id]==='number').length,0);const workspaceStatus=s.persistence.status==='saved'?'Saved locally':s.persistence.status==='saving'?'Saving locally…':'Degraded / unsaved';topline.innerHTML=`<div class="dataset-context"><span>${s.dataset.entities.length} Dataset ${s.dataset.entities.length===1?'Entity':'Entities'} · ${s.dimensions.length} Dimension${s.dimensions.length===1?'':'s'} · ${assessmentCount} Assessment${assessmentCount===1?'':'s'}</span></div><span role="status" aria-live="polite" aria-atomic="true">Dataset: ${s.datasetModified?'Changes not exported':'Matches last Export baseline'} · Browser workspace: ${workspaceStatus}</span>`;}
+ const title=s.dataset.extensions?.metadata?.title??'',editor=document.createElement('form');editor.className='dataset-title-editor';editor.innerHTML=`<label for="dataset-title-input">Dataset title</label><div class="dataset-title-editor-controls"><input id="dataset-title-input" name="dataset-title" type="text" value="${esc(datasetTitleDraft??title)}" ${s.readOnly?'disabled':''}><button type="submit" ${s.readOnly||(datasetTitleDraft??title)===title?'disabled':''}>Apply title</button></div>`;
  let status=root.querySelector('.successor-status');if(!status){status=document.createElement('section');status.className='successor-status';}
- if(status){const persistenceLabel=s.persistence.status==='saved'?'Workspace saved in this browser':s.persistence.status==='saving'?'Saving browser-local workspace…':'Browser-local workspace degraded / unsaved';const refusal=workspaceWriteGate.refusal;const persistenceMessage=refusal?.blockedByPeer?workspaceSaveFailureMessage(refusal,s.persistence.message,locale,{priorRefusal:true}):s.persistence.message;const persistenceDetail=persistenceMessage?`<p>${esc(persistenceMessage)}</p>`:s.persistence.status==='saving'?'<p>Waiting for browser-local save confirmation.</p>':'<p>To save an E2R Dataset file, use Export E2R JSON.</p>';status.innerHTML=`<div class="persistence-status" role="status"><strong>${persistenceLabel}</strong>${persistenceDetail}</div><p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p>${lifecycleNotice?`<p class="lifecycle-notice" role="status">${esc(lifecycleNotice)}</p>`:''}${diagnosticMarkup()}`;}
+ if(status){
+  const presentation=workspaceNotificationPresentation({persistence:s.persistence,lifecycleNotice,locale});
+  const refusal=workspaceWriteGate.refusal;
+  const persistenceMessage=refusal?workspaceSaveFailureMessage(refusal,s.persistence.message,locale,{priorRefusal:true}):s.persistence.message;
+  const warning=presentation.showPersistenceWarning?`<div class="persistence-status" role="alert"><strong>Browser-local workspace degraded / unsaved</strong><p>${esc(persistenceMessage||'To save an E2R Dataset file, use Export E2R JSON.')}</p></div>`:'';
+  status.innerHTML=`${warning}<p class="pending-draft-status" role="status"${s.pendingDraft?'':' hidden'}>Unapplied authoring changes are not in the saved browser workspace. Apply or cancel this draft before leaving.</p><p class="workspace-operation-result" role="status" aria-live="polite" aria-atomic="true">${esc(presentation.operation)}</p>${presentation.notice?`<p class="lifecycle-notice" role="${presentation.noticeRole}">${esc(presentation.notice)}</p>`:''}${diagnosticMarkup()}`;
+ }
+
  main?.prepend(editor,toolbar,status);
  const entityDrawer=root.querySelector('.drawer[aria-label="Entity Pool"]');if(entityDrawer){const p=entityDrawer.querySelector(':scope > p');if(p)p.textContent='Entities are edited directly in this Dataset. Dimensions and values are saved in the Dataset and included in exports.';const action=entityDrawer.querySelector('.pool-action button');if(action){action.textContent='Add Entity';action.disabled=s.readOnly;action.dataset.action='add-entity';}}
  const entityForm=root.querySelector('#entity-form');if(entityForm){const heading=entityForm.querySelector('h3');if(heading)heading.textContent=editEntityId?'Edit Entity':'New Entity';const nameInput=entityForm.elements.namedItem('temporary-entity-name'),description=entityForm.elements.namedItem('temporary-entity-description'),entity=s.dataset.entities.find(item=>item?.id===editEntityId);nameInput.name='dataset-entity-name';nameInput.removeAttribute('required');nameInput.removeAttribute('maxlength');nameInput.placeholder='Optional Entity name';description.name='dataset-entity-description';nameInput.value=pendingEntityDraft?.editId===editEntityId?pendingEntityDraft.name:(entity?.name??'');description.value=pendingEntityDraft?.editId===editEntityId?pendingEntityDraft.description:(entity?.description??'');const nameLabel=nameInput.closest('label'),descriptionLabel=description.closest('label');if(nameLabel)nameLabel.firstChild.textContent='Name (optional)';if(descriptionLabel)descriptionLabel.firstChild.textContent='Description (optional)';if(entityFormError){const error=document.createElement('p');error.className='field-error';error.setAttribute('role','alert');error.textContent=entityFormError;entityForm.insertBefore(error,entityForm.querySelector('.actions'));}}
@@ -602,6 +666,7 @@ render=function(){
 
 function showFileError(message){if(surface==='home'){homeError=message;fileError='';}else fileError=message;lifecycleNotice='';render();}
 function downloadJson(filename,value){
+ if(!editorSession.owns)return false;
  try{const blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=filename;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return true;}catch(error){lifecycleNotice=`Download could not be handed off: ${error?.message||'browser download unavailable'}`;render();return false;}
 }
 function startReplacement(kind,incoming){replacementAttemptId++;replacementRefusal=null;const homeFocus={ 'new-dataset':'new','sample-dataset':'sample','dataset':'open','handoff-dataset':s.workspaceCreated&&s.persistence.status==='saved'?'continue':'open' };replacement={kind,state:incoming,returnSurface:surface,returnFocus:surface==='home'?homeFocus[kind]:null,datasetTitle:incoming.dataset?.extensions?.metadata?.title};render();root.querySelector('[data-cancel-replacement]')?.focus();}
@@ -609,12 +674,15 @@ function cancelReplacement(){replacementAttemptId++;const request=replacement;re
 function cancelReplacementFeedback(){replacementAttemptId++;const request=replacementRefusal?.request;replacementRefusal=null;render();const focusAction=request?.returnFocus||({ 'new-dataset':'new','sample-dataset':'sample','dataset':'open','handoff-dataset':'continue' }[request?.kind])||'new';if(request?.returnSurface==='home')root.querySelector(`[data-home-action="${focusAction}"]`)?.focus();void refreshHomePeerWorkStatus();}
 function retryReplacement(){if(!replacementRefusal||replacementRefusal.checking||replacementRefusal.canRetry===false)return;const request=replacementRefusal.request;workspaceWriteGate.retryExplicitly();replacementRefusal={...replacementRefusal,checking:true};render();void activateIncoming(request);}
 function receiveDataset(kind,dataset){
+ if(!editorSession.owns)return;
  replacementRefusal=null;
  const incoming=fresh(readDataset(dataset),{ui:{workspaceCreated:true}});
  if(hasCurrentLossSensitiveWork())startReplacement(kind,incoming);
  else{replacement={kind,state:incoming,returnSurface:surface};activateIncoming();}
 }
 async function activateIncoming(requestOverride=null){
+ const editorToken=editorSession.capture();
+ if(editorToken===null)return;
  const attemptId=++replacementAttemptId,request=requestOverride||replacement;
  if(!request)return;
  const incoming=request.state;incoming.workspaceCreated=true;
@@ -623,20 +691,20 @@ async function activateIncoming(requestOverride=null){
   if(activeTabs.length)return {ok:false,blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before opening a replacement Dataset.'};
   return saveIfCurrent(incoming,expectedWorkspaceRaw);
  }));
- if(attemptId!==replacementAttemptId||result.cancelled)return;
+ if(!editorSession.isCurrent(editorToken)||attemptId!==replacementAttemptId||result.cancelled)return;
  if(!result.ok){
   if(result.priorRefusal){
-   const message=workspaceWriteGate.refusal?.blockedByPeer?workspaceSaveFailureMessage(workspaceWriteGate.refusal,s.persistence.message,locale,{priorRefusal:true}):( locale==='ja'?'このタブのWorkspace保存は安全のため停止したままです。必要なDatasetをE2R JSONとしてExportし、ダウンロードを確認してからReloadし、保存済みWorkspaceを開いてください。':'Workspace saving in this tab remains paused after an earlier safety refusal. Export any Dataset work you need as E2R JSON and check the download, then reload and open the saved Workspace.');
+   const message=workspaceSaveFailureMessage(workspaceWriteGate.refusal,s.persistence.message,locale,{priorRefusal:true});
    replacement=null;s.persistence={status:'degraded',message};workspaceCoordinator.setActive(true);
    if(request.returnSurface==='home')replacementRefusal={request,kind:'prior-save-refusal',reason:message,canRetry:false,checking:false};
-   else lifecycleNotice=workspaceWriteGate.refusal?.blockedByPeer?'':message;
+   else lifecycleNotice='';
    render();
    return;
   }
-  const message=result.blockedByPeer?workspaceSaveFailureMessage(result,s.persistence.message,locale):( locale==='ja'?`別のタブに未適用の作業があるか、安全確認ができませんでした。現在のWorkspaceは保持されています。他のタブで作業を保存または取り消してから、再試行してください。Handoffの場合は、このタブを再読み込みしてください。`:`${result.reason||'Cross-tab safety could not be verified.'} The current workspace was kept. Finish or cancel work in the other tab, then retry or reload this Handoff tab.`);
-  s.persistence={status:'degraded',message:workspaceSaveFailureMessage(result,s.persistence.message,locale)};workspaceCoordinator.setActive(true);
+  const message=workspaceSaveFailureMessage(result,s.persistence.message,locale);
+  s.persistence={status:'degraded',message};workspaceCoordinator.setActive(true);
   if(request.kind==='handoff-dataset'){replacement=null;showHandoffFailure(message);return;}
-  if(request.returnSurface!=='home'){replacement=null;lifecycleNotice=message;render();root.querySelector('.workspace-more-trigger')?.focus();return;}
+  if(request.returnSurface!=='home'){replacement=null;lifecycleNotice='';render();root.querySelector('.workspace-more-trigger')?.focus();return;}
   if(!requestOverride&&replacement!==request)return;
   const kind=result.blockedByPeer?'peer-work':result.conflict?'stale-revision':/was written/i.test(result.reason||'')?'write-unverified':'unknown';
   replacement=null;replacementRefusal={request,kind,reason:result.reason||'Cross-tab safety could not be verified.',canRetry:kind==='peer-work'||kind==='unknown',checking:false};render();root.querySelector('[data-retry-replacement], [data-cancel-replacement-feedback]')?.focus();return;
@@ -650,6 +718,8 @@ function clearDatasetHandoffFragment(){const next=removeDatasetUrlFromHash(windo
 function cancelStartupHandoff(){startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';handoffError='';}
 function showHandoffFailure(message){handoffStatus='';handoffError=message;render();}
 async function startStartupHandoff(){
+ const editorToken=editorSession.capture();
+ if(editorToken===null)return;
  if(startupHandoffStarted||startupHandoffCancelled||localeConflict)return;
  startupHandoffStarted=true;
  if(startupHandoff.kind==='none')return;
@@ -657,7 +727,7 @@ async function startStartupHandoff(){
  handoffError='';handoffStatus='Retrieving the linked Dataset…';render();
  const controller=new AbortController();startupHandoffController=controller;
  const fetched=await fetchDatasetHandoff(startupHandoff.datasetUrl,{signal:controller.signal,allowLocalhost:['localhost','127.0.0.1','[::1]'].includes(window.location.hostname.toLowerCase())&&window.location.protocol==='http:'});
- if(controller.signal.aborted||startupHandoffCancelled)return;
+ if(!editorSession.isCurrent(editorToken)||controller.signal.aborted||startupHandoffCancelled)return;
  startupHandoffController=null;
  if(!fetched.ok){showHandoffFailure('Could not retrieve the Dataset from this handoff link. The current workspace was not replaced.');return;}
  const parsed=parseHandoffJson(fetched.source);
@@ -666,14 +736,18 @@ async function startStartupHandoff(){
  catch{showHandoffFailure('The Dataset from this handoff link could not be opened. The current workspace was not replaced.');}
 }
 function importSelectedFile(file){
+ const editorToken=editorSession.capture();
+ if(editorToken===null)return;
  closeWorkspaceMore();
  if(!file)return;
- (async()=>{try{receiveDataset('dataset',JSON.parse(await file.text()));}catch(error){homeError=error?.message||'The selected file could not be opened.';showFileError(homeError);}})();
+ (async()=>{try{const source=await file.text();if(editorSession.isCurrent(editorToken))receiveDataset('dataset',JSON.parse(source));}catch(error){if(!editorSession.isCurrent(editorToken))return;homeError=error?.message||'The selected file could not be opened.';showFileError(homeError);}})();
 }
 async function openAshenCrownSample(){
+ const editorToken=editorSession.capture();
+ if(editorToken===null)return;
  homeError='';
- try{const response=await fetch(ashenCrownSampleUrl(locale));if(!response.ok)throw Error(`The sample Dataset could not be loaded (${response.status}).`);receiveDataset('sample-dataset',await response.json());}
- catch(error){homeError=error?.message||'The sample Dataset could not be opened.';render();}
+ try{const response=await fetch(ashenCrownSampleUrl(locale));if(!response.ok)throw Error(`The sample Dataset could not be loaded (${response.status}).`);const dataset=await response.json();if(editorSession.isCurrent(editorToken))receiveDataset('sample-dataset',dataset);}
+ catch(error){if(!editorSession.isCurrent(editorToken))return;homeError=error?.message||'The sample Dataset could not be opened.';render();}
 }
 function exportCurrentDataset(){
  if(s.readOnly){lifecycleNotice='E2R Dataset Export is unavailable during diagnostic read-only inspection.';render();return;}
@@ -691,15 +765,17 @@ function clearLifecycleNotice(){
   if(!lifecycleNotice)return;
   lifecycleNotice='';
   root.querySelector('.lifecycle-notice')?.remove();
+  const operation=root.querySelector('.workspace-operation-result');if(operation)operation.textContent='';
 }
 function closeWorkspaceMore({restoreFocus=false}={}){const menu=root.querySelector('.workspace-more');if(!menu?.open)return;menu.open=false;if(restoreFocus)menu.querySelector('summary')?.focus();}
-function openDatasetFilePicker(){cancelStartupHandoff();closeWorkspaceMore({restoreFocus:true});root.querySelector('#dataset-file')?.click();}
+function openDatasetFilePicker(){if(!editorSession.owns)return;cancelStartupHandoff();closeWorkspaceMore({restoreFocus:true});root.querySelector('#dataset-file')?.click();}
 function captureSuccessorClick(event){
  if(localeConflict&&event.target.matches('[data-locale-backdrop]')){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}
  const localeTarget=event.target.closest('[data-select-locale],[data-resolve-locale]');
  if(localeTarget?.dataset.selectLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.selectLocale;localeConflict=false;chooseSavedLocale(window.localStorage,locale,window.sessionStorage);window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+localeFragment(window.location.hash,locale));render();void startStartupHandoff();return;}
  if(localeTarget?.dataset.resolveLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.resolveLocale==='requested'?localeRequest.locale:savedLocale;localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}
  if(localeConflict){event.preventDefault();event.stopImmediatePropagation();return;}
+ if(event.target.closest('[data-open-credits]')){event.preventDefault();event.stopImmediatePropagation();creditsOpen=true;render();root.querySelector('[data-close-credits]')?.focus();return;}
  if(creditsOpen){
   if(event.target.closest('[data-close-credits]')||event.target.matches('[data-credits-backdrop]')){event.preventDefault();event.stopImmediatePropagation();creditsOpen=false;render();root.querySelector('.credits-button')?.focus();}
   return;
@@ -707,15 +783,18 @@ function captureSuccessorClick(event){
  const target=event.target.closest('button,[data-action],[data-go-home],label');if(!target&&!(rescaleProposal&&event.target.matches('.confirm-scrim[data-cancel-rescale]'))&&!(candidateUpgradeConfirmation&&event.target.matches('[data-upgrade-scrim]')))return;
  if(target?.closest('[data-upgrade-candidate]')){event.preventDefault();event.stopImmediatePropagation();candidateUpgradeConfirmation=true;render();root.querySelector('[data-cancel-candidate-upgrade]')?.focus();return;}
  if(candidateUpgradeConfirmation){if(target?.closest('[data-cancel-candidate-upgrade]')||event.target.matches('[data-upgrade-scrim]')){event.preventDefault();event.stopImmediatePropagation();candidateUpgradeConfirmation=false;render();root.querySelector('[data-upgrade-candidate]')?.focus();return;}if(target?.closest('[data-confirm-candidate-upgrade]')){event.preventDefault();event.stopImmediatePropagation();const result=upgradeDimensionAssessment(s);candidateUpgradeConfirmation=false;lifecycleNotice=result.ok?'Dimension Assessment upgraded to Candidate 0.2.0. Existing Dataset values were preserved.':result.reason;update();return;}event.preventDefault();event.stopImmediatePropagation();return;}
- if(target?.closest('[data-open-credits]')){event.preventDefault();event.stopImmediatePropagation();creditsOpen=true;render();root.querySelector('[data-close-credits]')?.focus();return;}
+
  clearLifecycleNotice();
   if(replacement){if(target?.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();cancelReplacement();return;}if(target?.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}return;}
  if(surface==='home'){
   const action=target?.dataset.homeAction;
-  if(action){event.preventDefault();event.stopImmediatePropagation();if(action==='continue'){cancelStartupHandoff();clearDatasetHandoffFragment();surface='workspace';render();const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}}else if(action==='new'){cancelStartupHandoff();receiveDataset('new-dataset',{version:'1.0',entities:[],events:[],relations:[]});}else if(action==='open')openDatasetFilePicker();else if(action==='sample'){cancelStartupHandoff();openAshenCrownSample();}}
+   if(action){event.preventDefault();event.stopImmediatePropagation();if(action==='recheck-peer-work'){if(homePeerWorkStatus.kind!=='checking')void refreshHomePeerWorkStatus();return;}if(homeAcquisitionBlocked(action,homePeerWorkStatus.kind))return;if(action==='continue'){cancelStartupHandoff();clearDatasetHandoffFragment();surface='workspace';render();const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}}else if(action==='return-workspace'){
+    if(!s.workspaceCreated||s.persistence.status!=='degraded')return;
+    surface='workspace';render();const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}
+  }else if(action==='new'){cancelStartupHandoff();receiveDataset('new-dataset',createEmptyDataset());}else if(action==='open')openDatasetFilePicker();else if(action==='sample'){cancelStartupHandoff();openAshenCrownSample();}}
   return;
  }
-  if(target.closest('[data-go-home]')){event.preventDefault();event.stopImmediatePropagation();surface='home';homeError='';render();root.querySelector('[data-home-action="continue"]')?.focus();return;}
+  if(target.closest('[data-go-home]')){event.preventDefault();event.stopImmediatePropagation();surface='home';homeError='';render();root.querySelector('[data-home-action="continue"], [data-home-action="return-workspace"]')?.focus();return;}
  if(entityDeleteNotice&&target.closest('[data-close-entity-delete-notice]')){event.preventDefault();event.stopImmediatePropagation();entityDeleteNotice=null;render();return;}
  if(rescaleProposal){const action=rescaleActionFor(target,event.target);if(action==='approve'){event.preventDefault();event.stopImmediatePropagation();const proposal=rescaleProposal;rescaleProposal=null;const result=applyDimensionAndRescale(s,proposal.dimension,proposal.values);if(!result.ok)dimensionError=result.reason;else{s.dimensionFormOpen=false;s.editDimension=null;dimensionDraft=null;s.pendingDraft=false;}update();return;}if(action==='cancel'){event.preventDefault();event.stopImmediatePropagation();rescaleProposal=null;render();root.querySelector('#dimension-form [name="dimension-name"]')?.focus();return;}return;}
   if(target.closest('[data-successor-export-dataset]')){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMore({restoreFocus:true});exportCurrentDataset();return;}
@@ -752,7 +831,7 @@ document.addEventListener('keydown',event=>{
  if(event.key==='Tab'){event.stopImmediatePropagation();trapDialogTab(event,'[data-upgrade-scrim] .confirm-dialog');return;}
  event.stopImmediatePropagation();
 },true);
-document.addEventListener('keydown',event=>{
+function handleShellKeydown(event){
  if(localeConflict){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}if(event.key==='Tab'){event.stopImmediatePropagation();trapDialogTab(event,'.locale-conflict-scrim .confirm-dialog');return;}event.stopImmediatePropagation();return;}
  if(!creditsOpen)return;
  event.stopImmediatePropagation();
@@ -766,7 +845,9 @@ document.addEventListener('keydown',event=>{
  const first=items[0],last=items.at(-1);
  if(event.shiftKey&&(document.activeElement===first||!dialog?.contains(document.activeElement))){event.preventDefault();last.focus();}
  else if(!event.shiftKey&&(document.activeElement===last||!dialog?.contains(document.activeElement))){event.preventDefault();first.focus();}
-},true);
+}
+presentationHandlers.keydown=handleShellKeydown;
+document.addEventListener('keydown',handleShellKeydown,true);
 document.addEventListener('click',event=>{const menu=root.querySelector('.workspace-more');if(menu?.open&&!menu.contains(event.target))menu.open=false;});
 document.addEventListener('toggle',focusWorkspaceMoreOnOpen,true);
 document.addEventListener('keydown',handleWorkspaceMoreKeydown);
@@ -802,10 +883,10 @@ document.addEventListener('input',event=>{
  if(target.id==='dataset-title-input'){datasetTitleDraft=target.value;s.pendingDraft=datasetTitleDraft!==(s.dataset.extensions?.metadata?.title??'');target.form?.querySelector('button[type="submit"]')?.toggleAttribute('disabled',!s.pendingDraft);root.querySelector('.pending-draft-status')?.toggleAttribute('hidden',!s.pendingDraft);}
  if(target.matches('#entity-form input,#entity-form textarea')){s.pendingDraft=true;pendingEntityDraft={editId:editEntityId,name:root.querySelector('#entity-form [name="dataset-entity-name"]')?.value||'',description:root.querySelector('#entity-form [name="dataset-entity-description"]')?.value||''};}
  if(target.closest('#dimension-form')){s.pendingDraft=true;const form=target.closest('#dimension-form'),field=name=>form.elements.namedItem(name);dimensionDraft={id:field('id').value||undefined,name:field('dimension-name').value,low:field('dimension-low').value,high:field('dimension-high').value,minInput:field('dimension-min')?.value||'',maxInput:field('dimension-max')?.value||'',unit:field('dimension-unit')?.value||'',unitPresent:Boolean(field('dimension-unit-enabled')?.checked),endpointLabelsPresent:Boolean(field('dimension-labels-enabled')?.checked),integerOnly:Boolean(field('dimension-integer-only')?.checked),...(field('dimension-description')?{description:field('dimension-description').value}:{})};for(const name of ['dimension-low','dimension-high']){const input=field(name);if(input)input.disabled=!field('dimension-labels-enabled')?.checked;}const unit=field('dimension-unit');if(unit)unit.disabled=!field('dimension-unit-enabled')?.checked;}
- if(s.pendingDraft)workspaceCoordinator.setActive(true);
+ if(target.id==='dataset-title-input'||target.matches('#entity-form input,#entity-form textarea')||target.closest('#dimension-form'))workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());
  if(s.pendingDraft)root.querySelector('.pending-draft-status')?.removeAttribute('hidden');
 },true);
-installBeforeUnloadProtection(window,()=>({...s,pendingDraft:s.pendingDraft||hasPendingAssessmentDraft(root)}));
+installBeforeUnloadProtection(window,()=>({...s,pendingDraft:hasCurrentPendingDraft()}));
 document.addEventListener('keydown',event=>{
  if(replacement||entityDeleteNotice||rescaleProposal){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();if(replacement){cancelReplacement();return;}if(entityDeleteNotice)entityDeleteNotice=null;if(rescaleProposal)rescaleProposal=null;render();}else if(event.key==='Tab')trapDialogTab(event,'.confirm-dialog');}
 },true);
@@ -836,5 +917,13 @@ render=function(){
  const search=root.querySelector('#dimension-search');if(search)search.placeholder='Filter by name, labels, range, or unit';
  localizeUi(root,locale);
 };
+editorSession.subscribe(()=>{
+  replacementAttemptId++;
+  homePeerWorkStatusRequest++;
+  cancelStartupHandoff();
+  document.querySelectorAll('.entity-drag-preview').forEach(element=>element.remove());
+  document.body.classList.remove('quadrant-dragging');
+  if(!editorSession.owns)render();
+});
 render();
 if(!localeConflict)void startStartupHandoff();

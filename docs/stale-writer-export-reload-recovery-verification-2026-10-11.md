@@ -296,3 +296,50 @@ During 35-I-J, the replacement refusal notice and the Workspace-save-stopped sta
 Test 35 does not itself reproduce the precise asynchronous interleaving from Test 34. Cross-Context Workspace Safety remains pending, including untested interleavings and form paths, BFCache/abnormal-termination coverage beyond recorded checkpoints, cross-app and production-host verification, and other browser configurations. Test 32 remains the historical incident; Test 33's bounded pass and Test 34's fix evidence are retained without expansion.
 
 PUBLIC RELEASE NO-GO remains in force.
+
+## M1-C11 — Home-to-Workspace recovery Human Browser evidence checkpoint
+
+Date: 2026-10-13. Human-reported Microsoft Edge InPrivate evidence from `http://127.0.0.1:5312/`, using four same-origin tabs and the disposable sample Dataset 灰冠の王国. Human explicitly approved the bounded M1-C6 recovery acceptance in M1-C12. This section records that **HUMAN BROWSER ACCEPTED / PASS / CLOSED (BOUNDED)** decision and its evidence boundary; it does not close the broader Cross-Context Workspace Safety work.
+
+### Human Browser observations
+
+- **Tab A — unapplied work:** Human opened the sample and appended `TEST A` to the Dataset title input without applying it. Human reports that the unapplied input remained present on later inspection. This is an in-memory form-draft observation; it is not evidence that the draft was persisted to the browser-local Workspace or recovered after reload.
+- **Tab B — refused save and recovery:** Human opened the saved Workspace, changed the Dataset title to `灰冠の王国 TEST B`, and applied it. The competing protected work in A caused Workspace persistence to be refused and B entered degraded / unsaved state. After navigating Home, `Workspaceに戻る` remained available. Activating it returned to the in-memory Dataset showing `灰冠の王国 TEST B`.
+- **Tab B — JSON Export:** Human used the existing E2R JSON Export and supplied the downloaded JSON for inspection. Its `metadata.title` was `灰冠の王国 TEST B`; it contained 10 Entities, 12 Events, 57 Relations, 7 Dimensions, and 70 Assessments. This is evidence from the downloaded file as reported and inspected by Human. No whole-file byte comparison, E2R Validator result, or proof of download completion by the application itself is claimed.
+- **Tab B — refusal remained:** After Export, the Workspace save-stopped state remained visible. Returning Home retained the recovery action. After switching locale JA → EN, `Return to Workspace` remained available; the English Workspace showed the changed title and degraded / unsaved state. Human then reports that returning Home and using the recovery action continued to work.
+- **Tab C — anomalous transition:** After Human selected Home's `編集を続ける`, Dataset replacement refusal and Workspace save-stopped notifications appeared. The cause remains **unresolved**. M1-C7 through M1-C10 did not establish the runtime event path; the C8 and C10 browser attempts are not valid reproduction or PASS evidence. Human subsequently used `Workspaceに戻る`; the Dataset remained accessible and the save-stopped state remained visible.
+- **Tab D — saved baseline observation:** Home's `編集を続ける` opened the Workspace showing the original title `灰冠の王国`, without `TEST A` or `TEST B`. Human also reports Home → Continue Editing worked again. This supports that the visible saved baseline was not replaced by B's refused write in this sequence. The entire stored Workspace was not compared byte-for-byte, so this is not a whole-record integrity assertion.
+
+### Evidence classes and existing implementation checks
+
+The bullets above are **Human Browser observations**, bounded to the reported InPrivate session, origin, sample, tabs, and operations. Dataset title and record counts above are **downloaded-JSON inspection evidence**. They do not establish schema validity or every payload's preservation.
+
+The implementation path remains application evidence: `main.js` offers `Return to Workspace` when a Workspace has been created and persistence is degraded; its handler returns to the current in-memory Workspace without replacing the Dataset or clearing the write-refusal latch. The existing Export action requests a JSON download and separately schedules a guarded Workspace save. These are source facts; this checkpoint does not claim a new source or full-suite test run.
+
+Existing automated checks in `home-screen.test.mjs` and `interaction-wiring.test.mjs` cover the recovery action's degraded-state visibility, its absence when no Workspace is available, and its handler guard/wiring. They do not establish browser lifecycle behavior, downloaded file contents, or the anomalous Tab C event sequence. The earlier Test 35/36 evidence in this document remains bounded to its own stated operations and is not expanded by this checkpoint.
+
+### Limited Human Acceptance — CLOSED (BOUNDED)
+
+Human accepted the following M1-C6 recovery behavior for the reported scenario and operations only:
+
+1. After a Dataset has been applied in a Workspace and a cross-tab safety refusal leaves that Workspace available in memory with persistence degraded, Home offers `Workspaceに戻る` / `Return to Workspace`.
+2. Using that action restores the current in-memory Dataset view without silently replacing it with the saved baseline, performing a new Dataset acquisition, or clearing the save-refusal state.
+3. From that returned Workspace, the existing E2R JSON Export can produce a file containing the refused-change title and the reported Dataset record counts. Export is a file-download path, not proof of browser-local Workspace persistence.
+4. Export does not silently clear the Workspace save stop. The Home recovery action remains available after Export and after the reported JA → EN locale switch.
+5. In the same reported sequence, a separate tab's Continue Editing displayed the original saved title without either refused title suffix. This supports visible saved-baseline non-replacement for this scenario only; it does not prove byte-identical storage preservation.
+
+This acceptance does **not** accept the anomalous Tab C transition. It preserves that Human observation as an unresolved incident/evidence item rather than dismissing it because it was not reproduced. It also does not establish all refusal reasons, read-only Dataset recovery, all tabs or event interleavings, all browsers, production hosting, full Dataset equality, complete Cross-Context Workspace Safety, or release readiness.
+
+### Related contracts and open items
+
+This proposal is consistent with the adopted E2R Cross-Context Workspace Safety principle: protect work during unsafe or unverifiable replacement/write conditions and leave a recoverable path, while retaining application-specific persistence and UI. It does not modify that shared contract or the existing Test 35 bounded acceptance.
+
+Keep these items open and separate from the proposed M1-C6 acceptance:
+
+- Tab C's Continue Editing followed by replacement refusal and save-stop notices; cause and triggering event path unresolved.
+- Whether Home should pre-disable or otherwise constrain New / Open / Sample while peer work is present or coordination is unknown.
+- Recovery Export for read-only Datasets.
+- Unaccepted Safety notification and recovery copy, and recovery paths for other refusal reasons.
+- Complete Cross-Context Workspace Safety acceptance, remaining browser review, cross-app/browser coverage, and production-host evidence.
+
+This entry changes only the status of the bounded M1-C6 Home recovery acceptance to HUMAN BROWSER ACCEPTED / PASS / CLOSED (BOUNDED), as explicitly authorized in M1-C12. It does not alter the unresolved Tab C observation or any other Acceptance. Diagnostics D2 remains OPEN and PUBLIC RELEASE remains NO-GO.

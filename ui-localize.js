@@ -5,6 +5,7 @@ const ja = new Map(Object.entries({
   'Get Started':'はじめる','Compare E2R Entities across Dimensions.':'E2Rのエンティティを評価軸で比較します。',
   'Continue Editing':'編集を続ける','New Dataset':'新しいデータセット','Open E2R Dataset':'E2Rデータセットを開く',
   'Open Sample Dataset · The Ashen Crown':'サンプルデータセットを開く · 灰冠の王国',
+  'Check other tabs again':'他のタブを再確認',
   'E2R comparison editor':'E2R比較エディター','Credits':'クレジット','Close':'閉じる',
   'Application: ParameterPlotter':'アプリケーション: ParameterPlotter','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
   'With gratitude to all the AI systems that contributed to this project.':'このプロジェクトに貢献したすべてのAIシステムに感謝します。',
@@ -147,7 +148,7 @@ const phrases = [
 ];
 
 phrases.push(
-  ['Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.','別のParameterPlotterタブで保存済みWorkspaceが更新されました。このタブから上書きはしていません。残したい作業をE2R JSONへExportし、ダウンロードを確認してからこのタブを再読み込みし、「Continue Editing」を選んで最新の保存済みWorkspaceを開いてください。'],
+  ['Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.','別のParameterPlotterタブで保存済みWorkspaceが更新されました。このタブから上書きはしていません。残したい作業をE2R JSONとして書き出し、ダウンロードを確認してから、このタブを再読み込みし、「編集を続ける」を選んで最新の保存済みWorkspaceを開いてください。'],
   ['Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before changing this shared workspace.','別のParameterPlotterタブに未適用の作業があります。共有Workspaceを変更する前に、そのタブの入力を適用または取り消してください。必要なDatasetの変更はE2R JSONとして書き出してください。'],
   ['Another ParameterPlotter tab has work that needs protection. Apply or cancel its open input, and export any Dataset changes you need to keep before opening a replacement Dataset.','別のParameterPlotterタブに未適用の作業があります。置換Datasetを開く前に、そのタブの入力を適用または取り消してください。必要なDatasetの変更はE2R JSONとして書き出してください。'],
   ['The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.','E2R JSONのダウンロードをブラウザーに依頼しました。このアプリでは完了を確認できないため、ファイルがダウンロードされたことを確認してから利用してください。ブラウザー内Workspaceへの保存は別の処理です。'],
@@ -165,6 +166,7 @@ phrases.push(
 const protectedContent = '.dataset-title,.replacement-incoming-dataset,.entity-row-title strong,.entity-content .profile-intro h3,.entity-content .profile-intro p,.dimension-description,.dimension-card .card-head strong,.point-label,.plot-item,.quadrant-keyboard-help,.quadrant-keyboard-status,.matrix-row-name,.matrix-identity span,.pager-current strong,.list-row strong,.quadrant-axis-name span,.credits-metadata a';
 ja.set('Dataset title','Datasetタイトル');
 ja.set('Apply','適用');
+ja.set('Apply title','タイトルを適用');
 ja.set('Workspace actions','作業操作');
 ja.set('Dataset title applied. E2R JSON Export is a separate step.','データセットのタイトルを適用しました。E2R JSONの書き出しは別の操作です。');
 ja.set('Create dimensions to populate the Matrix.','評価軸を作成するとマトリクスに表示されます。');

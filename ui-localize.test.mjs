@@ -5,6 +5,7 @@ import {translateUiText} from './ui-localize.js';
 
 test('selected Japanese Product action wording is retained',()=>{
   assert.equal(translateUiText('Dataset title'),'Datasetタイトル');
+  assert.equal(translateUiText('Apply title'),'タイトルを適用');
   assert.equal(translateUiText(' Fill blanks'),' 未設定の値をランダム入力');
   assert.equal(translateUiText('Review Assessment rescale'),'値の再計算を確認');
   assert.equal(translateUiText('Apply reviewed rescale'),'再計算を適用');
@@ -63,4 +64,12 @@ test('workspace saving progress is localized without implying a completed write'
   assert.notEqual(translateUiText('Saving locally…'),'Saving locally…');
   assert.notEqual(translateUiText('Saving browser-local workspace…'),'Saving browser-local workspace…');
   assert.notEqual(translateUiText('Waiting for browser-local save confirmation.'),'Waiting for browser-local save confirmation.');
+});
+
+test('stale-workspace recovery warning uses the adopted Japanese Export action wording',()=>{
+  const english='Another ParameterPlotter tab changed the saved workspace. This tab did not overwrite it. Export any work you need to keep as E2R JSON and check that the download completed; then reload this tab and choose Continue Editing to open the latest saved workspace.';
+  const japanese=translateUiText(english);
+  assert.match(japanese,/E2R JSONとして書き出し/);
+  assert.match(japanese,/「編集を続ける」を選んで/);
+  assert.doesNotMatch(japanese,/Export|Continue Editing/);
 });
