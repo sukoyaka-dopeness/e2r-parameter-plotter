@@ -58,6 +58,13 @@ async function start(id,{hash='',manager=locks.client(id),fetcher}={}){
 }
 
 const a=await start('a',{hash:'#locale=ja'});
+function assertWorkspaceBrandFocus(page){
+  const heading=page.document.querySelector('header h1.app-brand');
+  const link=heading?.querySelector('a[data-go-home]');
+  assert.ok(link,'Workspace brand Home link');
+  assert.equal(page.document.activeElement,link,'Workspace arrival focuses the actionable brand link');
+  assert.equal(heading.hasAttribute('tabindex'),false,'brand heading is not a second focus stop');
+}
 assert.ok(a.document.querySelector('[data-home-action="continue"]'));
 const baseline=storage.getItem(key),readCount=storage.reads.filter(item=>item===key).length;
 const b=await start('b',{hash:'#locale=ja&datasetUrl=https%3A%2F%2Fexample.test%2Fdataset.json'});
@@ -68,7 +75,7 @@ assert.equal(fetches,0);assert.equal(storage.getItem(key),baseline);
 assert.equal(storage.reads.filter(item=>item===key).length,readCount+1);
 function verifyCredits(page,ja){
   const footer=page.document.querySelector('.app-footer');
-  assert.equal(footer.querySelector('small').textContent,ja?'E2R比較エディター':'E2R comparison editor');
+  assert.equal(footer.querySelector('small').textContent,ja?'E2R 評価軸エディター':'E2R Dimension Editor');
   assert.equal(footer.querySelector('[data-open-credits]').textContent,ja?'クレジット':'Credits');
   page.click('[data-open-credits]');
   const dialog=page.document.querySelector('.credits-dialog');assert.ok(dialog);
@@ -104,6 +111,13 @@ for(let i=0;i<5;i++)a.window.dispatchEvent(new a.window.Event('focus'));
 await tick();assert.equal(a.document.querySelector('[data-home-action="continue"]'),button);
 assert.equal(a.document.querySelector('[data-home-action="new"]').getAttribute('aria-disabled'),null);
 a.click('[data-home-action="continue"]');
+assertWorkspaceBrandFocus(a);
+const firstBrandLink=a.document.activeElement;
+firstBrandLink.click();
+assert.ok(a.document.querySelector('[data-home-action="continue"]'));
+assert.equal(a.document.activeElement,a.document.querySelector('[data-home-action="continue"]'));
+a.click('[data-home-action="continue"]');
+assertWorkspaceBrandFocus(a);
 assert.ok(a.document.querySelector('#dataset-title-input'));
 assert.equal(a.document.querySelector('#dataset-title-input').value,sample.extensions.metadata.title);
 console.log('PASS: focus keeps Home DOM and clear availability; first Continue click opens Workspace');
@@ -141,6 +155,7 @@ assert.ok(a.document.querySelector('[data-home-action="return-workspace"]'));
 const notice=a.document.querySelector('.home-notice[role="alert"]'),actions=a.document.querySelector('.home-actions');
 assert.ok(notice.compareDocumentPosition(actions)&a.window.Node.DOCUMENT_POSITION_FOLLOWING);
 a.click('[data-home-action="return-workspace"]');
+assertWorkspaceBrandFocus(a);
 assert.equal(a.document.querySelector('#dataset-title-input').value,rescueTitle);
 // The existing menu's Export action remains the rescue path.
 const exportButton=a.document.querySelector('[data-successor-export-dataset]');
@@ -148,6 +163,24 @@ assert.ok(exportButton,'Workspace Export button');exportButton.click();await tic
 assert.equal(a.downloads.length,1);
 assert.equal(JSON.parse(await a.downloads[0].blob.text()).extensions.metadata.title,rescueTitle);
 assert.equal(storage.getItem(key),saved);
+const exportNotice=()=>a.document.querySelector('.lifecycle-notice');
+const exportPreferenceBefore=storage.getItem('parameterplotter.locale');
+assert.match(exportNotice().textContent,/E2R JSONのダウンロードをブラウザーに依頼しました/);
+assert.equal(exportNotice().getAttribute('role'),'status');
+a.click('[data-select-locale]');
+assert.match(exportNotice().textContent,/The browser was asked to download the E2R JSON/);
+assert.doesNotMatch(exportNotice().textContent,/E2R JSONのダウンロード/);
+a.click('[data-successor-export-dataset]');await tick();
+assert.equal(a.downloads.length,2);
+assert.match(exportNotice().textContent,/The browser was asked to download the E2R JSON/);
+a.click('[data-select-locale]');
+assert.match(exportNotice().textContent,/E2R JSONのダウンロードをブラウザーに依頼しました/);
+a.click('[data-successor-export-dataset]');await tick();
+assert.equal(a.downloads.length,3);
+assert.match(exportNotice().textContent,/E2R JSONのダウンロードをブラウザーに依頼しました/);
+assert.equal(JSON.parse(await a.downloads[2].blob.text()).extensions.metadata.title,rescueTitle);
+assert.equal(storage.getItem(key),saved);
+if(exportPreferenceBefore===null)storage.removeItem('parameterplotter.locale');else storage.setItem('parameterplotter.locale',exportPreferenceBefore);
 releaseLegacy();await tick();
 a.click('[data-successor-export-dataset]');await tick();assert.equal(storage.getItem(key),saved);
 console.log('PASS: degraded Return and existing JSON Export preserve memory, saved Workspace and refusal latch');
@@ -187,6 +220,7 @@ assert.ok(handoff.document.querySelector('.confirm-dialog')||handoff.document.qu
 if(handoff.document.querySelector('[data-confirm-replacement]'))handoff.click('[data-confirm-replacement]');
 await tick();await tick();
 assert.ok(handoff.document.querySelector('.workspace'));
+assertWorkspaceBrandFocus(handoff);
 assert.equal(JSON.parse(storage.getItem(key)).dataset.extensions.metadata.title,sample.extensions.metadata.title);
 console.log('PASS: a fresh owner can use the unchanged startup Handoff acceptance/replacement path');
 handoff.leave();await tick();
@@ -226,6 +260,7 @@ storage.removeItem(key);
 const generated=await start('generated');
 assert.equal(generated.document.querySelector('[data-home-action="continue"]'),null);
 generated.click('[data-home-action="new"]');await tick();await tick();
+assertWorkspaceBrandFocus(generated);
 const specId='draft.github.sukoyaka-dopeness.specification';
 assert.deepEqual(JSON.parse(storage.getItem(key)).dataset.extensions[specId],{specVersion:'0.1.0',uses:[]});
 apply(generated,'test');await tick();await tick();

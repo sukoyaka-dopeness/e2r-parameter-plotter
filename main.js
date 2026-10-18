@@ -1,5 +1,5 @@
 import {createEmptyDataset} from './dataset-specification.js';
-import {workspaceNotificationPresentation} from './workspace-notifications.js';
+import {EXPORT_DOWNLOAD_NOTICE,workspaceNotificationPresentation} from './workspace-notifications.js';
 import {load, saveIfCurrent, WORKSPACE_STORAGE_KEY, fresh, readDataset, uid, getValue, setValue, label, fmt, clamp, entities, plottedEntities, waitingCandidates, validateDataset, datasetForWorkspace, datasetForExport, exportBaseline, transactDatasetMutation} from './model.js';
 import {renderProfile, renderQuadrant, renderRadar, renderMatrix} from './views.js';
 import {dimensionRange, rangePosition, valueAtRangePosition, quadrantOutOfRangeEntities} from './model.js';
@@ -536,6 +536,7 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-action="add-dim
 // source; this runtime consumes the portable Candidate and persists a distinct workspace.
 let pendingEntityDraft=null;
 const runtimeHeader=()=>`<button data-go-home>Home</button>`;
+function focusWorkspaceBrandLink(){root.querySelector('header h1.app-brand a[data-go-home]')?.focus();}
 renderEntityList=function(){
  const q=(root.querySelector('#entity-search')?.value||'').toLocaleLowerCase();
  const rows=s.dataset.entities.map((entity,index)=>({entity,index})).filter(({entity,index})=>entity&&typeof entity==='object'&&[label(entity,index),String(entity.description||''),String(entity.id||'')].some(text=>text.toLocaleLowerCase().includes(q)));
@@ -712,7 +713,7 @@ async function activateIncoming(requestOverride=null){
  expectedWorkspaceRaw=result.raw;replacement=null;replacementRefusal=null;startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';handoffError='';if(request.kind!=='handoff-dataset')clearDatasetHandoffFragment();surface='workspace';s=incoming;fileError='';homeError='';matrixError='';entityMenu=null;confirmation=null;entityDeleteNotice=null;rescaleProposal=null;pendingEntityDraft=null;dimensionDraft=null;datasetTitleDraft=null;s.pendingDraft=false;workspaceCoordinator.setActive(hasLossSensitiveWork(s));
  lifecycleNotice='';
  render();
- const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}
+ focusWorkspaceBrandLink();
 }
 function clearDatasetHandoffFragment(){const next=removeDatasetUrlFromHash(window.location.hash);if(next!==window.location.hash)window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+next);}
 function cancelStartupHandoff(){startupHandoffCancelled=true;startupHandoffController?.abort();startupHandoffController=null;handoffStatus='';handoffError='';}
@@ -755,7 +756,7 @@ function exportCurrentDataset(){
  if(!validation.valid){s.readOnly=true;lifecycleNotice='Export blocked: Validator errors remain. No repair or normalization was applied.';render();return;}
  const exportDataset=datasetForExport(s);
  if(!downloadJson(getDatasetExportFilename(exportDataset),exportDataset))return;
- exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave({exportRequested:true});lifecycleNotice=locale==='ja'?'E2R JSONのダウンロードをブラウザーに依頼しました。完了はこの画面では確認できないため、必要なファイルがダウンロードされたことを確認してください。ブラウザー内Workspaceへの保存は別の処理です。':'The browser was asked to download the E2R JSON. This app cannot confirm that the download completed, so check that the file is available before relying on it. Saving the browser-local Workspace is a separate operation.';render();
+ exportBaseline(s);workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave({exportRequested:true});lifecycleNotice=EXPORT_DOWNLOAD_NOTICE;render();
 }
 function relationDeletionFeedback(id){
  const result=entityDeleteEligibility(s,id);if(!result.allowed){entityDeleteNotice={id,reason:result.reason,relations:result.relations||[]};render();root.querySelector('.confirm-dialog button')?.focus();return;}
@@ -788,9 +789,9 @@ function captureSuccessorClick(event){
   if(replacement){if(target?.closest('[data-cancel-replacement]')){event.preventDefault();event.stopImmediatePropagation();cancelReplacement();return;}if(target?.closest('[data-confirm-replacement]')){event.preventDefault();event.stopImmediatePropagation();activateIncoming();return;}return;}
  if(surface==='home'){
   const action=target?.dataset.homeAction;
-   if(action){event.preventDefault();event.stopImmediatePropagation();if(action==='recheck-peer-work'){if(homePeerWorkStatus.kind!=='checking')void refreshHomePeerWorkStatus();return;}if(homeAcquisitionBlocked(action,homePeerWorkStatus.kind))return;if(action==='continue'){cancelStartupHandoff();clearDatasetHandoffFragment();surface='workspace';render();const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}}else if(action==='return-workspace'){
+   if(action){event.preventDefault();event.stopImmediatePropagation();if(action==='recheck-peer-work'){if(homePeerWorkStatus.kind!=='checking')void refreshHomePeerWorkStatus();return;}if(homeAcquisitionBlocked(action,homePeerWorkStatus.kind))return;if(action==='continue'){cancelStartupHandoff();clearDatasetHandoffFragment();surface='workspace';render();focusWorkspaceBrandLink();}else if(action==='return-workspace'){
     if(!s.workspaceCreated||s.persistence.status!=='degraded')return;
-    surface='workspace';render();const heading=root.querySelector('header h1');if(heading){heading.tabIndex=-1;heading.focus();}
+    surface='workspace';render();focusWorkspaceBrandLink();
   }else if(action==='new'){cancelStartupHandoff();receiveDataset('new-dataset',createEmptyDataset());}else if(action==='open')openDatasetFilePicker();else if(action==='sample'){cancelStartupHandoff();openAshenCrownSample();}}
   return;
  }

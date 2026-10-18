@@ -130,8 +130,7 @@ test('degraded Home recovery returns to the retained Workspace without reopening
 test('workspace persistence refusal presents one specific status instead of duplicating lifecycle feedback',async()=>{
   const main=await readFile(new URL('./main.js',import.meta.url),'utf8');
   assert.match(main,/blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection/);
-  assert.match(main,/The browser was asked to download the E2R JSON\. This app cannot confirm that the download completed/);
-  assert.match(main,/ブラウザーに依頼しました。完了はこの画面では確認できないため/);
+  assert.match(main,/lifecycleNotice=EXPORT_DOWNLOAD_NOTICE;render\(\)/);
   assert.match(main,/workspaceSaveFailureMessage\(result,s\.persistence\.message,locale\)/);
   assert.match(main,/if\(!exportNoticePending\)lifecycleNotice='';\s*exportNoticePending=false;\s*render\(\);/);
   assert.match(main,/scheduleWorkspaceSave\(\{exportRequested:true\}\)/);

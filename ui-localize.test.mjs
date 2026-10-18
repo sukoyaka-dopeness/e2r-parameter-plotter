@@ -38,7 +38,7 @@ test('value-bearing UI phrases translate without changing authored Dimension nam
   assert.equal(translateUiText('Value unchanged · this Dimension accepts integers from -2.7 to 3.6. The recorded value remains in session data.'),'値は変更されませんでした · この評価軸では-2.7〜3.6の整数を入力できます。記録済みの値は保持されます。');
 });
 test('Footer descriptor keeps the approved English and Japanese wording',()=>{
-  assert.equal(translateUiText('E2R comparison editor'),'E2R比較エディター');
+  assert.equal(translateUiText('E2R Dimension Editor'),'E2R 評価軸エディター');
 });
 test('Entity and Dimension drawer wording avoids redundant Dataset and Candidate jargon',()=>{
   assert.equal(translateUiText('Add Entity'),'エンティティを追加');

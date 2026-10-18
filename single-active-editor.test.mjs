@@ -164,7 +164,7 @@ test('both entry-screen locales provide dedicated guidance without editing or ac
 
 test('dedicated screen reuses the common Footer and exposes only presentation controls',()=>{
   const markup=editorSessionMarkup({kind:'blocked'});
-  assert.match(markup,/<small>E2R comparison editor<\/small>/);
+  assert.match(markup,/<small>E2R Dimension Editor<\/small>/);
   assert.match(markup,/<button class="credits-button" data-open-credits>Credits<\/button>/);
   assert.doesNotMatch(markup,/E2R \u00b7 ParameterPlotter|data-home-action|<form/);
 });

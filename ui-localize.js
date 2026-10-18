@@ -6,7 +6,7 @@ const ja = new Map(Object.entries({
   'Continue Editing':'編集を続ける','New Dataset':'新しいデータセット','Open E2R Dataset':'E2Rデータセットを開く',
   'Open Sample Dataset · The Ashen Crown':'サンプルデータセットを開く · 灰冠の王国',
   'Check other tabs again':'他のタブを再確認',
-  'E2R comparison editor':'E2R比較エディター','Credits':'クレジット','Close':'閉じる',
+  'E2R Dimension Editor':'E2R 評価軸エディター','Credits':'クレジット','Close':'閉じる',
   'Application: ParameterPlotter':'アプリケーション: ParameterPlotter','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
   'With gratitude to all the AI systems that contributed to this project.':'このプロジェクトに貢献したすべてのAIシステムに感謝します。',
   'ParameterPlotter repository':'ParameterPlotterリポジトリ','E2R specification repository':'E2R仕様リポジトリ',

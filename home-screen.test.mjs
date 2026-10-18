@@ -149,7 +149,7 @@ test('Home does not offer workspace recovery when no in-memory Workspace is avai
 
 test('Application shell provides a shared Footer and a bounded Credits dialog',async()=>{
   const footer=footerMarkup(),dialog=creditsMarkup();
-  assert.match(footer,/E2R comparison editor[\s\S]*data-open-credits/);
+  assert.match(footer,/E2R Dimension Editor[\s\S]*data-open-credits/);
   assert.match(dialog,/role="dialog" aria-modal="true"/);
   assert.match(dialog,/Application: ParameterPlotter/);
   assert.match(dialog,/Creator: sukoyaka-dopeness/);

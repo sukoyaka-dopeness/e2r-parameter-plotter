@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {workspaceNotificationPresentation as presentation} from './workspace-notifications.js';
+import {EXPORT_DOWNLOAD_NOTICE,workspaceNotificationPresentation as presentation} from './workspace-notifications.js';
 
 test('normal save and saving use the persistent status, not a duplicate success panel',()=>{
   for(const status of ['saved','saving']) {
@@ -21,5 +21,19 @@ test('unknown errors and Export/download confirmation guidance are never classif
     const result=presentation({persistence:{status:'degraded'},lifecycleNotice:notice});
     assert.equal(result.showPersistenceWarning,true);assert.equal(result.notice,notice);assert.equal(result.operation,'');
     if(notice.includes('blocked')||notice.includes('could not'))assert.equal(result.noticeRole,'alert');
+  }
+});
+test('retained Export guidance follows the current locale without changing save or Export state',()=>{
+  const japanese='E2R JSONのダウンロードをブラウザーに依頼しました。完了はこの画面では確認できないため、必要なファイルがダウンロードされたことを確認してください。ブラウザー内Workspaceへの保存は別の処理です。';
+  for(const status of ['saved','saving','degraded']){
+    const persistence={status};
+    for(const locale of ['ja','en','ja']){
+      const result=presentation({persistence,lifecycleNotice:EXPORT_DOWNLOAD_NOTICE,locale});
+      assert.equal(result.notice,locale==='ja'?japanese:EXPORT_DOWNLOAD_NOTICE);
+      assert.equal(result.noticeRole,'status');
+      assert.equal(result.operation,'');
+      assert.equal(result.showPersistenceWarning,status==='degraded');
+      assert.equal(persistence.status,status);
+    }
   }
 });
