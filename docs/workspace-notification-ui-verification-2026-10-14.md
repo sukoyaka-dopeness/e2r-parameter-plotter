@@ -1,6 +1,6 @@
 # Workspace notification UI revision
 
-Status: IMPLEMENTED / AUTOMATED PASS / HUMAN BROWSER ACCEPTANCE PENDING
+Status: IMPLEMENTED / AUTOMATED PASS / N2 HUMAN BROWSER PASS (BOUNDED) / OVERALL HUMAN BROWSER ACCEPTANCE PENDING
 
 ## Roles and scope
 
@@ -44,3 +44,29 @@ changes Metadata declaration/Validator semantics.
 
 Single Active Editor acceptance remains PENDING. Existing bounded acceptances,
 Tab C UNRESOLVED, Diagnostics D2 OPEN and PUBLIC RELEASE NO-GO remain unchanged.
+
+## N2 Human Browser evidence — recorded 2026-10-17
+
+Human reported **N2: PASS (BOUNDED)** for Workspace save refusal and recovery.
+The individual review source hash and run date were not reported. This is Human
+Browser evidence, not a Codex Browser or automated test result.
+
+- Reload restored the saved title `N2 saved baseline` before the refusal test.
+- A limited test injection rejected only Workspace localStorage writes with
+  `QuotaExceededError`. Applying `N2 refused edit` produced a save-failure
+  warning and safety stop. The write refusal occurred and the saved Workspace
+  remained unchanged.
+- After navigation to Home, the safety-stop warning remained visible.
+- Human removed the injection and reloaded. The saved title `N2 saved baseline`
+  returned. Normal saving then recovered: applying `N2 recovery saved`
+  succeeded, and a further reload restored `N2 recovery saved`.
+
+This PASS covers the reported targeted refusal, unchanged saved copy, Home
+warning, reload to the prior saved baseline, and subsequent save/reload recovery.
+It is not evidence of actual disk exhaustion, other refusal causes, JSON Export
+completion, every browser/profile, or all notification states. N2 does not
+close Workspace Notification UI acceptance as a whole. The earlier Single
+Active Editor PENDING statement above records this document's pre-closure
+snapshot; its separate formal decision is [HUMAN ACCEPTED / CLOSED (BOUNDED)](../../e2r-spec/docs/parameterplotter/parameterplotter-single-active-editor-final-acceptance-decision-packet-2026-10-17.md).
+Other Human review items retain their independently reported states, and
+ParameterPlotter Public Release remains NO-GO.
