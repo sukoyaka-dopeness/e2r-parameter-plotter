@@ -77,8 +77,10 @@ decision.
 
 Single Active Editor, Generated Extension Declaration Integrity and Home/common
 UI / Focus Restoration retain their separate **HUMAN ACCEPTED / CLOSED
-(BOUNDED)** decisions. Workspace Notification UI remains overall **PENDING**
-despite its N2 bounded PASS and this title-flow notice observation. Tab C remains
+(BOUNDED)** decisions. At this Phase 2A decision, Workspace Notification UI
+remained overall **PENDING** despite its N2 bounded PASS and this title-flow
+notice observation; its later independent [Phase 2B bounded Human closure](workspace-notification-ui-verification-2026-10-14.md#workspace-notification-ui-formal-human-acceptance--2026-10-19)
+does not expand this Phase 2A acceptance. Tab C remains
 **UNRESOLVED**; LiaisonScape Diagnostics D2 remains **OPEN**; Cross-Context
 Workspace Safety and ParameterPlotter Product Acceptance remain **PENDING**.
 ParameterPlotter Public Release remains **NO-GO**. The
