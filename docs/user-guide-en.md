@@ -2,6 +2,8 @@
 
 *ParameterPlotter user guide · English*
 
+Application version: **0.1.0**. Dimension Assessment `0.2.0` is a separate, non-Stable Specification Candidate.
+
 ParameterPlotter helps you record and compare numeric Assessments for the Entities in an E2R Dataset. You can use the same Dataset in other E2R applications while each application gives you a different view.
 
 > An Assessment is an authored value in the Dataset. ParameterPlotter does not infer a value from an Entity name or its relationships. A recorded **0** is different from no Assessment.

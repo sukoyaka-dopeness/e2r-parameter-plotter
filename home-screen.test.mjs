@@ -151,7 +151,9 @@ test('Application shell provides a shared Footer and a bounded Credits dialog',a
   const footer=footerMarkup(),dialog=creditsMarkup();
   assert.match(footer,/E2R Dimension Editor[\s\S]*data-open-credits/);
   assert.match(dialog,/role="dialog" aria-modal="true"/);
-  assert.match(dialog,/Application: ParameterPlotter/);
+  const packageVersion=JSON.parse(await readFile(new URL('./package.json',import.meta.url),'utf8')).version;
+  assert.equal(packageVersion,'0.1.0');
+  assert.match(dialog,new RegExp(`Application: ParameterPlotter ${packageVersion.replaceAll('.','\\.')}`));
   assert.match(dialog,/Creator: sukoyaka-dopeness/);
   assert.match(dialog,/With gratitude to all the AI systems that contributed to this project\./);
   assert.doesNotMatch(dialog,/working name/);

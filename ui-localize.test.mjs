@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {translateUiText} from './ui-localize.js';
 
 test('selected Japanese Product action wording is retained',()=>{
+  assert.equal(translateUiText('Application: ParameterPlotter 0.1.0'),'アプリケーション: ParameterPlotter 0.1.0');
   assert.equal(translateUiText('Dataset title'),'Datasetタイトル');
   assert.equal(translateUiText('Apply title'),'タイトルを適用');
   assert.equal(translateUiText(' Fill blanks'),' 未設定の値をランダム入力');

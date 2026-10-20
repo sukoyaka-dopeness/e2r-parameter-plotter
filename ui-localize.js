@@ -7,7 +7,7 @@ const ja = new Map(Object.entries({
   'Open Sample Dataset · The Ashen Crown':'サンプルデータセットを開く · 灰冠の王国',
   'Check other tabs again':'他のタブを再確認',
   'E2R Dimension Editor':'E2R 評価軸エディター','Credits':'クレジット','Close':'閉じる',
-  'Application: ParameterPlotter':'アプリケーション: ParameterPlotter','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
+  'Application: ParameterPlotter 0.1.0':'アプリケーション: ParameterPlotter 0.1.0','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
   'With gratitude to all the AI systems that contributed to this project.':'このプロジェクトに貢献したすべてのAIシステムに感謝します。',
   'ParameterPlotter repository':'ParameterPlotterリポジトリ','E2R specification repository':'E2R仕様リポジトリ',
   'Credits links':'クレジット関連リンク','Home':'ホーム','Entities':'エンティティ','Dimensions':'評価軸','More':'その他',
