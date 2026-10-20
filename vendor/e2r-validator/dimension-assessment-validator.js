@@ -84,7 +84,9 @@ export function validateDimensionAssessment(dataset, occurrences = new Map()) {
   }
 
   const specification = dataset.extensions?.[SPECIFICATION_EXTENSION_ID];
-  if (specification !== undefined) {
+  // Only Specification 0.1.0 is locally interpretable; future versions own
+  // their `uses` semantics and must remain opaque here.
+  if (specification?.specVersion === "0.1.0") {
     const declarations = Array.isArray(specification?.uses) ? specification.uses.filter((entry) => entry?.extension === DIMENSION_ASSESSMENT_EXTENSION_ID) : [];
     if (declarations.length !== 1) add("dimension_assessment_specification_declaration_count", `/extensions/${pointer(SPECIFICATION_EXTENSION_ID)}/uses`);
     else if (declarations[0].version !== payload.specVersion) add("dimension_assessment_specification_version_conflict", `/extensions/${pointer(SPECIFICATION_EXTENSION_ID)}/uses`);

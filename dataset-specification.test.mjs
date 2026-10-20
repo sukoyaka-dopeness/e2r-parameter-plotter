@@ -67,6 +67,36 @@ test('existing future/opaque declarations and their additional information are p
   assert.deepEqual(datasetForExport(state).extensions[SPEC],declaration);
 });
 
+test('bundled Validator preserves future Specification versions with either supported Dimension Assessment Candidate',()=>{
+  for(const version of ['0.1.0','0.2.0']){
+    const dataset={...empty(),entities:[{id:'e'}],extensions:{
+      [DA]:{specVersion:version,dimensions:[dim],assessments:[{entityId:'e',dimensionId:'d',value:0}]},
+      [SPEC]:{specVersion:'9.0.0',uses:[],future:{keep:true}},
+    }};
+    const before=JSON.stringify(dataset),state=fresh(dataset);
+    assert.equal(state.validation.valid,true);
+    assert.equal(state.readOnly,false);
+    assert.ok(state.validation.diagnostics.some(d=>d.code==='specification_version_unsupported'));
+    assert.ok(!state.validation.diagnostics.some(d=>d.code==='dimension_assessment_specification_declaration_count'));
+    assert.deepEqual(datasetForWorkspace(state),dataset);
+    assert.deepEqual(datasetForExport(state),dataset);
+    const previous=globalThis.localStorage;globalThis.localStorage=new MemoryStorage();
+    try{
+      assert.equal(saveIfCurrent(state,null).ok,true);
+      assert.deepEqual(load().dataset,dataset);
+    }finally{globalThis.localStorage=previous;}
+    assert.equal(JSON.stringify(dataset),before);
+
+    const supported=structuredClone(dataset);
+    supported.extensions[SPEC]={specVersion:'0.1.0',uses:[]};
+    assert.ok(validateDataset(supported).diagnostics.some(d=>d.code==='dimension_assessment_specification_declaration_count'));
+    supported.extensions[SPEC].uses=[{extension:DA,version:version==='0.1.0'?'0.2.0':'0.1.0'}];
+    assert.ok(validateDataset(supported).diagnostics.some(d=>d.code==='dimension_assessment_specification_version_conflict'));
+    supported.extensions[SPEC].uses[0].version=version;
+    assert.equal(validateDataset(supported).valid,true);
+  }
+});
+
 test('an existing future Metadata version is not downgraded; incomplete declarations remain read-only',()=>{
   const declaration={specVersion:'0.1.0',uses:[{extension:'metadata',version:'9.9.9',extra:'keep'}],extra:{keep:true}};
   const state=fresh({...empty(),extensions:{metadata:{title:'Old'},[SPEC]:declaration}});
