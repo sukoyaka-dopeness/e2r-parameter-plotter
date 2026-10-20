@@ -18,9 +18,9 @@
 .plot-item{position:absolute;width:0;height:0;z-index:2;touch-action:none;cursor:grab}
 .plot-item:hover,.plot-item:focus-within,.plot-item.selected{z-index:5}
 .plot-dot{position:absolute;left:-7px;top:-7px;width:14px;height:14px;min-height:0;padding:0;border:2px solid #fff;border-radius:50%;background:#3655ad;box-shadow:0 0 0 1px #25479b;cursor:grab;z-index:2}
-.plot-item:hover .plot-dot,.plot-item:focus-within .plot-dot,.plot-item.selected .plot-dot{background:#e6833f;box-shadow:0 0 0 3px #e6833f55}
 .point-label{position:absolute;left:var(--label-x);top:var(--label-y);width:max-content;max-width:125px;min-height:0;padding:2px 5px;border:1px solid transparent;background:#fffdf0;color:#283145;font-size:.78rem;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px #26314325;cursor:grab}
-.plot-item:hover .point-label,.plot-item:focus-within .point-label,.plot-item.selected .point-label{border-color:#df8b55;background:#fff5e9}
+.plot-item:hover .point-label,.plot-item:focus-within .point-label{border-color:#9aaad3;background:#f3f6ff}
+.plot-item.selected .point-label{border-color:#df8b55;background:#fff5e9}
 .point-connector{position:absolute;left:0;top:0;width:var(--line-length);border-top:1px solid #8998b9;transform-origin:left center;transform:rotate(var(--line-angle));pointer-events:none}
 .plot-foot{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-top:10px}.plot-foot .small{flex:1}
 .plot-foot .quadrant-keyboard-help,.plot-foot .quadrant-keyboard-status{flex-basis:100%;min-width:0}
@@ -61,8 +61,9 @@
 .plot-dot{left:-15px;top:-15px;width:30px;height:30px;border:0;background:transparent;box-shadow:none;touch-action:none}
 .plot-dot::before{content:"";display:block;width:12px;height:12px;margin:auto;border:2px solid #fff;border-radius:50%;background:#3655ad;box-shadow:0 0 0 1px #25479b}
 .plot-dot:hover,.plot-dot:focus-visible,.plot-item.selected .plot-dot{background:transparent;box-shadow:none;outline:none}
-.plot-dot:hover::before,.plot-dot:focus-visible::before,.plot-item.selected .plot-dot::before{background:#e6833f;box-shadow:0 0 0 4px #e6833f55}
-.plot-dot:focus-visible{outline:2px solid #28499a;outline-offset:2px}
+.plot-dot:hover::before,.plot-dot:focus-visible::before{background:#3655ad;box-shadow:0 0 0 4px #3655ad55}
+.plot-item.selected .plot-dot::before{background:#e6833f;box-shadow:0 0 0 4px #e6833f55}
+.plot-dot:focus-visible,.plot-item.selected .plot-dot:focus-visible{outline:2px solid #28499a;outline-offset:2px}
 .point-label{cursor:pointer}
 .vertex{fill:#fff;stroke:#3655ad;stroke-width:2;outline:none;touch-action:none}
 .vertex:hover,.vertex:focus-visible,.vertex.dragging{fill:#f3f6ff;stroke:#24489f;stroke-width:3;filter:drop-shadow(0 0 4px #3655ad99)}
@@ -196,7 +197,7 @@
 .point-label{transition:none}
 .point-label.is-relocating{transition:left .16s ease-out,top .16s ease-out}
 .waiting-header.drop-ready .pager-current{border-color:#3655ad;background:#e9efff;box-shadow:0 0 0 3px #3655ad33}
-.plot-dot.dragging::before{background:#e6833f;box-shadow:0 0 0 5px #e6833f55}
+.plot-dot.dragging::before{background:#3655ad;box-shadow:0 0 0 5px #3655ad55}
 .quadrant-dragging,.quadrant-dragging *{user-select:none}
 @media(max-width:720px){.radar{width:min(100%,76vh)}}
 @media(prefers-reduced-motion:reduce){.point-label.is-relocating{transition:none}}

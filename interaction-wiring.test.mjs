@@ -132,10 +132,10 @@ test('workspace persistence refusal presents one specific status instead of dupl
   assert.match(main,/blockedByPeer:true,reason:'Another ParameterPlotter tab has work that needs protection/);
   assert.match(main,/lifecycleNotice=EXPORT_DOWNLOAD_NOTICE;render\(\)/);
   assert.match(main,/workspaceSaveFailureMessage\(result,s\.persistence\.message,locale\)/);
-  assert.match(main,/if\(!exportNoticePending\)lifecycleNotice='';\s*exportNoticePending=false;\s*render\(\);/);
+  assert.match(main,/if\(!exportNoticePending\)lifecycleNotice='';\s*exportNoticePending=false;\s*renderAfterWorkspaceSave\(\);/);
   assert.match(main,/scheduleWorkspaceSave\(\{exportRequested:true\}\)/);
   assert.match(main,/workspaceWriteGate\.run\(\(\)=>workspaceCoordinator\.withWriteLock/);
-  assert.match(main,/if\(result\.ok\)\{expectedWorkspaceRaw=result\.raw;exportNoticePending=false;render\(\);return;\}/);
+  assert.match(main,/if\(result\.ok\)\{expectedWorkspaceRaw=result\.raw;exportNoticePending=false;renderAfterWorkspaceSave\(\);return;\}/);
   assert.match(main,/const refusal=result\.priorRefusal\|\|result;\s*s\.persistence=\{status:'degraded'/);
   assert.match(main,/const persistenceMessage=refusal\?workspaceSaveFailureMessage\(refusal,s\.persistence\.message,locale,\{priorRefusal:true\}\):s\.persistence\.message/);
   assert.match(main,/const notice=s\.persistence\.status==='degraded'\?refusal\?workspaceSaveFailureMessage\(refusal,s\.persistence\.message,locale,\{priorRefusal:true\}\):s\.persistence\.message:''/);

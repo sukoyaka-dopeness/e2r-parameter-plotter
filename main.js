@@ -153,6 +153,27 @@ function renderEntityList(){const q=(document.querySelector('#entity-search')?.v
 function renderDimensionList(){const q=dimensionQuery.toLowerCase();document.querySelector('#dimension-list').innerHTML=s.dimensions.filter(d=>[d.name,d.low,d.high].some(x=>x.toLowerCase().includes(q))).map(d=>`<div class="list-row"><span><strong>${esc(d.name)}</strong><small>${esc(d.low)} → ${esc(d.high)}</small>${dimensionNeedsId(s,d,'pool')?`<small>ID ${esc(shortId(d.id))}</small>`:''}</span><button data-edit-dimension="${esc(d.id)}">Edit</button><button class="danger" data-delete-dimension="${esc(d.id)}">Delete</button></div>`).join('')||`<p>${s.dimensions.length?'No matching dimensions':'No dimensions yet'}</p>`;}
 function fillDimensionForm(){const f=document.querySelector('#dimension-form'),d=dimensionDraft||s.dimensions.find(x=>x.id===s.editDimension);if(!d||!f)return;f.elements.namedItem('dimension-name').value=d.name;f.elements.namedItem('dimension-low').value=d.low;f.elements.namedItem('dimension-high').value=d.high;}
 let saveScheduled=false;
+function renderAfterWorkspaceSave(){
+   // Capture at settlement so a later keyboard target or scroll position wins over the original action.
+   const active=document.activeElement,scrollSnapshot=captureDocumentScroll(document);
+   const identity=element=>`${element.tagName}|${[...element.attributes].filter(attribute=>['id','name','type','href'].includes(attribute.name)||attribute.name.startsWith('data-')).map(attribute=>`${attribute.name}=${attribute.value}`).sort().join('|')}`;
+   let focusPath=null;
+   if(active&&root.contains(active)){
+     const path=[];
+     for(let element=active;element!==root;element=element.parentElement){
+       if(!element?.parentElement){path.length=0;break;}
+       path.unshift(Array.prototype.indexOf.call(element.parentElement.children,element));
+     }
+     if(path.length)focusPath={path,identity:identity(active)};
+   }
+   render();
+   const focusLost=document.activeElement===document.body||document.activeElement===document.documentElement;
+   if(focusPath&&focusLost){
+     const target=focusPath.path.reduce((element,index)=>element?.children[index],root);
+     if(target&&identity(target)===focusPath.identity&&!target.matches(':disabled')&&!target.closest('[inert]'))target.focus({preventScroll:true});
+   }
+   if(focusLost)restoreDocumentScroll(scrollSnapshot);
+}
 let saveChain=Promise.resolve();
 let exportNoticePending=false;
 function scheduleWorkspaceSave({exportRequested=false}={}){
@@ -165,7 +186,7 @@ function scheduleWorkspaceSave({exportRequested=false}={}){
     workspaceCoordinator.setActive(true);
     if(!exportRequested)lifecycleNotice='';
     exportNoticePending=false;
-    render();
+    renderAfterWorkspaceSave();
     return;
   }
   if(saveScheduled)return;
@@ -179,14 +200,14 @@ function scheduleWorkspaceSave({exportRequested=false}={}){
       return saveIfCurrent(s,expectedWorkspaceRaw);
     }));
     if(!editorSession.isCurrent(editorToken))return;
-    if(result.ok){expectedWorkspaceRaw=result.raw;exportNoticePending=false;render();return;}
+    if(result.ok){expectedWorkspaceRaw=result.raw;exportNoticePending=false;renderAfterWorkspaceSave();return;}
     if(result.cancelled)return;
     const refusal=result.priorRefusal||result;
     s.persistence={status:'degraded',message:workspaceSaveFailureMessage(refusal,s.persistence.message,locale,{priorRefusal:Boolean(result.priorRefusal)})};
     workspaceCoordinator.setActive(true);
     if(!exportNoticePending)lifecycleNotice='';
     exportNoticePending=false;
-    render();
+    renderAfterWorkspaceSave();
   }).catch(error=>{
     if(!editorSession.isCurrent(editorToken))return;
     saveScheduled=false;
@@ -194,7 +215,7 @@ function scheduleWorkspaceSave({exportRequested=false}={}){
       workspaceCoordinator.setActive(true);
       if(!exportNoticePending)lifecycleNotice='';
       exportNoticePending=false;
-      render();
+      renderAfterWorkspaceSave();
   });
 }
 function update(){if(!editorSession.owns)return;workspaceCoordinator.setActive(hasCurrentLossSensitiveWork());scheduleWorkspaceSave();render();}
@@ -243,7 +264,7 @@ document.addEventListener('click',e=>{
   if(contextMenu)contextMenu=null;
   if(b.dataset.view){s.view=b.dataset.view;update();return;}
   if(b.dataset.chooseEntity){if(s.view==='Quadrant'&&!waitingCandidates(s).some(e=>e.id===b.dataset.chooseEntity))return;if(s.view==='Matrix'){focusMatrixRow(b.dataset.chooseEntity);return;}if(s.view==='Radar'&&s.selected!==b.dataset.chooseEntity){const list=entities(s),from=list.findIndex(x=>x.id===s.selected),to=list.findIndex(x=>x.id===b.dataset.chooseEntity);pagerDirection=to>=from?1:-1;radarSelectedDimension=null;}s.selected=b.dataset.chooseEntity;if(s.view==='Quadrant')s.waiting=b.dataset.chooseEntity;closeDrawers();return;}
-  if(b.dataset.selectEntity){s.selected=b.dataset.selectEntity;update();return;}
+  if(b.dataset.selectEntity){const id=b.dataset.selectEntity,keyboardLabel=e.detail===0&&b.matches('[data-select-entity]'),scrollSnapshot=keyboardLabel?captureDocumentScroll(document):null;s.selected=id;update();if(keyboardLabel){root.querySelector(`[data-select-entity="${CSS.escape(id)}"]`)?.focus({preventScroll:true});restoreDocumentScroll(scrollSnapshot);}return;}
   if(b.dataset.editDimension){dimensionWarning=null;dimensionDraft=null;s.editDimension=b.dataset.editDimension;s.dimensionFormOpen=true;render();document.querySelector('#dimension-form [name=dimension-name]')?.focus();return;}
   if(b.dataset.editEntity){if(!s.tempEntities.some(x=>x.id===b.dataset.editEntity))return;editEntityId=b.dataset.editEntity;s.entityFormOpen=true;entityMenu=null;render();root.querySelector('#entity-form [name=temporary-entity-name]')?.focus();return;}
   if(b.dataset.deleteDimension){openConfirmation('dimension',b.dataset.deleteDimension);return;}

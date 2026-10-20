@@ -281,6 +281,70 @@ assert.deepEqual(JSON.parse(storage.getItem(key)).dataset.extensions[specId].use
 resumedGenerated.leave();await tick();
 generated.dom.window.close();resumedGenerated.dom.window.close();
 console.log('PASS: actual New/title/save/resume/Export/title-removal lifecycle keeps exact declarations without warnings');
+storage.setItem(key,JSON.stringify({format:'parameterplotter-local-workspace',version:1,dataset:sample,ui:{workspaceCreated:true}}));
+const quadrant=await start('quadrant-focus',{hash:'#locale=ja'});
+await tick();await tick();
+if(quadrant.document.querySelector('[data-resolve-locale="requested"]'))quadrant.click('[data-resolve-locale="requested"]');
+assert.ok(quadrant.document.querySelector('[data-home-action="continue"]'),'the saved sample can resume');
+quadrant.click('[data-home-action="continue"]');
+assert.ok(quadrant.document.querySelector('[data-view="Quadrant"]'),quadrant.document.body.textContent.slice(0,300));
+quadrant.click('[data-view="Quadrant"]');
+for(const [index,name] of [[0,'指揮権限'],[1,'戦闘能力']]){
+  const axis=quadrant.document.querySelector(`[data-quadrant-axis="${index}"]`);
+  axis.value=[...axis.options].find(option=>option.textContent.includes(name)).value;
+  axis.dispatchEvent(new quadrant.window.Event('change',{bubbles:true}));await tick();await tick();
+}
+assert.equal(quadrant.document.querySelectorAll('[data-point]').length,10);
+const datasetBeforeSelection=JSON.stringify(JSON.parse(storage.getItem(key)).dataset);
+const scrollport=quadrant.document.documentElement,appRoot=quadrant.document.querySelector('#app');
+Object.defineProperty(quadrant.document,'scrollingElement',{configurable:true,value:scrollport});
+const innerHTML=Object.getOwnPropertyDescriptor(quadrant.window.Element.prototype,'innerHTML');
+Object.defineProperty(appRoot,'innerHTML',{configurable:true,get(){return innerHTML.get.call(this);},set(markup){innerHTML.set.call(this,markup);scrollport.scrollTop=0;}});
+async function holdWorkspaceWrite(id){
+  let release;
+  void locks.client(id).request('e2r:parameter-plotter:workspace-write',()=>new Promise(resolve=>{release=resolve;}));
+  await tick();assert.ok(release);return release;
+}
+const focusPoint=name=>[...quadrant.document.querySelectorAll('[data-point]')].find(point=>point.getAttribute('aria-label').includes(name));
+const selene=focusPoint('セレネ'),seleneId=selene.dataset.point;
+let releaseWrite=await holdWorkspaceWrite('quadrant-hold-1');
+scrollport.scrollTop=420;
+selene.focus();selene.click();
+assert.equal(quadrant.document.activeElement?.dataset.point,seleneId,'native-style point activation restores focus immediately');
+assert.equal(scrollport.scrollTop,420,'point activation preserves the current document position');
+await tick();assert.equal(quadrant.document.activeElement?.dataset.point,seleneId,'focus remains while save waits');
+scrollport.scrollTop=610;
+releaseWrite();await tick();await tick();
+assert.equal(quadrant.document.activeElement?.dataset.point,seleneId,'save completion preserves point focus');
+assert.equal(scrollport.scrollTop,610,'save completion restores the latest user scroll, not the earlier point position');
+assert.ok(quadrant.document.querySelector(`[data-point="${seleneId}"]`)?.closest('.plot-item.selected'));
+
+releaseWrite=await holdWorkspaceWrite('quadrant-hold-2');
+const garrick=focusPoint('ガリック');garrick.focus();garrick.click();
+const movedLabel=quadrant.document.querySelector(`[data-select-entity="${seleneId}"]`);movedLabel.focus();
+releaseWrite();await tick();await tick();
+assert.equal(quadrant.document.activeElement?.dataset.selectEntity,seleneId,'a newer label focus is not overwritten by the earlier point');
+
+releaseWrite=await holdWorkspaceWrite('quadrant-hold-3');
+const pointAgain=focusPoint('セレネ');pointAgain.focus();pointAgain.click();
+quadrant.document.querySelector('[data-go-home]').focus();
+releaseWrite();await tick();await tick();
+assert.equal(quadrant.document.activeElement?.hasAttribute('data-go-home'),true,'a newer Header focus survives save completion');
+
+const label=quadrant.document.querySelector(`[data-select-entity="${seleneId}"]`);label.focus();label.click();
+assert.equal(quadrant.document.activeElement?.dataset.selectEntity,seleneId,'native-style label activation restores its own focus');
+await tick();await tick();
+assert.equal(quadrant.document.activeElement?.dataset.selectEntity,seleneId,'save completion preserves label focus');
+
+let releasePeer;
+void locks.client('quadrant-peer').request('e2r:parameter-plotter:workspace-tab:quadrant-peer',()=>new Promise(resolve=>{releasePeer=resolve;}));
+await tick();storage.setItem('e2r:parameter-plotter:workspace-tab:quadrant-peer',JSON.stringify({tabId:'quadrant-peer',active:true}));
+const refusedPoint=focusPoint('セレネ');refusedPoint.focus();refusedPoint.click();await tick();await tick();
+assert.equal(quadrant.document.activeElement?.dataset.point,seleneId,'save refusal preserves point focus');
+assert.ok(quadrant.document.querySelector('.persistence-status[role="alert"]'),'save refusal remains visible');
+assert.equal(JSON.stringify(JSON.parse(storage.getItem(key)).dataset),datasetBeforeSelection,'selection and refused save never change Dataset Assessments');
+releasePeer();await tick();quadrant.leave();await tick();quadrant.dom.window.close();
+console.log('PASS: Quadrant point and label focus survive delayed save completion and refusal without stealing newer focus or changing Dataset data');
 for(const page of [a,b,c,offline,handoff,oldRuntimeBlocked,...delayedPages])page.dom.window.close();
 assert.deepEqual(eventErrors,[]);
-console.log('12 real-module DOM integration scenarios PASS. No Human/browser profiles or servers were used.');
+console.log('13 real-module DOM integration scenarios PASS. No Human/browser profiles or servers were used.');
