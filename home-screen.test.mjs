@@ -155,9 +155,11 @@ test('Application shell provides a shared Footer and a bounded Credits dialog',a
   assert.equal(packageVersion,'0.1.0');
   assert.match(dialog,new RegExp(`Application: ParameterPlotter ${packageVersion.replaceAll('.','\\.')}`));
   assert.match(dialog,/Creator: sukoyaka-dopeness/);
+  assert.match(dialog,/<span>First release<\/span>: 2026-10-21/);
+  assert.match(dialog,/<span>Updated<\/span>: 2026-10-21/);
   assert.match(dialog,/With gratitude to all the AI systems that contributed to this project\./);
   assert.doesNotMatch(dialog,/working name/);
-  assert.doesNotMatch(dialog,/First release|Updated|acknowledg/i);
+  assert.doesNotMatch(dialog,/acknowledg/i);
   assert.doesNotMatch(dialog,/<dl|<dt|<dd/);
   assert.match(dialog,/sukoyaka-dopeness/);
   assert.match(dialog,/data-close-credits/);
