@@ -2,7 +2,7 @@
 
 Date: 2026-10-21
 
-Status: **LOCAL IMPLEMENTATION VERIFIED / HUMAN BROWSER REVIEW PENDING / NOT DEPLOYED**
+Status: **HUMAN ACCEPTED / CLOSED (BOUNDED) for the local Credits change / NOT DEPLOYED**. The earlier implementation checkpoint had **HUMAN BROWSER REVIEW PENDING**; the subsequent 2026-10-21 Human decision is recorded below.
 
 ## Source and date meaning
 
@@ -25,4 +25,12 @@ The [first Public Release closure](../../e2r-spec/docs/parameterplotter/paramete
 
 Using this local candidate in an isolated or disposable browser Workspace, open Credits in EN and JA. Confirm the two dates and label translations, Creator, acknowledgement and both repository links at normal and narrow widths. Check that the links remain clickable over their text only, then use Tab/Shift+Tab and Close/Escape to check focus and dismissal. These are the newly affected presentation and adjacent accepted interactions; the earlier M2-O review is not reopened wholesale.
 
-Human acceptance of this follow-up, the exact commit to publish, and the `Updated` date for its deployment are separate decisions. Before any main push, compare the expected JST deployment date with `Updated: 2026-10-21`; if publication is planned for another date, correct the value and obtain review of the new source. Verify the actual date after deployment; a changed date requires a separately reviewed correction. A push would trigger Pages deployment. This document does not authorize push, deployment, or an amendment to the earlier Public Release closure.
+At the local implementation checkpoint, Human review was pending. Its later bounded result is recorded below. The exact commit to publish, the `Updated` date for its deployment, and the push remain separate decisions. Before any main push, compare the expected JST deployment date with `Updated: 2026-10-21`; if publication is planned for another date, correct the value and obtain review of the new source. Verify the actual date after deployment; a changed date requires a separately reviewed correction. A push would trigger Pages deployment. This document does not authorize push, deployment, or an amendment to the earlier Public Release closure.
+
+## Formal Human decision — 2026-10-21
+
+Human accepted the Credits release-date change at local implementation commit `9dc49c53615703cf7b6d527fde07c36ffaa3a4bf`: **HUMAN ACCEPTED / CLOSED (BOUNDED)**. This is a Human Browser result, separate from the Codex isolated Edge and automated evidence above.
+
+Human confirmed EN/JA Credits, `First release / 初回リリース: 2026-10-21`, `Updated / 更新日: 2026-10-21`, and Application Version `0.1.0`. At 500px and 360px widths, the displayed layout passed visual review. Both repository links were clickable over their text only. Tab/Shift+Tab focus movement, Close/Escape/backdrop dismissal, and focus restoration after dismissal all passed.
+
+This acceptance covers the added dates and their adjacent Credits display and interactions only. It does not extend the earlier M2-O acceptance, alter the first Public Release closure at `1511a2f9e4ef60b2c4c059e8076689e713202d18`, or accept untested environments. The date change is still local: GitHub `main` and Pages have not received this follow-up. Human approval of the exact publication candidate, `Updated` date, and normal `main` push with automatic Pages deployment remains pending.
