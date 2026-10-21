@@ -1,8 +1,8 @@
-# Credits release dates — local implementation and limited review preparation
+# Credits release dates — local acceptance and public deployment closure
 
 Date: 2026-10-21
 
-Status: **HUMAN ACCEPTED / CLOSED (BOUNDED) for the local Credits change / NOT DEPLOYED**. The earlier implementation checkpoint had **HUMAN BROWSER REVIEW PENDING**; the subsequent 2026-10-21 Human decision is recorded below.
+Status: **M2-U LOCAL HUMAN ACCEPTED / CLOSED (BOUNDED); M2-W PUBLISHED / DEPLOYMENT SUCCEEDED / POST-DEPLOYMENT VERIFICATION PASS (BOUNDED) / HUMAN ACCEPTED / CLOSED (BOUNDED)**. The sections before the M2-W checkpoint preserve the earlier local and pre-publication states.
 
 ## Source and date meaning
 
@@ -34,3 +34,16 @@ Human accepted the Credits release-date change at local implementation commit `9
 Human confirmed EN/JA Credits, `First release / 初回リリース: 2026-10-21`, `Updated / 更新日: 2026-10-21`, and Application Version `0.1.0`. At 500px and 360px widths, the displayed layout passed visual review. Both repository links were clickable over their text only. Tab/Shift+Tab focus movement, Close/Escape/backdrop dismissal, and focus restoration after dismissal all passed.
 
 This acceptance covers the added dates and their adjacent Credits display and interactions only. It does not extend the earlier M2-O acceptance, alter the first Public Release closure at `1511a2f9e4ef60b2c4c059e8076689e713202d18`, or accept untested environments. The date change is still local: GitHub `main` and Pages have not received this follow-up. Human approval of the exact publication candidate, `Updated` date, and normal `main` push with automatic Pages deployment remains pending.
+
+## M2-W public deployment and formal Human closure — 2026-10-21
+
+Human authorized the exact Credits follow-up SHA `e058a5b0e32febe916c825868405c4bd87567913`, its three commits/five files after first-release SHA `1511a2f9e4ef60b2c4c059e8076689e713202d18`, `Updated: 2026-10-21` for a same-JST-day deployment, and the normal fast-forward push with automatic Check and Pages deployment. The push completed and GitHub `main` matched `e058a5b0e32febe916c825868405c4bd87567913`. This is a **post-release Credits update**; the first Public Release at `1511a2f9e4ef60b2c4c059e8076689e713202d18` retains its own formal closure.
+
+| Evidence class | M2-W result and boundary |
+| --- | --- |
+| GitHub Actions / Pages | [Check run 39549359749](https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/actions/runs/39549359749) and [Pages run 39549359750](https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/actions/runs/39549359750) both succeeded for the exact public SHA. The Pages Deploy step succeeded at **2026-10-21 14:24:41 JST**. No manual workflow dispatch, settings change, Tag or GitHub Release was part of M2-W. |
+| Public source / automated | The [public HTTPS app](https://sukoyaka-dopeness.github.io/e2r-parameter-plotter/) responded. Published `application-shell.js`, `ui-localize.js` and `main.js` were byte-identical to the approved production build. The Check workflow passed its source checks; local pre-publication evidence had 42 syntax-checked modules, 239/239 tests and 64 production build files. |
+| Codex Browser, public HTTPS | In an isolated Edge profile, EN/JA Credits displayed Application Version `0.1.0`, `First release / 初回リリース: 2026-10-21`, and `Updated / 更新日: 2026-10-21`. At 360px, the dialog had no horizontal overflow. Both Repository links opened their intended GitHub URLs. Tab/Shift+Tab, Close/Escape/backdrop and focus restoration passed; no unexpected runtime exception or error log was observed in this bounded session. |
+| Existing Human Browser evidence | The separate M2-U local Human review above accepted the dates, 500px/360px appearance and related Credits interactions. M2-W added **Codex** public-browser evidence; it did **not** create a new Human Browser PASS. |
+
+The actual Pages deployment and both displayed dates are **2026-10-21 JST**, so `Updated` matches this publication. Human explicitly accepted the GitHub push, successful Pages deployment and bounded Codex Browser post-deployment verification as evidence, and formally decided **M2-W HUMAN ACCEPTED / CLOSED (BOUNDED)**. This decision does not expand Product, M2-O or M2-U acceptance; it does not certify other browsers, all viewport sizes or unrelated Dataset/Workspace paths. Application Version stays `0.1.0`; Dimension Assessment Specification `0.2.0` remains **HUMAN-ADOPTED CANDIDATE / NOT STABLE**. Hub publication and wider Cross-Context Workspace Safety remain separate.
