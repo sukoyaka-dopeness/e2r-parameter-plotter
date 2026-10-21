@@ -13,7 +13,7 @@ ParameterPlotter Credits now presents `Application: ParameterPlotter 0.1.0`, Cre
 | First release | `2026-10-21` | The initial Pages deployment succeeded on 2026-10-21 JST. This historical date stays fixed for later releases. |
 | Updated | `2026-10-21` | The last confirmed public deployment date at this local checkpoint. **This does not assert that this undeployed change has shipped.** Before publishing the follow-up, compare the planned JST deployment date with this value. If it differs, update the source value, repeat focused checks, and review the resulting commit before push. Confirm the actual date after deployment. |
 
-The [first Public Release closure](../../e2r-spec/docs/parameterplotter/parameterplotter-0.1.0-first-public-release-closure-proposal-2026-10-21.md) remains attached to published SHA `1511a2f9e4ef60b2c4c059e8076689e713202d18`, which did not display either date. This local change is a later, unpublished follow-up. It does not revise the M2-O Credits Human acceptance or assert a new Human Browser result.
+The first Public Release closure (E2R-SPEC local record: `docs/parameterplotter/parameterplotter-0.1.0-first-public-release-closure-proposal-2026-10-21.md`) remains attached to published SHA `1511a2f9e4ef60b2c4c059e8076689e713202d18`, which did not display either date. This local change is a later, unpublished follow-up. It does not revise the M2-O Credits Human acceptance or assert a new Human Browser result.
 
 ## Change and verification boundary
 
