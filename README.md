@@ -30,7 +30,7 @@ The GitHub Actions check runs the same command with read-only repository access.
 
 ## Published application and next maintenance candidate
 
-The public application is at <https://sukoyaka-dopeness.github.io/e2r-parameter-plotter/>. The published Credits show **First release: 2026-10-21** and **Updated: 2026-10-21**. The [M2-W record](docs/credits-release-date-follow-up-2026-10-21.md) distinguishes the published Credits update and its bounded Human closure from its later Documentation commit, which is still local.
+The public application is at <https://sukoyaka-dopeness.github.io/e2r-parameter-plotter/>. The published Credits show **First release: 2026-10-21** and **Updated: 2026-10-21**. The [M2-W record](docs/credits-release-date-follow-up-2026-10-21.md) distinguishes the published Credits update and its bounded Human closure from the later Documentation record.
 
 The next maintenance candidate adds Home sample information, links to the English and Japanese [user guides](docs/user-guide-en.md) ([日本語](docs/user-guide-ja.md)), and restrained GitHub Sponsors and Ko-fi links. These candidate changes have not been published or Human accepted. The guides are repository Markdown files, outside the Pages artifact; Home links target their GitHub `main` pages. Before a future push, confirm the candidate version and the actual JST deployment date, update Credits **Updated** if required, and review the exact push range. Verify the guide content, Home links, application and Credits after deployment. A main push starts the Pages workflow and requires separate Human authorization.
 
