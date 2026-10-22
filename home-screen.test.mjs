@@ -29,6 +29,34 @@ test('Home offers Continue Editing only when caller confirms recoverable local w
   assert.doesNotMatch(html,/Browser-local recovery keeps work available|Export E2R JSON when you need a portable Dataset file|home-footnote/);
 });
 
+test('Home keeps guides and optional support below Dataset actions in both locales',async()=>{
+  const [englishGuide,japaneseGuide]=await Promise.all([
+    readFile(new URL('./docs/user-guide-en.md',import.meta.url),'utf8'),
+    readFile(new URL('./docs/user-guide-ja.md',import.meta.url),'utf8'),
+  ]);
+  const home=homeMarkup({peerWorkStatus:{kind:'clear'}});
+  const actionEnd=home.indexOf('</div>\n    <section class="home-resources"');
+  const guides=home.indexOf('class="home-guide-links"');
+  const support=home.indexOf('class="home-support-links"');
+  assert.ok(actionEnd>0&&guides>actionEnd&&support>guides);
+  assert.match(home,/10 Entities, 7 Dimensions, and 70 Assessments/);
+  for(const [name,guide] of [['en',englishGuide],['ja',japaneseGuide]]){
+    assert.match(home,new RegExp(`href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-${name}\\.md" target="_blank" rel="noopener noreferrer"`));
+    assert.match(guide,/0\.1\.0/);
+  }
+  for(const url of ['https://github.com/sponsors/sukoyaka-dopeness','https://ko-fi.com/sukoyaka_dopeness']){
+    assert.ok(home.includes(`href="${url}" target="_blank" rel="noopener noreferrer"`));
+  }
+  assert.equal(translateUiText('Support E2R on GitHub Sponsors'),'GitHub SponsorsでE2Rを支援する');
+  assert.equal(translateUiText('Support E2R on Ko-fi'),'Ko-fiでE2Rを支援する');
+  assert.equal(translateUiText('English user guide'),'英語ユーザーガイド');
+  assert.equal(translateUiText('Japanese user guide'),'日本語ユーザーガイド');
+  assert.match(translateUiText('The Ashen Crown is a ready-to-explore sample with 10 Entities, 7 Dimensions, and 70 Assessments. Its Dataset language follows the UI language.'),/10件のエンティティ、7つの評価軸、70件の評価値/);
+  const blocked=homeMarkup({peerWorkStatus:{kind:'work'},locale:'ja'});
+  assert.match(blocked,/data-home-action="sample"[^>]*aria-disabled="true"/);
+  assert.match(blocked,/href="https:\/\/ko-fi.com\/sukoyaka_dopeness"/);
+});
+
 test('Home keeps acquisition choices visible but unavailable until peer safety is clear',()=>{
   for(const kind of ['work','unknown']){
     for(const locale of ['en','ja']){

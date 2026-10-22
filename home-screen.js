@@ -85,6 +85,17 @@ export function homeMarkup({canContinue=false,canReturnToWorkspace=false,notice=
       <button data-home-action="open"${acquisitionAttrs}>Open E2R Dataset</button>
       <div class="sample-action"><button data-home-action="sample"${acquisitionAttrs}>Open Sample Dataset · The Ashen Crown</button></div>
     </div>
+    <section class="home-resources" aria-label="Explore and learn">
+      <p class="home-sample-description">The Ashen Crown is a ready-to-explore sample with 10 Entities, 7 Dimensions, and 70 Assessments. Its Dataset language follows the UI language.</p>
+      <nav class="home-guide-links" aria-label="User guides">
+        <a href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-en.md" target="_blank" rel="noopener noreferrer">English user guide</a>
+        <a href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-ja.md" target="_blank" rel="noopener noreferrer">Japanese user guide</a>
+      </nav>
+    </section>
+    <nav class="home-support-links" aria-label="Support E2R">
+      <a href="https://github.com/sponsors/sukoyaka-dopeness" target="_blank" rel="noopener noreferrer">Support E2R on GitHub Sponsors</a>
+      <a href="https://ko-fi.com/sukoyaka_dopeness" target="_blank" rel="noopener noreferrer">Support E2R on Ko-fi</a>
+    </nav>
     <input id="dataset-file" type="file" accept=".json,.e2r.json,application/json" hidden>
   </main>`;
 }
