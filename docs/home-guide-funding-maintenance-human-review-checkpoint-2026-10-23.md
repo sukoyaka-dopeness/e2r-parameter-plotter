@@ -4,7 +4,7 @@ Date: 2026-10-23 JST
 
 Checkpoint: `PP-HOME-MAINTENANCE1-HUMAN-REVIEW-CHECKPOINT1`
 
-Current status: **ACCEPTED — BOUNDED MAINTENANCE CANDIDATE** (Human decision, 2026-10-23 JST). This is local candidate acceptance; Version, Credits `Updated`, Commit, Push, Deployment, and Publication remain unapproved.
+Current status: **ACCEPTED — BOUNDED MAINTENANCE CANDIDATE** (Human decision, 2026-10-23 JST). Application Version `0.1.1` and Credits `Updated: 2026-10-24` are approved local release-candidate metadata; Push, Deployment, and Publication remain separate.
 
 The partial-review observations and PENDING statements below are historical checkpoints. The final Human decision and its boundaries are recorded at the end of this document; earlier evidence has not been retroactively changed.
 
@@ -65,3 +65,7 @@ The accepted maintenance scope comprises the EN/JA Home visual and action hierar
 This bounded acceptance does not assert Human browser review of every Handoff display, every viewport or browser, all storage and cross-context failure paths, or actual navigation to each external-link destination and new-tab behavior. Source and tests support link URLs/attributes and the distinction between generated fixed copy and authored Dataset titles, including Handoff titles; these are not additional Human operations. Browser-local Workspace saving remains distinct from portable E2R JSON Export. Dimension Assessment `0.2.0` remains a non-Stable Candidate. The cross-app visual and structural unification of replacement/unsaved-work dialogs remains a separate post-maintenance UX task.
 
 **Maintenance Candidate Human Acceptance is complete within the scope above. Publication Approval is not.** The next release preparation must separately settle the application Version, Credits `Updated` date, exact source and Documentation Commit contents, Push range, and automatic Pages Deployment authorization. No Commit, Push, Deployment, or public-release verification is implied by this decision.
+
+## Release-candidate metadata authorization — 2026-10-24 JST
+
+Human subsequently approved Application Version `0.1.1`, retained Credits `First release: 2026-10-21`, and approved Credits `Updated: 2026-10-24` as the **planned** JST deployment date. The local metadata update and Commit are authorized. This does not revise the 2026-10-23 bounded acceptance evidence or the separately closed M2-W record. Published ParameterPlotter remains `0.1.0` until the later authorized Push and successful Pages Deployment. If the actual JST deployment date differs, recheck and correct `Updated` before Push. Exact Push scope and public verification remain separate gates.

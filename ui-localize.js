@@ -13,7 +13,7 @@ const ja = new Map(Object.entries({
   'Support E2R on Ko-fi':'Ko-fiでE2Rを支援する',
   'Check other tabs again':'他のタブを再確認',
   'E2R Dimension Editor':'E2R 評価軸エディター','Credits':'クレジット','Close':'閉じる',
-  'Application: ParameterPlotter 0.1.0':'アプリケーション: ParameterPlotter 0.1.0','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
+  'Application: ParameterPlotter 0.1.1':'アプリケーション: ParameterPlotter 0.1.1','Creator: sukoyaka-dopeness':'作成者: sukoyaka-dopeness',
   'First release':'初回リリース','Updated':'更新日',
   'With gratitude to all the AI systems that contributed to this project.':'このプロジェクトに貢献したすべてのAIシステムに感謝します。',
   'ParameterPlotter repository':'ParameterPlotterリポジトリ','E2R specification repository':'E2R仕様リポジトリ',

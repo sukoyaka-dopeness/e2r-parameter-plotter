@@ -5,7 +5,7 @@ import {localizeUi,translateUiText} from './ui-localize.js';
 import {replacementMarkup} from './replacement-safety.js';
 
 test('selected Japanese Product action wording is retained',()=>{
-  assert.equal(translateUiText('Application: ParameterPlotter 0.1.0'),'アプリケーション: ParameterPlotter 0.1.0');
+  assert.equal(translateUiText('Application: ParameterPlotter 0.1.1'),'アプリケーション: ParameterPlotter 0.1.1');
   assert.equal(translateUiText('First release'),'初回リリース');
   assert.equal(translateUiText('Updated'),'更新日');
   assert.equal(translateUiText('Dataset title'),'Datasetタイトル');

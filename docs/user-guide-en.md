@@ -2,7 +2,7 @@
 
 *ParameterPlotter user guide · English*
 
-ParameterPlotter helps you record numeric Assessments for Entities in an E2R Dataset and compare them in four views. Try the built-in sample first, or open your own Dataset. Application version: **0.1.0**.
+ParameterPlotter helps you record numeric Assessments for Entities in an E2R Dataset and compare them in four views. Try the built-in sample first, or open your own Dataset. Application version: **0.1.1**.
 
 ## Start with a Dataset
 
