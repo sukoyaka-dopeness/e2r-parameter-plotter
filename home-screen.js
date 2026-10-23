@@ -69,10 +69,12 @@ export function homeMarkup({canContinue=false,canReturnToWorkspace=false,notice=
   const cancelLabel=(replacementFeedback?.kind==='write-unverified'||replacementFeedback?.kind==='stale-revision'||replacementFeedback?.kind==='prior-save-refusal')?(ja?'通知を閉じる':'Close notice'):(ja?'置換を取り消す':'Cancel replacement');
   const showFeedbackReason=replacementFeedback?.reason&&!['peer-work','stale-revision'].includes(replacementFeedback.kind);
   const feedback=replacementFeedback?`<section class="home-notice home-replacement-feedback" role="${replacementFeedback.checking?'status':'alert'}" aria-live="polite"><h2>${feedbackTitle}</h2><p${peerPresentation.feedbackStatusId?' id="home-acquisition-status"':''} data-home-peer-feedback-copy>${escapeHtml(feedbackCopy)}</p>${showFeedbackReason?`<p class="replacement-feedback-reason"><strong>${detailsLabel}:</strong> ${escapeHtml(replacementFeedback.reason)}</p>`:''}<div class="home-replacement-feedback-actions">${replacementFeedback.canRetry===false?'':`<button data-retry-replacement ${replacementFeedback.checking?'disabled':''}>${retryLabel}</button>`}<button data-cancel-replacement-feedback>${cancelLabel}</button></div></section>` : '';
+  const guideLanguage=ja?'ja':'en';
+  const guideLabel=ja?'Japanese user guide':'English user guide';
   return `<header class="app-header home-header"><a class="app-brand" href="#home">ParameterPlotter</a></header>
   <main class="home-main" aria-labelledby="home-title">
     <h1 id="home-title">Get Started</h1>
-    <p class="home-intro">Compare E2R Entities across Dimensions.</p>
+    <p class="home-intro">Compare Entities across Dimensions.</p>
     ${feedback}
     ${persistenceNotice?`<p class="home-notice" role="alert">${escapeHtml(persistenceNotice)}</p>`:''}
     ${sampleError?`<p class="home-notice" role="alert">${escapeHtml(sampleError)}</p>`:''}
@@ -83,15 +85,11 @@ export function homeMarkup({canContinue=false,canReturnToWorkspace=false,notice=
       ${workspaceAction}
       <button data-home-action="new"${acquisitionAttrs}>New Dataset</button>
       <button data-home-action="open"${acquisitionAttrs}>Open E2R Dataset</button>
-      <div class="sample-action"><button data-home-action="sample"${acquisitionAttrs}>Open Sample Dataset · The Ashen Crown</button></div>
+      <div class="sample-action"><button data-home-action="sample"${acquisitionAttrs}>Open The Ashen Crown example</button><a class="sample-info-link" href="https://github.com/sukoyaka-dopeness/e2r-spec/blob/main/docs/public-samples/public-sample-provenance.md" target="_blank" rel="noopener noreferrer">Sample info</a></div>
     </div>
-    <section class="home-resources" aria-label="Explore and learn">
-      <p class="home-sample-description">The Ashen Crown is a ready-to-explore sample with 10 Entities, 7 Dimensions, and 70 Assessments. Its Dataset language follows the UI language.</p>
-      <nav class="home-guide-links" aria-label="User guides">
-        <a href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-en.md" target="_blank" rel="noopener noreferrer">English user guide</a>
-        <a href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-ja.md" target="_blank" rel="noopener noreferrer">Japanese user guide</a>
-      </nav>
-    </section>
+    <nav class="home-guide-links" aria-label="User guides">
+      <a href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-${guideLanguage}.md" target="_blank" rel="noopener noreferrer">${guideLabel}</a>
+    </nav>
     <nav class="home-support-links" aria-label="Support E2R">
       <a href="https://github.com/sponsors/sukoyaka-dopeness" target="_blank" rel="noopener noreferrer">Support E2R on GitHub Sponsors</a>
       <a href="https://ko-fi.com/sukoyaka_dopeness" target="_blank" rel="noopener noreferrer">Support E2R on Ko-fi</a>

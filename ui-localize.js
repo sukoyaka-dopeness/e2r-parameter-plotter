@@ -2,11 +2,9 @@
 // Dataset values, IDs, names, descriptions, and authored labels stay in their
 // original language. The English source remains the fallback for new copy.
 const ja = new Map(Object.entries({
-  'Get Started':'はじめる','Compare E2R Entities across Dimensions.':'E2Rのエンティティを評価軸で比較します。',
-  'Continue Editing':'編集を続ける','New Dataset':'新しいデータセット','Open E2R Dataset':'E2Rデータセットを開く',
-  'Open Sample Dataset · The Ashen Crown':'サンプルデータセットを開く · 灰冠の王国',
-  'Explore and learn':'サンプルと使いかた',
-  'The Ashen Crown is a ready-to-explore sample with 10 Entities, 7 Dimensions, and 70 Assessments. Its Dataset language follows the UI language.':'灰冠の王国は、10件のエンティティ、7つの評価軸、70件の評価値を含むサンプルです。データセットの言語はUIの言語に合わせて切り替わります。',
+  'Get Started':'はじめる','Compare Entities across Dimensions.':'エンティティを評価軸で比較します。',
+  'Continue Editing':'編集を続ける','New Dataset':'新しいDataset','Open E2R Dataset':'E2R Datasetを開く',
+  'Open The Ashen Crown example':'灰冠の王国の例を開く','Sample info':'サンプル情報',
   'User guides':'ユーザーガイド',
   'English user guide':'英語ユーザーガイド',
   'Japanese user guide':'日本語ユーザーガイド',
@@ -49,18 +47,18 @@ const ja = new Map(Object.entries({
   'Back to Dimension edit':'評価軸の編集に戻る','Clear plotted Assessments?':'配置した値を消去しますか？',
   'Clear Assessments':'値を消去','Delete Dimension?':'評価軸を削除しますか？',
   'Delete Dimension':'評価軸を削除',
-  'Delete Entity':'エンティティを削除','Create a new Dataset?':'新しいデータセットを作成しますか？',
-  'Open sample Dataset?':'サンプルデータセットを開きますか？','Open another Dataset?':'別のデータセットを開きますか？',
-  'Open linked Dataset?':'リンクされたデータセットを開きますか？','Retrieving the linked Dataset…':'リンクされたデータセットを取得しています…',
+  'Delete Entity':'エンティティを削除','Create a new Dataset?':'新しいDatasetを作成しますか？',
+  'Open sample Dataset?':'サンプルDatasetを開きますか？','Open another Dataset?':'別のDatasetを開きますか？',
+  'Open linked Dataset?':'リンクされたDatasetを開きますか？','Retrieving the linked Dataset…':'リンクされたデータセットを取得しています…',
   'The Dataset handoff link is invalid. Check its datasetUrl and try again.':'データセット引き継ぎリンクが無効です。datasetUrlを確認して再試行してください。',
   'Could not retrieve the Dataset from this handoff link. The current workspace was not replaced.':'リンクからデータセットを取得できませんでした。現在のワークスペースは置き換えていません。',
   'The Dataset from this handoff link is not valid JSON. The current workspace was not replaced.':'リンク先のデータセットは有効なJSONではありません。現在のワークスペースは置き換えていません。',
   'The Dataset from this handoff link could not be opened. The current workspace was not replaced.':'リンク先のデータセットを開けませんでした。現在のワークスペースは置き換えていません。',
-  'Incoming:':'読み込み先:','A new empty E2R Dataset.':'新しい空のE2Rデータセット。',
-  'Dataset from the Hub handoff.':'Hubから引き継いだデータセット。','Discard and Open Linked Dataset':'破棄してリンク先のデータセットを開く',
-  'The Ashen Crown sample Dataset.':'The Ashen Crownのサンプルデータセット。',
-  'E2R Dataset.':'E2Rデータセット。','Discard and Create Dataset':'破棄してデータセットを作成',
-  'Discard and Open Sample':'破棄してサンプルを開く','Discard and Open Dataset':'破棄してデータセットを開く',
+  'Incoming:':'読み込み先:','A new empty E2R Dataset':'新しい空のE2R Dataset',
+  'Dataset from the Hub handoff':'Hubから引き継いだDataset','Discard and Open Linked Dataset':'破棄してリンク先のDatasetを開く',
+  'The Ashen Crown sample Dataset':'灰冠の王国のサンプルDataset',
+  'E2R Dataset':'E2R Dataset','Discard and Create Dataset':'破棄してDatasetを作成',
+  'Discard and Open Sample':'破棄してサンプルを開く','Discard and Open Dataset':'破棄してDatasetを開く',
   'Workspace saved in this browser':'ブラウザー内に作業状態を保存しました',
   'Browser-local workspace degraded / unsaved':'ブラウザー内の作業状態を保存できていません',
   'Saved locally':'ブラウザー内に保存済み','Saving locally…':'ブラウザー内に保存中…','Degraded / unsaved':'ブラウザー内の作業状態を保存できていません',
@@ -137,8 +135,8 @@ const phrases = [
   ['Open a Dataset or create a Dataset Entity. No Assessment is inferred.','データセットを開くか、エンティティを作成してください。値は推測して追加されません。'],
   ['Entities are edited directly in this Dataset. Dimensions and values are saved in the Dataset and included in exports.','エンティティはこのDataset内で直接編集します。評価軸と値はDatasetに保存され、書き出しにも含まれます。'],
   ['Changing these bounds makes existing Assessments invalid. Review this linear rescale; nothing changes in the Dataset until you approve it.','この範囲変更により既存の値が無効になります。線形の再計算を確認してください。承認するまでデータセットは変更されません。'],
-  ['Opening this Dataset replaces the active Dataset and its comparison workspace. Any Dataset changes or unapplied authoring in the current workspace will be discarded.','このデータセットを開くと、現在のデータセットと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。'],
-  ['Creating this Dataset replaces the active Dataset and its comparison workspace. Any Dataset changes or unapplied authoring in the current workspace will be discarded.','新しいデータセットを作成すると、現在のデータセットと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。'],
+  ['Opening this Dataset replaces the active Dataset and its comparison workspace. Any Dataset changes or unapplied authoring in the current workspace will be discarded.','このDatasetを開くと、現在のDatasetと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。'],
+  ['Creating this Dataset replaces the active Dataset and its comparison workspace. Any Dataset changes or unapplied authoring in the current workspace will be discarded.','新しいDatasetを作成すると、現在のDatasetと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。'],
   ['Dataset:','データセット:'],['Browser workspace:','ブラウザー内の作業状態:'],
   ['Changes not exported','変更は未書き出し'],['Matches last Export baseline','最後の書き出し内容と一致'],
   ['Saved locally','ブラウザー内に保存済み'],['Saving locally…','ブラウザー内に保存中…'],['Degraded / unsaved','ブラウザー内の作業状態を保存できていません'],
@@ -219,7 +217,7 @@ export function localizeUi(root,locale) {
   for(let node=walker.nextNode();node;node=walker.nextNode()){
     if(node.parentElement?.matches('.temp-badge')&&node.nodeValue.trim()==='Dataset')continue;
     if(node.parentElement?.closest(protectedContent)){
-      if(node.parentElement?.matches('.temp-badge,[data-ui-empty-description]')||node.parentElement?.matches('.pager-current strong')&&node.nodeValue.trim()==='Choose Entity'||node.parentElement?.matches('.quadrant-axis-name span')&&node.nodeValue.trim()==='Choose dimension')node.nodeValue=translateUiText(node.nodeValue);
+      if(node.parentElement?.matches('.temp-badge,[data-ui-empty-description],[data-ui-generated-incoming]')||node.parentElement?.matches('.pager-current strong')&&node.nodeValue.trim()==='Choose Entity'||node.parentElement?.matches('.quadrant-axis-name span')&&node.nodeValue.trim()==='Choose dimension')node.nodeValue=translateUiText(node.nodeValue);
       continue;
     }
     if(node.parentElement?.closest('[data-matrix-empty]')&&node.nodeValue.startsWith('Selected Entity: ')){

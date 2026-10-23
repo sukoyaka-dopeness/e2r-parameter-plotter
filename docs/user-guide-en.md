@@ -6,7 +6,9 @@ ParameterPlotter helps you record numeric Assessments for Entities in an E2R Dat
 
 ## Start with a Dataset
 
-On Home, choose **Open Sample Dataset · The Ashen Crown** to explore the built-in example: 10 Entities, seven Dimensions, and 70 Assessments. The English or Japanese sample Dataset follows the UI language. Home also links to both versions of this guide. Choose **Open E2R Dataset** to select a JSON file, or **New Dataset** to start fresh.
+On Home, choose **Open The Ashen Crown example** to explore the built-in sample: 10 Entities, seven Dimensions, and 70 Assessments. The English or Japanese sample Dataset follows the UI language. **Sample info** below the button links to its source and rights information. Choose **Open E2R Dataset** to select a JSON file, or **New Dataset** to start fresh.
+
+Home shows the **English user guide** link in the English UI and the **Japanese user guide** link in the Japanese UI. Switch the UI language to reach the other guide from Home, or use the language link at the end of this guide. **Support E2R on GitHub Sponsors** and **Support E2R on Ko-fi** are optional links below the Dataset actions and guide link. **Continue Editing** appears when a saved browser-local Workspace can be resumed; if an active Workspace is available but browser-local saving is degraded, Home shows **Return to Workspace** instead.
 
 If your browser already has work, replacing the Dataset and comparison workspace may show a confirmation. Choose **Cancel** to keep them; export changes you need before replacing them. A configured Hub link can open a Dataset at startup; a failed fetch or invalid response leaves the current Dataset unchanged.
 
@@ -33,7 +35,7 @@ View navigation and editing controls also support keyboard focus. The UI languag
 
 ParameterPlotter saves the working copy in this browser when local storage is available. This browser-local Workspace helps you continue here, but it is **not an exported Dataset file**. Use **More → Export E2R JSON** to request a portable download; check that the file was saved where you expect. Export again after changes you want to carry to another browser or app.
 
-The workspace indicates whether changes have been exported and whether browser-local saving is available. If saving to browser storage fails, the in-memory work may be lost when you reload or close the browser. Export a file for a portable copy.
+The workspace indicates whether changes have been exported and whether browser-local saving is available. Saving can fail, for example, if storage space is full, browser settings or an administrator restrict site storage, or a temporary browser error occurs. ParameterPlotter may not identify the exact cause. If the current work was not saved, it may be lost when you reload or close the browser. Export important work as E2R JSON for a portable copy.
 
 Use **More → Open E2R Dataset** to open another local file. A Hub startup link can retrieve a Dataset from its configured source. ParameterPlotter does not host or publish that source. Replacing loss-sensitive work requires explicit confirmation; Cancel keeps the active workspace.
 

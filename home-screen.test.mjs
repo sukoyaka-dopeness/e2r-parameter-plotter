@@ -12,9 +12,10 @@ import {translateUiText} from './ui-localize.js';
 test('Home uses the Human-selected start copy and presents primary Dataset acquisition',()=>{
   const html=homeMarkup({peerWorkStatus:{kind:'clear'}});
   assert.match(html,/<h1 id="home-title">Get Started<\/h1>/);
-  assert.match(html,/<p class="home-intro">Compare E2R Entities across Dimensions\.<\/p>/);
+  assert.match(html,/<p class="home-intro">Compare Entities across Dimensions\.<\/p>/);
+  assert.equal(translateUiText('Compare Entities across Dimensions.'),'エンティティを評価軸で比較します。');
   assert.doesNotMatch(html,/Continue Editing/);
-  assert.match(html,/New Dataset[\s\S]*Open E2R Dataset[\s\S]*Open Sample Dataset · The Ashen Crown/);
+  assert.match(html,/New Dataset[\s\S]*Open E2R Dataset[\s\S]*Open The Ashen Crown example/);
   assert.doesNotMatch(html,/Choose a workspace|Browser-local recovery keeps work available|Export E2R JSON when you need a portable Dataset file|home-footnote/);
   assert.match(html,/<button data-home-action="open">Open E2R Dataset<\/button>[\s\S]*<div class="sample-action"><button data-home-action="sample">/);
   assert.doesNotMatch(html,/home-panel|class="primary"/);
@@ -24,7 +25,7 @@ test('Home uses the Human-selected start copy and presents primary Dataset acqui
 test('Home offers Continue Editing only when caller confirms recoverable local work',()=>{
   const html=homeMarkup({canContinue:true});
   assert.match(html,/<h1 id="home-title">Get Started<\/h1>/);
-  assert.match(html,/<p class="home-intro">Compare E2R Entities across Dimensions\.<\/p>/);
+  assert.match(html,/<p class="home-intro">Compare Entities across Dimensions\.<\/p>/);
   assert.match(html,/Continue Editing[\s\S]*New Dataset/);
   assert.doesNotMatch(html,/Browser-local recovery keeps work available|Export E2R JSON when you need a portable Dataset file|home-footnote/);
 });
@@ -35,15 +36,21 @@ test('Home keeps guides and optional support below Dataset actions in both local
     readFile(new URL('./docs/user-guide-ja.md',import.meta.url),'utf8'),
   ]);
   const home=homeMarkup({peerWorkStatus:{kind:'clear'}});
-  const actionEnd=home.indexOf('</div>\n    <section class="home-resources"');
+  const actionEnd=home.indexOf('</div>\n    <nav class="home-guide-links"');
   const guides=home.indexOf('class="home-guide-links"');
   const support=home.indexOf('class="home-support-links"');
   assert.ok(actionEnd>0&&guides>actionEnd&&support>guides);
-  assert.match(home,/10 Entities, 7 Dimensions, and 70 Assessments/);
+  assert.match(home,/data-home-action="sample"[^>]*>Open The Ashen Crown example<\/button><a class="sample-info-link" href="https:\/\/github\.com\/sukoyaka-dopeness\/e2r-spec\/blob\/main\/docs\/public-samples\/public-sample-provenance\.md" target="_blank" rel="noopener noreferrer">Sample info<\/a>/);
+  assert.doesNotMatch(home,/home-sample-description|10 Entities, 7 Dimensions, 70 Assessments/);
+  const japaneseHome=homeMarkup({peerWorkStatus:{kind:'clear'},locale:'ja'});
   for(const [name,guide] of [['en',englishGuide],['ja',japaneseGuide]]){
-    assert.match(home,new RegExp(`href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-${name}\\.md" target="_blank" rel="noopener noreferrer"`));
+    const localizedHome=name==='en'?home:japaneseHome;
+    const otherLanguage=name==='en'?'ja':'en';
+    assert.match(localizedHome,new RegExp(`href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-${name}\\.md" target="_blank" rel="noopener noreferrer"`));
+    assert.doesNotMatch(localizedHome,new RegExp(`user-guide-${otherLanguage}\\.md`));
     assert.match(guide,/0\.1\.0/);
   }
+  assert.match(japaneseHome,/class="sample-info-link"[^>]*>Sample info<\/a>/);
   for(const url of ['https://github.com/sponsors/sukoyaka-dopeness','https://ko-fi.com/sukoyaka_dopeness']){
     assert.ok(home.includes(`href="${url}" target="_blank" rel="noopener noreferrer"`));
   }
@@ -51,7 +58,9 @@ test('Home keeps guides and optional support below Dataset actions in both local
   assert.equal(translateUiText('Support E2R on Ko-fi'),'Ko-fiでE2Rを支援する');
   assert.equal(translateUiText('English user guide'),'英語ユーザーガイド');
   assert.equal(translateUiText('Japanese user guide'),'日本語ユーザーガイド');
-  assert.match(translateUiText('The Ashen Crown is a ready-to-explore sample with 10 Entities, 7 Dimensions, and 70 Assessments. Its Dataset language follows the UI language.'),/10件のエンティティ、7つの評価軸、70件の評価値/);
+  assert.equal(translateUiText('New Dataset'),'新しいDataset');
+  assert.equal(translateUiText('Open E2R Dataset'),'E2R Datasetを開く');
+  assert.equal(translateUiText('Sample info'),'サンプル情報');
   const blocked=homeMarkup({peerWorkStatus:{kind:'work'},locale:'ja'});
   assert.match(blocked,/data-home-action="sample"[^>]*aria-disabled="true"/);
   assert.match(blocked,/href="https:\/\/ko-fi.com\/sukoyaka_dopeness"/);
@@ -66,9 +75,9 @@ test('Home keeps acquisition choices visible but unavailable until peer safety i
       }
       assert.match(markup,/id="home-acquisition-status"/);
       assert.match(markup,/data-home-action="recheck-peer-work"/);
-      assert.match(markup,/New Dataset|新しいデータセット/);
-      assert.match(markup,/Open E2R Dataset|E2Rデータセットを開く/);
-      assert.match(markup,/Open Sample Dataset|サンプルデータセットを開く/);
+      assert.match(markup,/New Dataset/);
+      assert.match(markup,/Open E2R Dataset/);
+      assert.match(markup,/Open The Ashen Crown example/);
     }
   }
   for(const locale of ['en','ja']){
@@ -228,8 +237,8 @@ test('Home chooses the bundled Ashen Crown language matching the current UI loca
 });
 
 test('Ashen Crown Home sample label follows the approved JA product name without changing Dataset content',async()=>{
-  assert.match(homeMarkup(),/Open Sample Dataset · The Ashen Crown/);
-  assert.equal(translateUiText('Open Sample Dataset · The Ashen Crown'),'サンプルデータセットを開く · 灰冠の王国');
+  assert.match(homeMarkup(),/Open The Ashen Crown example/);
+  assert.equal(translateUiText('Open The Ashen Crown example'),'灰冠の王国の例を開く');
   const japanese=JSON.parse(await readFile(new URL('./samples/ashen-crown.ja.e2r.json',import.meta.url),'utf8'));
   assert.equal(japanese.extensions.metadata.title,'灰冠の王国');
 });

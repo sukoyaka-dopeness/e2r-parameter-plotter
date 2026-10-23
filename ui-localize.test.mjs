@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {translateUiText} from './ui-localize.js';
+import {localizeUi,translateUiText} from './ui-localize.js';
+import {replacementMarkup} from './replacement-safety.js';
 
 test('selected Japanese Product action wording is retained',()=>{
   assert.equal(translateUiText('Application: ParameterPlotter 0.1.0'),'アプリケーション: ParameterPlotter 0.1.0');
@@ -75,4 +76,56 @@ test('stale-workspace recovery warning uses the adopted Japanese Export action w
   assert.match(japanese,/E2R JSONとして書き出し/);
   assert.match(japanese,/「編集を続ける」を選んで/);
   assert.doesNotMatch(japanese,/Export|Continue Editing/);
+});
+
+test('replacement dialog uses the approved Japanese copy while authored Handoff titles stay literal',()=>{
+  const cases=[
+    [{kind:'new-dataset'},'A new empty E2R Dataset','新しい空のE2R Dataset','新しいDatasetを作成しますか？','破棄してDatasetを作成'],
+    [{kind:'sample-dataset'},'The Ashen Crown sample Dataset','灰冠の王国のサンプルDataset','サンプルDatasetを開きますか？','破棄してサンプルを開く'],
+    [{kind:'dataset'},'E2R Dataset','E2R Dataset','別のDatasetを開きますか？','破棄してDatasetを開く'],
+    [{kind:'handoff-dataset'},'Dataset from the Hub handoff','Hubから引き継いだDataset','リンクされたDatasetを開きますか？','破棄してリンク先のDatasetを開く'],
+    [{kind:'handoff-dataset',datasetTitle:'A new empty E2R Dataset'},'A new empty E2R Dataset','A new empty E2R Dataset','リンクされたDatasetを開きますか？','破棄してリンク先のDatasetを開く'],
+    [{kind:'handoff-dataset',datasetTitle:'A new empty E2R Dataset.'},'A new empty E2R Dataset.','A new empty E2R Dataset.','リンクされたDatasetを開きますか？','破棄してリンク先のDatasetを開く'],
+    [{kind:'handoff-dataset',datasetTitle:'The Ashen Crown'},'The Ashen Crown','The Ashen Crown','リンクされたDatasetを開きますか？','破棄してリンク先のDatasetを開く'],
+    [{kind:'handoff-dataset',datasetTitle:'The Ashen Crown sample Dataset'},'The Ashen Crown sample Dataset','The Ashen Crown sample Dataset','リンクされたDatasetを開きますか？','破棄してリンク先のDatasetを開く'],
+  ];
+  const warningJapanese={
+    creating:'新しいDatasetを作成すると、現在のDatasetと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。',
+    opening:'このDatasetを開くと、現在のDatasetと比較用の作業状態が置き換わります。現在の変更や未適用の編集は破棄されます。',
+  };
+  const priorDocument=globalThis.document,priorNodeFilter=globalThis.NodeFilter;
+  try{
+    globalThis.NodeFilter={SHOW_TEXT:4};
+    for(const [request,expectedEnglish,expectedJapanese,expectedTitle,expectedConfirm] of cases){
+      const markup=replacementMarkup(request);
+      const [,title]=markup.match(/<h2 id="replacement-title">([^<]*)<\/h2>/)??[];
+      const [,warning]=markup.match(/<p id="replacement-detail">([^<]*)<\/p>/)??[];
+      const [,confirm]=markup.match(/<button class="danger solid" data-confirm-replacement>([^<]*)<\/button>/)??[];
+      const [,attributes,english]=markup.match(/<span class="replacement-incoming-dataset"([^>]*)>([^<]*)<\/span>/)??[];
+      assert.equal(english,expectedEnglish);
+      assert.equal(translateUiText(title),expectedTitle);
+      assert.equal(translateUiText(warning),request.kind==='new-dataset'?warningJapanese.creating:warningJapanese.opening);
+      assert.equal(translateUiText(confirm),expectedConfirm);
+      assert.equal(translateUiText('Incoming:'),'読み込み先:');
+      assert.equal(translateUiText('Cancel'),'キャンセル');
+      if(!request.datasetTitle)assert.doesNotMatch(english,/\.$/);
+      const parent={
+        matches:selector=>selector.split(',').some(part=>part.trim()==='[data-ui-generated-incoming]'&&attributes.includes('data-ui-generated-incoming')),
+        closest:selector=>selector.includes('.replacement-incoming-dataset')?parent:null,
+      };
+      const node={nodeValue:english,parentElement:parent};
+      globalThis.document={createTreeWalker:()=>{
+        let visited=false;
+        return {nextNode:()=>visited?null:(visited=true,node)};
+      }};
+      const root={querySelectorAll:()=>[]};
+      localizeUi(root,'en');
+      assert.equal(node.nodeValue,english);
+      localizeUi(root,'ja');
+      assert.equal(node.nodeValue,expectedJapanese);
+    }
+  }finally{
+    if(priorDocument===undefined)delete globalThis.document;else globalThis.document=priorDocument;
+    if(priorNodeFilter===undefined)delete globalThis.NodeFilter;else globalThis.NodeFilter=priorNodeFilter;
+  }
 });
