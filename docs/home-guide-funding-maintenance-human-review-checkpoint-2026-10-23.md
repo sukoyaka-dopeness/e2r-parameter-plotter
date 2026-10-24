@@ -4,9 +4,9 @@ Date: 2026-10-23 JST
 
 Checkpoint: `PP-HOME-MAINTENANCE1-HUMAN-REVIEW-CHECKPOINT1`
 
-Current status: **ACCEPTED — BOUNDED MAINTENANCE CANDIDATE** (Human decision, 2026-10-23 JST). Application Version `0.1.1` and Credits `Updated: 2026-10-24` are approved local release-candidate metadata; Push, Deployment, and Publication remain separate.
+Local candidate decision at this checkpoint: **ACCEPTED — BOUNDED MAINTENANCE CANDIDATE** (Human decision, 2026-10-23 JST). Application Version `0.1.1` and Credits `Updated: 2026-10-24` were approved local release-candidate metadata at that time. The subsequent public release and final Human decision are recorded in the [0.1.1 publication and closure record](parameterplotter-0.1.1-publication-and-release-closure-2026-10-24.md).
 
-The partial-review observations and PENDING statements below are historical checkpoints. The final Human decision and its boundaries are recorded at the end of this document; earlier evidence has not been retroactively changed.
+The partial-review observations and PENDING statements below are historical checkpoints. The 2026-10-23 local Human decision and its boundaries are recorded later in this document; earlier evidence has not been retroactively changed.
 
 Historical partial-review status: **HUMAN REVIEW IN PROGRESS / LIMITED ITEMS REPORTED / HOME VISUAL ACCEPTANCE PENDING / DESIGN SCOPE DECISION PENDING / NO MAINTENANCE RELEASE ACCEPTANCE**.
 
@@ -69,3 +69,7 @@ This bounded acceptance does not assert Human browser review of every Handoff di
 ## Release-candidate metadata authorization — 2026-10-24 JST
 
 Human subsequently approved Application Version `0.1.1`, retained Credits `First release: 2026-10-21`, and approved Credits `Updated: 2026-10-24` as the **planned** JST deployment date. The local metadata update and Commit are authorized. This does not revise the 2026-10-23 bounded acceptance evidence or the separately closed M2-W record. Published ParameterPlotter remains `0.1.0` until the later authorized Push and successful Pages Deployment. If the actual JST deployment date differs, recheck and correct `Updated` before Push. Exact Push scope and public verification remain separate gates.
+
+## Subsequent publication and closure — 2026-10-24 JST
+
+The planned Push and Pages Deployment later succeeded, and Human formally accepted the public release as **PUBLICATION ACCEPTED — BOUNDED / CLOSED (BOUNDED)**. See the [publication and release closure record](parameterplotter-0.1.1-publication-and-release-closure-2026-10-24.md) for the published SHA, technical and Human browser evidence, and exclusions. The preceding local review and metadata checkpoints remain historical evidence of their respective stages.
