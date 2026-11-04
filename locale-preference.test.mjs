@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {requestedLocale, resolveLocale, localeFragment, chooseSavedLocale, readSavedLocale, chooseTemporaryLocale, readTemporaryLocale} from './locale-preference.js';
-import {localeControlMarkup} from './locale-shell.js';
+import {localeControlMarkup,localeConflictMarkup} from './locale-shell.js';
 
 function storage(){const values=new Map();return {getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};}
 test('locale startup uses exact requests, saved preference, and browser fallback',()=>{
@@ -27,4 +27,16 @@ test('shell offers only the opposite locale',()=>{
   assert.doesNotMatch(localeControlMarkup('en'),/data-select-locale="en"/);
   assert.match(localeControlMarkup('ja'),/data-select-locale="en"[^>]*>English<\/button>/);
   assert.doesNotMatch(localeControlMarkup('ja'),/data-select-locale="ja"/);
+});
+
+test('conflict has fixed bilingual questions with language-appropriate temporary routes',()=>{
+  for(const saved of ['en','ja']){
+    const requested=saved==='en'?'ja':'en',html=localeConflictMarkup(saved,requested);
+    assert.match(html,/<span lang="en">Which language would you like to use\?<\/span>/);
+    assert.match(html,/<span lang="ja">どちらの言語で表示しますか？<\/span>/);
+    const buttons=[...html.matchAll(/<button[^>]*lang="(en|ja)"[^>]*data-resolve-locale="(saved|requested)"[^>]*>(.*?)<\/button>/g)];
+    assert.deepEqual(buttons.map(m=>[m[1],m[2],m[3]]),[['en',saved==='en'?'saved':'requested','English'],['ja',saved==='ja'?'saved':'requested','日本語']]);
+    assert.match(html,/aria-describedby="locale-conflict-detail"/);
+    assert.match(html,/Your choice applies to this visit only/);
+  }
 });

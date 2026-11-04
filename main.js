@@ -792,10 +792,10 @@ function clearLifecycleNotice(){
 function closeWorkspaceMore({restoreFocus=false}={}){const menu=root.querySelector('.workspace-more');if(!menu?.open)return;menu.open=false;if(restoreFocus)menu.querySelector('summary')?.focus();}
 function openDatasetFilePicker(){if(!editorSession.owns)return;cancelStartupHandoff();closeWorkspaceMore({restoreFocus:true});root.querySelector('#dataset-file')?.click();}
 function captureSuccessorClick(event){
- if(localeConflict&&event.target.matches('[data-locale-backdrop]')){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}
+ if(localeConflict&&event.target.matches('[data-locale-backdrop]')){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();if(document.activeElement===document.body)root.querySelector('header a, header button')?.focus();void startStartupHandoff();return;}
  const localeTarget=event.target.closest('[data-select-locale],[data-resolve-locale]');
  if(localeTarget?.dataset.selectLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.selectLocale;localeConflict=false;chooseSavedLocale(window.localStorage,locale,window.sessionStorage);window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+localeFragment(window.location.hash,locale));render();void startStartupHandoff();return;}
- if(localeTarget?.dataset.resolveLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.resolveLocale==='requested'?localeRequest.locale:savedLocale;localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}
+ if(localeTarget?.dataset.resolveLocale){event.preventDefault();event.stopImmediatePropagation();locale=localeTarget.dataset.resolveLocale==='requested'?localeRequest.locale:savedLocale;localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();if(document.activeElement===document.body)root.querySelector('header a, header button')?.focus();void startStartupHandoff();return;}
  if(localeConflict){event.preventDefault();event.stopImmediatePropagation();return;}
  if(event.target.closest('[data-open-credits]')){event.preventDefault();event.stopImmediatePropagation();creditsOpen=true;render();root.querySelector('[data-close-credits]')?.focus();return;}
  if(creditsOpen){
@@ -854,7 +854,7 @@ document.addEventListener('keydown',event=>{
  event.stopImmediatePropagation();
 },true);
 function handleShellKeydown(event){
- if(localeConflict){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();void startStartupHandoff();return;}if(event.key==='Tab'){event.stopImmediatePropagation();trapDialogTab(event,'.locale-conflict-scrim .confirm-dialog');return;}event.stopImmediatePropagation();return;}
+ if(localeConflict){if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();localeConflict=false;chooseTemporaryLocale(window.sessionStorage,localeRequest.locale,locale);render();if(document.activeElement===document.body)root.querySelector('header a, header button')?.focus();void startStartupHandoff();return;}if(event.key==='Tab'){event.stopImmediatePropagation();trapDialogTab(event,'.locale-conflict-scrim .confirm-dialog');return;}event.stopImmediatePropagation();return;}
  if(!creditsOpen)return;
  event.stopImmediatePropagation();
  if(event.key==='Escape'){
