@@ -22,6 +22,19 @@ test('Home uses the Human-selected start copy and presents primary Dataset acqui
   assert.match(html,/app-header home-header/);
 });
 
+test('Home Hub link is separate from support and carries only the current locale',()=>{
+  for(const locale of ['en','ja']){
+    const html=homeMarkup({peerWorkStatus:{kind:'clear'},locale});
+    const guides=html.indexOf('class="home-guide-links"');
+    const hub=html.indexOf('class="home-ecosystem"');
+    const support=html.indexOf('class="home-support-links"');
+    assert.ok(guides<hub&&hub<support);
+    assert.ok(html.includes(`href="https://sukoyaka-dopeness.github.io/e2r-hub/#locale=${locale}" target="_blank" rel="noopener noreferrer"`));
+    assert.ok(html.includes(locale==='ja'?'E2R Hubでほかのアプリを見る（新しいタブで開きます）':'Explore other E2R apps on E2R Hub (opens in a new tab)'));
+    assert.doesNotMatch(footerMarkup(),/e2r-hub/);
+  }
+});
+
 test('Home offers Continue Editing only when caller confirms recoverable local work',()=>{
   const html=homeMarkup({canContinue:true});
   assert.match(html,/<h1 id="home-title">Get Started<\/h1>/);

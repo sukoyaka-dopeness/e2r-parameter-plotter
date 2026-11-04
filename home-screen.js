@@ -90,6 +90,9 @@ export function homeMarkup({canContinue=false,canReturnToWorkspace=false,notice=
     <nav class="home-guide-links" aria-label="User guides">
       <a href="https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/blob/main/docs/user-guide-${guideLanguage}.md" target="_blank" rel="noopener noreferrer">${guideLabel}</a>
     </nav>
+    <nav class="home-ecosystem" aria-label="${ja?'E2Rエコシステム':'E2R ecosystem'}">
+      <a href="https://sukoyaka-dopeness.github.io/e2r-hub/#locale=${locale}" target="_blank" rel="noopener noreferrer" title="${ja?'新しいタブで開きます':'Opens in a new tab'}" aria-label="${ja?'E2R Hubでほかのアプリを見る（新しいタブで開きます）':'Explore other E2R apps on E2R Hub (opens in a new tab)'}">${ja?'E2R Hubでほかのアプリを見る':'Explore other E2R apps on E2R Hub'}</a>
+    </nav>
     <nav class="home-support-links" aria-label="Support E2R">
       <a href="https://github.com/sponsors/sukoyaka-dopeness" target="_blank" rel="noopener noreferrer">Support E2R on GitHub Sponsors</a>
       <a href="https://ko-fi.com/sukoyaka_dopeness" target="_blank" rel="noopener noreferrer">Support E2R on Ko-fi</a>
