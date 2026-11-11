@@ -188,3 +188,41 @@ and the completion report; it is not claimed before commit creation. Push,
 Deployment and Publication Closure are NOT AUTHORIZED and remain unperformed.
 Neither this acceptance nor the Local Commit closes Home-to-Hub or any previous
 publication workstream. Any later public operation needs separate Human approval.
+
+
+## Publication evidence synchronization - 2026-11-12
+
+Current status: BOUNDED LOCAL HUMAN ACCEPTANCE / PUSH AND PAGES SUCCESS /
+OFFICIAL PUBLIC BROWSER VERIFICATION BLOCKED / HUMAN PUBLICATION ACCEPTANCE
+AND PUBLICATION CLOSURE PENDING. The earlier statement that Push was not yet
+authorized and had not occurred is retained above as its original checkpoint.
+
+Human subsequently authorized publication of the accepted commit
+`0f3642a4d439d9c6ba2f8be68a5483819b1835c1`. The commit was normally pushed to main; GitHub Pages
+[workflow 42352570111](https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/actions/runs/42352570111)
+completed SUCCESS for that exact SHA, including 243 tests, 42-module syntax check and build. The remote main
+SHA was read again on 2026-11-12 and matched. The public URL is https://sukoyaka-dopeness.github.io/e2r-parameter-plotter/
+
+The bounded post-deployment technical check returned HTTP 200 and the sampled public main.js, locale-shell.js, locale-preference.js, second-pass.css and home-screen.js matched the accepted Git blobs byte-for-byte.
+This establishes scoped publication evidence, not full dependency equivalence
+or UI operation. The earlier local Human Acceptance, local automated gates,
+Desktop Work local-candidate browser evidence and this public technical evidence
+are distinct.
+
+The requested official post-deployment Public Browser Acceptance verification
+has not completed. The 2026-11-07 attempt was blocked before browser detection
+by a Node runtime path error; the 2026-11-11 VS Code retry returned
+`The browser access host is unavailable`. These are separate observations;
+no universal cause or product defect is asserted. Existing prior browser PASS
+was not converted into post-deployment PASS. Human Publication Acceptance and
+Publication Closure are not established by this synchronization.
+
+Still NOT VERIFIED: actual screen-reader speech; direct real-browser comparison
+of saved Locale values; successor Handoff confirmation focus contention; and
+complete deployed dependency identity. Existing automated preference tests and
+focus guards are supporting evidence only. Other browser engines and all
+edit/save-failure states remain outside this bounded acceptance.
+
+This section is a local Documentation-only addendum. It does not authorize or
+perform a new Commit, Push, Deployment, acceptance, or closure, and does not
+change Core, Extension, Dataset, Locale or Handoff semantics.
