@@ -2,7 +2,7 @@
 
 Date: 2026-11-04 JST
 
-Status: BOUNDED HUMAN ACCEPTANCE RECORDED / PHASE C PUBLIC PASS / PHASE D AUTHORIZED FOR COMMIT AND PUBLICATION / HUMAN CLOSURE PENDING
+Status: PUBLISHED / FINAL PUBLIC E2E PASS (BOUNDED) / HUMAN PUBLICATION CLOSURE APPROVED (BOUNDED)
 
 `homeMarkup()` adds a separate ecosystem navigation group between Guide and
 support, using its effective locale for the public Hub fragment and exact
@@ -128,3 +128,49 @@ Apply accepted-dirty-worktree-baseline-recovery to exact-path ownership and
 preservation, and bounded-public-release-evidence-reconciliation to source,
 workflow, actual-public-browser evidence and Human Closure separation. These
 knowledge entries do not authorize extra runtime changes or publication scope.
+
+## Phase D publication and final public evidence — 2026-11-04
+
+After Phase C deployment and public checks passed, exactly home-screen.js,
+home-screen.css, home-screen.test.mjs and this record were committed as
+`1afa30613efc443352ca1a19cf5d94f2273ff7c6`. Ordinary main push succeeded; final
+remote read matched. [Pages 41821372129](https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/actions/runs/41821372129)
+and [Check 41821371846](https://github.com/sukoyaka-dopeness/e2r-parameter-plotter/actions/runs/41821371846)
+completed SUCCESS for that exact SHA. Fresh local check (42 modules / 242 tests)
+and static build passed. Public home-screen.js/css matched committed source.
+Public Home: https://sukoyaka-dopeness.github.io/e2r-parameter-plotter/
+
+Actual public Home-to-public-Hub EN/JA passed at measured 1280/390px, including
+placement/typography, no overflow, native Enter/new tab/null opener, Hub initial
+locale and unchanged source Home/serialized Dataset keys. In all four combinations,
+a second tab's non-owner screen had no Home ecosystem link; no takeover occurred.
+Screenshots were inspected without material regression.
+
+Final public verification after all four deployments: twelve Home views across
+three apps / EN-JA / Desktop-Narrow passed. Six synthetic Dataset round trips
+passed unchanged Home/storage and identical continued Workspace text. Public Hub
+manual switching, URL synchronization, reload, top and history passed; all six
+reverse Hub-to-app launches passed. See the sibling LiaisonScape record's
+"Phase C resumed successfully and final public E2E" section for the consolidated
+matrix, exact source SHAs, evidence paths, preservation and knowledge scope.
+
+The earlier Phase C failure / Phase D held history above remains a historical
+snapshot. Success does not establish its underlying server-error cause.
+Human Publication Closure remains PENDING despite bounded public E2E PASS.
+Actual screen-reader speech, all pending-edit/save-error states and exhaustive
+browser engines remain NOT VERIFIED. No other product acceptance is expanded.
+These post-publication results remain LOCAL/UNCOMMITTED, with no extra push.
+
+
+## Bounded Publication Closure — 2026-11-12 JST
+
+Human confirmed the new-tab route to Hub and approved bounded Home-to-Hub
+Publication Closure. Earlier candidate Acceptance and the Codex-operated public
+E2E matrix above remain separate; Human did not claim to perform every browser
+or synthetic Dataset check personally.
+
+**CLOSED (BOUNDED).** Screen-reader speech, pending-edit and replacement/save-failure
+states, exhaustive engines and full Dataset byte identity remain unverified. The
+second-tab non-owner boundary remains supported only by the scoped evidence
+above. The separate dirty Locale record is outside this Closure and remains
+untouched.
